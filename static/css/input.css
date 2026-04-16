@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+/* Pastas a serem escaneadas pelo Tailwind v4 */
+@source "../../templates";
+@source "../../hoteis/templates";
+
+/* Variáveis de tema */
+@theme {
+    --color-action-blue: #2563eb;
+    --color-action-blue-dark: #1d4ed8;
+    --font-sans: 'Inter', sans-serif;
+}
+
+@layer base {
+  html { scroll-behavior: smooth; }
+  body { 
+    font-family: 'Inter', sans-serif; 
+    background-color: #f8fafc; 
+  }
+}
+
+@layer components {
+  .event-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .event-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  }
+  .ticket-card.selected { 
+    border-color: var(--color-action-blue); 
+    box-shadow: 0 0 0 2px var(--color-action-blue); 
+  }
+}

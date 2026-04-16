@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Naviê Vibe - {{ hotel.nome }}{% endblock %}
+
+{% block extra_head %}
+<!-- O CSS do Swiper já está na base.html -->
+{% endblock %}
+
+{% block content %}
+<main class="container mx-auto px-4 py-8">
+    <div class="lg:grid lg:grid-cols-3 lg:gap-12 lg:items-start">
+        
+        <div class="lg:col-span-2">
+            <!-- Carrossel -->
+            <div class="relative rounded-2xl overflow-hidden h-64 md:h-96 mb-8 bg-gray-200">
+                {% if imagens %}
+                <div class="swiper h-full">
+                    <div class="swiper-wrapper">
+                        <!-- Imagem do Banner como primeira do swiper -->
+                        {% if hotel.banner %}
+                        <div class="swiper-slide">
+                            <img src="{{ hotel.banner.url }}" class="w-full h-full object-cover" />
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Demais Imagens da Galeria -->
+                        {% for img in imagens %}
+                        <div class="swiper-slide">
+                            <img src="{{ img.url_imagem.url }}" class="w-full h-full object-cover" />
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="swiper-pagination"></div>
+                </div>
+                {% else %}
+                    <!-- Fallback se não tiver imagens extras -->
+                    {% if hotel.banner %}
+                        <img src="{{ hotel.banner.url }}" alt="Imagem do hotel {{ hotel.nome }}" class="w-full h-full object-cover">
+                    {% else %}
+                        <div class="w-full h-full bg-gray-300 flex items-center justify-center text-gray-500">Sem Imagem</div>
+                    {% endif %}
+                {% endif %}
+            </div>
+
+            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">{{ hotel.nome }}</h1>
+            <div class="flex flex-col md:flex-row md:items-center gap-4 md:gap-8 text-gray-600 mb-8">
+                {% if hotel.data_inicio %}
+                <div class="flex items-center gap-3">
+                    <i data-lucide="calendar" class="w-6 h-6 text-action-blue"></i>
+                    <span class="font-semibold">{{ hotel.data_inicio|date:"d/m/Y" }}</span>
+                </div>
+                {% endif %}
+                {% if hotel.horario_inicio %}
+                <div class="flex items-center gap-3">
+                    <i data-lucide="clock" class="w-6 h-6 text-action-blue"></i>
+                    <span class="font-semibold">Check-in às {{ hotel.horario_inicio|time:"H:i" }}</span>
+                </div>
+                {% endif %}
+                <div class="flex items-center gap-3">
+                    <i data-lucide="map-pin" class="w-6 h-6 text-action-blue"></i>
+                    <span class="font-semibold">{{ hotel.local.nome }}</span>
+                </div>
+            </div>
+            
+            <div class="prose max-w-none text-gray-700 space-y-6 text-lg">
+                <h3 class="text-xl font-bold mb-2">Sobre</h3>
+                <p>{{ hotel.descricao|linebreaksbr }}</p>
+            </div>
+        </div>
+
+        <div class="lg:col-start-3 lg:row-start-1 lg:sticky lg:top-28 mt-8 lg:mt-0">
+            <!-- Sidebar / Reserve -->
+            <form id="cart-form" action="#" method="POST" class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
+                {% csrf_token %}
+                <h2 class="text-2xl font-bold mb-6">Quartos e Opções</h2>
+                
+                <div class="space-y-4">
+                    {% for quarto in quartos %}
+                    <div class="ticket-card border-2 border-gray-100 rounded-xl p-4 cursor-pointer transition-all" data-price="{{ quarto.preco }}">
+                        <div class="flex justify-between items-center">
+                            <div class="flex-1">
+                                <h4 class="font-bold text-lg text-gray-800">{{ quarto.nome }}</h4>
+                                <p class="text-sm text-gray-500">{{ quarto.descricao }}</p>
+                                <p class="font-bold text-action-blue mt-1">R$ {{ quarto.preco }}</p>
+                                <input type="hidden" name="tickets[{{ quarto.id }}][price]" value="{{ quarto.preco }}">
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button type="button" class="quantity-btn-minus h-8 w-8 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-300">-</button>
+                                <input type="text" name="tickets[{{ quarto.id }}][quantity]" value="0" readonly class="quantity-value w-8 text-center font-bold bg-transparent">
+                                <button type="button" class="quantity-btn-plus h-8 w-8 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-300">+</button>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500 text-sm">Sem quartos cadastrados.</p>
+                    {% endfor %}
+                </div>
+                
+                <button id="buy-button" type="button" class="w-full mt-6 bg-gray-300 cursor-not-allowed text-white py-4 rounded-xl font-semibold text-lg transition-colors" disabled>
+                    Adicionar à Reserva
+                </button>
+            </form>
+        </div>
+        
+        <div class="lg:col-span-2 mt-12">
+            <h3 class="text-xl font-bold mb-4">Localização</h3>
+            <p class="text-gray-600 mb-4">{{ hotel.local.endereco }}, {{ hotel.local.cidade }} - {{ hotel.local.estado }}</p>
+        </div>
+
+    </div>
+</main>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Inicialização do Swiper
+    if (document.querySelector('.swiper')) {
+        const swiper = new Swiper('.swiper', {
+            autoplay: {
+                delay: 5000,
+                disableOnInteraction: false,
+            },
+            loop: true,
+            pagination: {
+                el: '.swiper-pagination',
+                clickable: true,
+            },
+        });
+    }
+
+    // Lógica do carrinho local
+    const ticketCards = document.querySelectorAll('.ticket-card');
+    const buyButton = document.getElementById('buy-button');
+    
+    function updateCart() {
+        let total = 0;
+        let ticketCount = 0;
+        ticketCards.forEach(card => {
+            const price = parseFloat(card.dataset.price.replace(',','.'));
+            const quantityInput = card.querySelector('.quantity-value');
+            const quantity = parseInt(quantityInput.value);
+            if (quantity > 0) {
+                total += quantity * price;
+                ticketCount += quantity;
+                card.classList.add('selected');
+                card.classList.remove('border-gray-100');
+            } else {
+                card.classList.remove('selected');
+                card.classList.add('border-gray-100');
+            }
+        });
+        
+        if (ticketCount > 0) {
+            buyButton.textContent = `Reservar (R$ ${total.toFixed(2).replace('.', ',')})`;
+            buyButton.disabled = false;
+            buyButton.classList.remove('bg-gray-300', 'cursor-not-allowed');
+            buyButton.classList.add('bg-action-blue', 'hover:bg-action-blue-dark');
+        } else {
+            buyButton.textContent = 'Adicionar à Reserva';
+            buyButton.disabled = true;
+            buyButton.classList.add('bg-gray-300', 'cursor-not-allowed');
+            buyButton.classList.remove('bg-action-blue', 'hover:bg-action-blue-dark');
+        }
+    }
+    
+    ticketCards.forEach(card => {
+        const quantityInput = card.querySelector('.quantity-value');
+        const minusBtn = card.querySelector('.quantity-btn-minus');
+        const plusBtn = card.querySelector('.quantity-btn-plus');
+        
+        minusBtn.addEventListener('click', () => {
+            let currentValue = parseInt(quantityInput.value);
+            if (currentValue > 0) {
+                quantityInput.value = currentValue - 1;
+                updateCart();
+            }
+        });
+        plusBtn.addEventListener('click', () => {
+            let currentValue = parseInt(quantityInput.value);
+            quantityInput.value = currentValue + 1;
+            updateCart();
+        });
+    });
+</script>
+{% endblock %}

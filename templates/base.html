@@ -1,0 +1,94 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Naviê Vibe - Descubra os Melhores Destinos{% endblock %}</title>
+    
+    <!-- CSS Compilado do Tailwind e Inter Font Local -->
+    <!-- (Nota: inter.css aponta para as fontes baixadas, ou para a API caso ainda precise baixar as woff2 locais) -->
+    <link rel="stylesheet" href="{% static 'css/inter.css' %}">
+    <link rel="stylesheet" href="{% static 'css/output.css' %}">
+    
+    <!-- Swiper CSS Local -->
+    <link rel="stylesheet" href="{% static 'css/swiper-bundle.min.css' %}">
+
+    <style>
+        /* Regras Customizadas Vanilla (Avançadas) */
+        html { scroll-behavior: smooth; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f8fafc; 
+        }
+        
+        .bg-action-blue { background-color: #2563eb; }
+        .text-action-blue { color: #2563eb; }
+        .border-action-blue { border-color: #2563eb; }
+        .hover\:bg-action-blue-dark:hover { background-color: #1d4ed8; }
+        
+        /* Premium Card Animations */
+        .event-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .event-card:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); 
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="w-full text-gray-800">
+
+    <!-- Header Simples -->
+    <header class="bg-white sticky top-0 z-50 shadow-sm">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="{% url 'hoteis:home' %}" class="flex items-center gap-3 text-2xl font-black text-gray-900 tracking-tight">
+                <img src="{% static 'images/logo.png' %}" alt="Logo Naviê" class="h-10 w-auto object-contain">
+                Naviê <span class="text-action-blue">Vibe</span>
+            </a>
+            
+            <nav class="hidden md:flex gap-6 items-center font-medium">
+                <a href="#" class="hover:text-action-blue transition-colors">Hotéis</a>
+                <a href="#" class="hover:text-action-blue transition-colors">Eventos</a>
+                <a href="#" class="hover:text-action-blue transition-colors">Cinema</a>
+            </nav>
+            
+            <div class="flex items-center gap-4">
+                <a href="#" class="relative p-2 text-gray-600 hover:text-action-blue transition-colors">
+                    <i data-lucide="shopping-cart" class="w-6 h-6"></i>
+                    <span class="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center">0</span>
+                </a>
+                <a href="#" class="bg-gray-100 px-4 py-2 rounded-full font-semibold text-sm hover:bg-gray-200 transition-colors">
+                    Entrar
+                </a>
+            </div>
+        </div>
+    </header>
+
+    {% block content %}
+    <!-- Conteúdo da Página Aqui -->
+    {% endblock %}
+
+    <footer class="bg-gray-900 text-white py-12 mt-16">
+        <div class="container mx-auto px-4 text-center">
+            <div class="flex items-center justify-center gap-3 mb-4">
+                <img src="{% static 'images/logo.png' %}" alt="Logo Naviê" class="h-10 w-auto opacity-80" style="filter: brightness(0) invert(1);">
+                <h2 class="text-2xl font-black">Naviê <span class="text-action-blue">Vibe</span></h2>
+            </div>
+            <p class="text-gray-400 mb-8 max-w-md mx-auto">O seu marketplace de experiências na Ibiapaba. Encontre os melhores hotéis, atrações e eventos num só lugar.</p>
+            <div class="border-t border-gray-800 pt-8 text-sm text-gray-500">
+                &copy; {% now "Y" %} Naviê Vibe. Todos os direitos reservados.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts Locais -->
+    <script src="{% static 'js/lucide.min.js' %}"></script>
+    <script src="{% static 'js/swiper-bundle.min.js' %}"></script>
+    
+    <script>
+        // Inicializa ícones Lucide
+        lucide.createIcons();
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
