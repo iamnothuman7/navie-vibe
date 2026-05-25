@@ -79,6 +79,7 @@ class Quarto(models.Model): # Antigo 'Tipos de Ingresso'
     
     # Novos campos para gestão avançada, SEO e IA
     video_url = models.CharField(max_length=500, blank=True, null=True, help_text="Link para vídeo MP4 ou embed")
+    video_arquivo = models.FileField(upload_to='quartos/videos/', blank=True, null=True, help_text="Arquivo de vídeo local do tour")
     capacidade_pessoas = models.IntegerField(default=2, help_text="Capacidade de hóspedes")
     tags = models.CharField(max_length=255, blank=True, default="", help_text="Categorização (ex: Família, Romântico)")
     comodidades = models.CharField(max_length=255, blank=True, default="", help_text="Comodidades (ex: Ar Condicionado, Wi-Fi)")

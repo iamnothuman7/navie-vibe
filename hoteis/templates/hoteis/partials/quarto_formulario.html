@@ -2,12 +2,12 @@
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
 
 <style>
-    /* Quill Rich Text Editor Dark Mode Overrides */
+    /* Quill Rich Text Editor Dark Mode Overrides in Modal */
     .ql-toolbar.ql-snow {
         border: 1px solid rgba(226, 232, 240, 0.8) !important;
         background: #f8fafc !important;
-        border-top-left-radius: 1rem;
-        border-top-right-radius: 1rem;
+        border-radius: 1rem 1rem 0 0;
+        width: 100% !important;
     }
     .dark .ql-toolbar.ql-snow {
         border: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -17,9 +17,9 @@
         border: 1px solid rgba(226, 232, 240, 0.8) !important;
         border-top: 0 !important;
         background: #ffffff !important;
-        border-bottom-left-radius: 1rem;
-        border-bottom-right-radius: 1rem;
+        border-radius: 0 0 1rem 1rem;
         font-family: inherit;
+        width: 100% !important;
     }
     .dark .ql-container.ql-snow {
         border: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -28,7 +28,7 @@
     }
     .ql-editor {
         font-size: 0.875rem;
-        min-height: 120px;
+        min-height: 240px;
         color: inherit;
     }
     .dark .ql-stroke {
@@ -44,9 +44,22 @@
         background-color: #1e293b !important;
         border-color: rgba(255, 255, 255, 0.08) !important;
     }
+
+    /* Custom Hardware-Accelerated Animated Divider Bar */
+    @keyframes dividerMove {
+        0% { transform: translateX(-100%); }
+        50% { transform: translateX(350%); }
+        100% { transform: translateX(-100%); }
+    }
+    .animated-divider-bar {
+        width: 25%;
+        height: 100%;
+        border-radius: 9999px;
+        animation: dividerMove 8s ease-in-out infinite;
+    }
 </style>
 
-<div class="bg-white/80 dark:bg-black/30 border border-slate-200/80 dark:border-navie-border rounded-3xl p-5 sm:p-6 shadow-sm backdrop-blur-md animate-in fade-in zoom-in-95 duration-300">
+<div x-data="{ editorOpen: false }" class="bg-white/80 dark:bg-black/30 border border-slate-200/80 dark:border-navie-border rounded-3xl p-5 sm:p-6 shadow-sm backdrop-blur-md animate-in fade-in zoom-in-95 duration-300 relative">
     <!-- Form Header and Back triggers -->
     <div class="flex items-center justify-between gap-4 border-b border-slate-100 dark:border-white/5 pb-4 mb-6">
         <div>
@@ -64,7 +77,7 @@
     </div>
 
     <!-- Main Dynamic Form -->
-    <form id="quarto-form" hx-post="{% url 'hoteis:partner_quarto_salvar' %}" hx-target="#quartos-container" hx-swap="innerHTML" enctype="multipart/form-data" class="space-y-6">
+    <form id="quarto-form" hx-post="{% url 'hoteis:partner_quarto_salvar' %}" hx-target="#quartos-container" hx-swap="innerHTML" enctype="multipart/form-data" class="space-y-8">
         {% csrf_token %}
         {% if quarto %}
         <input type="hidden" name="quarto_id" value="{{ quarto.id }}">
@@ -74,7 +87,7 @@
         <input type="hidden" name="tem_desconto_multidias" id="tem-desconto-input" value="{% if quarto.tem_desconto_multidias %}true{% else %}false{% endif %}">
 
         <!-- ─────────────────────────────────────────────────────────────
-             ETAPA 1: GALERIA DE FOTOS (MÁXIMO 10 FOTOS)
+             SEÇÃO 1: GALERIA DE FOTOS (PRINCIPAL DESTAQUE CORONA)
              ───────────────────────────────────────────────────────────── -->
         <div>
             <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-3">Galeria de Fotos (Máximo 10 Fotos)</label>
@@ -82,14 +95,22 @@
                 <!-- Imagens Existentes no Banco -->
                 {% if quarto %}
                     {% for img in quarto.imagens.all %}
-                    <div id="quarto-img-card-{{ img.id }}" class="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border border-slate-100 dark:border-white/5 shadow-inner shrink-0 group/img animate-in zoom-in-95 duration-200">
+                    <div id="quarto-img-card-{{ img.id }}" 
+                         class="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden shrink-0 group/img animate-in zoom-in-95 duration-200 {% if forloop.first %}border-2 border-brand shadow-md scale-95{% else %}border border-slate-100 dark:border-white/5 shadow-inner{% endif %}">
                         <img src="{{ img.url_imagem.url }}" class="w-full h-full object-cover">
                         <!-- Botão Deletar Imagem Existente via HTMX -->
                         <button type="button" hx-delete="{% url 'hoteis:partner_quarto_deletar_imagem' img.id %}" hx-target="#quarto-img-card-{{ img.id }}" hx-swap="outerHTML"
                                 class="absolute top-1 right-1 bg-red-500/90 text-white rounded-full p-1 hover:bg-red-600 transition-all shadow opacity-0 group-hover/img:opacity-100 flex items-center justify-center">
                             <i data-lucide="x" class="w-3 h-3"></i>
                         </button>
+                        
+                        <!-- Destaque Circular da Cor Base -->
+                        {% if forloop.first %}
+                        <div class="absolute top-1.5 left-1.5 w-5 h-5 rounded-full border border-brand bg-brand flex items-center justify-center text-white shadow"><i data-lucide="crown" class="w-2.5 h-2.5"></i></div>
+                        <div class="absolute bottom-1 right-1 bg-brand/80 backdrop-blur-sm text-[8px] text-white px-1.5 py-0.5 rounded font-black shadow-sm">Principal</div>
+                        {% else %}
                         <div class="absolute bottom-1 left-1 bg-black/60 backdrop-blur-sm text-[8px] text-white px-1.5 py-0.5 rounded font-black">Salva</div>
+                        {% endif %}
                     </div>
                     {% endfor %}
                 {% endif %}
@@ -104,41 +125,90 @@
                     <input type="file" name="imagens" id="upload-galeria" multiple accept="image/*" class="hidden" onchange="previewLocalImages(this)">
                 </label>
             </div>
-            <p class="text-[10px] text-slate-400 mt-2">Dica: Selecione múltiplas imagens. Formatos válidos: PNG, JPG ou WEBP de até 2MB.</p>
+            <p class="text-[10px] text-slate-400 mt-2">O primeiro card (borda destacada com coroa) é a imagem de capa da pousada no site. Selecione até 10 fotos.</p>
         </div>
 
-        <hr class="border-slate-100 dark:border-white/5 my-6">
+        <!-- Custom Division Line with Animation -->
+        <div class="relative h-[2px] w-full bg-slate-100 dark:bg-white/5 my-8 rounded-full overflow-hidden shrink-0">
+            <div class="animated-divider-bar bg-brand absolute top-0 left-0"></div>
+        </div>
 
         <!-- ─────────────────────────────────────────────────────────────
-             ETAPA 2: TOUR EM VÍDEO
+             SEÇÃO 2: TOUR EM VÍDEO COM DOUBLE MOCKUP
              ───────────────────────────────────────────────────────────── -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
-            <div>
-                <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-2">Vídeo Tour da Acomodação</label>
-                <input type="url" name="video_url" id="video-url-input" value="{{ quarto.video_url|default:'' }}" placeholder="https://exemplo.com/tour.mp4" oninput="updateVideoPreview(this.value)"
-                       class="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-brand transition-colors">
-                <p class="text-[10px] text-slate-400 mt-2 leading-relaxed">Cole o link direto de um vídeo em MP4 (com suporte a loops de carregamento) para o tour de exibição. O vídeo rodará automaticamente no seu site público e nos resultados do assistente virtual.</p>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+            <!-- Upload de Video Card -->
+            <div class="lg:col-span-5 flex flex-col gap-3">
+                <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider">Vídeo Tour da Acomodação</label>
+                
+                <label class="relative rounded-3xl border-2 border-dashed border-slate-300 dark:border-white/10 hover:border-brand dark:hover:border-brand p-6 flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.01] active:scale-99 bg-slate-50/50 dark:bg-black/10 group h-36">
+                    <span class="flex items-center text-slate-400 dark:text-slate-500 group-hover:text-brand transition-colors"><i data-lucide="video" class="w-8 h-8"></i></span>
+                    <span class="text-xs font-bold text-slate-600 dark:text-slate-300 mt-2">Escolher Vídeo Tour</span>
+                    <span class="text-[10px] text-slate-400 mt-1" id="video-filename-display">
+                        {% if quarto.video_arquivo %}
+                            {{ quarto.video_arquivo.name|slice:"15:" }}
+                        {% else %}
+                            MP4, MOV ou WebM de até 20MB
+                        {% endif %}
+                    </span>
+                    <input type="file" name="video_arquivo" id="upload-video" accept="video/*" class="hidden" onchange="previewLocalVideo(this)">
+                </label>
+                
+                <!-- Controle de remoção de video -->
+                <div class="flex items-center justify-between" id="video-removal-control" style="display: {% if quarto.video_arquivo %}flex{% else %}none{% endif %};">
+                    <span class="text-[10px] text-slate-400 font-bold">Vídeo local carregado</span>
+                    <button type="button" onclick="clearVideoTour()" class="text-[10px] font-black text-red-500 hover:underline flex items-center gap-1">
+                        <span class="flex items-center" style="pointer-events:none;"><i data-lucide="trash" class="w-3.5 h-3.5"></i></span> Remover Vídeo
+                    </button>
+                </div>
+                <input type="hidden" name="remover_video" id="remover-video-input" value="false">
+                <p class="text-[10px] text-slate-400 mt-1 leading-relaxed">Faça o upload do tour de vídeo local. Ele rodará de forma silenciosa e contínua dentro dos dispositivos de visualização de clientes.</p>
             </div>
-            <div>
-                <!-- Looping Player Preview -->
-                <div id="video-preview-box" class="relative rounded-2xl overflow-hidden bg-slate-900 border border-slate-200/50 dark:border-white/5 aspect-video w-full max-w-sm mx-auto shadow-inner flex items-center justify-center group" style="display: {% if quarto.video_url %}block{% else %}none{% endif %};">
-                    <video id="quarto-video-player" src="{{ quarto.video_url|default:'' }}" autoplay loop muted playsinline class="w-full h-full object-cover"></video>
-                    <div class="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md text-[9px] font-bold text-white px-2 py-0.5 rounded-md flex items-center gap-1">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Vídeo Ativo
+
+            <!-- Previews lado a lado em Mockups -->
+            <div class="lg:col-span-7 flex flex-row items-end justify-center gap-6 sm:gap-8 bg-slate-50/40 dark:bg-black/10 p-5 rounded-3xl border border-slate-100 dark:border-white/5">
+                
+                <!-- Desktop Safari Mockup -->
+                <div class="flex flex-col gap-2 shrink-0">
+                    <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Preview Desktop</span>
+                    <div class="w-48 sm:w-60 aspect-video rounded-xl border border-slate-200 dark:border-white/10 bg-slate-900 overflow-hidden shadow-lg flex flex-col relative group">
+                        <!-- Browser Bar -->
+                        <div class="h-3.5 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-white/5 flex items-center px-1.5 gap-1 shrink-0">
+                            <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>
+                            <span class="w-1.5 h-1.5 rounded-full bg-yellow-400"></span>
+                            <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>
+                            <div class="h-2 w-28 bg-white dark:bg-slate-900 rounded-[2px] ml-2"></div>
+                        </div>
+                        <div class="flex-1 w-full bg-slate-950 flex items-center justify-center relative">
+                            <video id="quarto-video-desktop" src="{% if quarto.video_arquivo %}{{ quarto.video_arquivo.url }}{% endif %}" autoplay loop muted playsinline class="w-full h-full object-cover" style="display: {% if quarto.video_arquivo %}block{% else %}none{% endif %};"></video>
+                            <div id="quarto-video-desktop-placeholder" class="text-slate-500 text-[10px] font-bold" style="display: {% if quarto.video_arquivo %}none{% else %}block{% endif %};">Sem vídeo...</div>
+                        </div>
                     </div>
                 </div>
-                <!-- Box Vazio -->
-                <div id="video-empty-box" class="rounded-2xl border-2 border-dashed border-slate-300 dark:border-white/10 aspect-video w-full max-w-sm mx-auto flex flex-col items-center justify-center text-slate-400 dark:text-slate-500" style="display: {% if quarto.video_url %}none{% else %}flex{% endif %};">
-                    <span class="flex items-center text-slate-400 dark:text-slate-500 opacity-60"><i data-lucide="video" class="w-8 h-8"></i></span>
-                    <span class="text-xs font-bold mt-2">Nenhum vídeo carregado</span>
+
+                <!-- Smartphone Mockup -->
+                <div class="flex flex-col gap-2 shrink-0">
+                    <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Preview Mobile</span>
+                    <div class="w-[84px] sm:w-[100px] h-[150px] sm:h-[180px] rounded-[24px] border-[4px] border-slate-800 dark:border-slate-700 bg-slate-900 overflow-hidden shadow-2xl relative flex flex-col">
+                        <!-- notch -->
+                        <div class="absolute top-1 left-1/2 -translate-x-1/2 w-8 h-2 bg-slate-800 rounded-full z-20"></div>
+                        <div class="w-full h-full bg-slate-950 flex items-center justify-center relative">
+                            <video id="quarto-video-mobile" src="{% if quarto.video_arquivo %}{{ quarto.video_arquivo.url }}{% endif %}" autoplay loop muted playsinline class="w-full h-full object-cover" style="display: {% if quarto.video_arquivo %}block{% else %}none{% endif %};"></video>
+                            <div id="quarto-video-mobile-placeholder" class="text-slate-500 text-[9px] font-bold text-center p-1" style="display: {% if quarto.video_arquivo %}none{% else %}block{% endif %};">Sem vídeo...</div>
+                        </div>
+                    </div>
                 </div>
+
             </div>
         </div>
 
-        <hr class="border-slate-100 dark:border-white/5 my-6">
+        <!-- Custom Division Line with Animation -->
+        <div class="relative h-[2px] w-full bg-slate-100 dark:bg-white/5 my-8 rounded-full overflow-hidden shrink-0">
+            <div class="animated-divider-bar bg-brand absolute top-0 left-0"></div>
+        </div>
 
         <!-- ─────────────────────────────────────────────────────────────
-             ETAPA 3: INFORMAÇÕES DA ACOMODAÇÃO
+             SEÇÃO 3: INFORMAÇÕES DA ACOMODAÇÃO E TEXTO EM MODAL
              ───────────────────────────────────────────────────────────── -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <!-- Nome -->
@@ -153,34 +223,133 @@
                 <div class="relative">
                     <span class="absolute left-4 top-3 text-xs font-bold text-slate-400">R$</span>
                     <input type="text" name="preco" id="room-price-input" required value="{{ quarto.preco|default:'' }}" placeholder="250.00" oninput="updateSEOPreview()"
-                           class="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl pl-10 pr-4 py-3 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-brand transition-colors font-bold">
+                           class="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl pl-10 pr-4 py-3 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-brand transition-colors font-bold font-mono">
                 </div>
             </div>
         </div>
 
-        <!-- Descrição Completa com Quill.js Editor -->
+        <!-- Botão Editor de Descrição em Modal -->
         <div>
-            <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-2">Descrição da Acomodação (Texto Rico)</label>
-            <div id="editor-container" class="dark:text-white"></div>
+            <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-2">Descrição Completa</label>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                <button type="button" @click="editorOpen = true"
+                        class="bg-brand/10 hover:bg-brand/20 border border-brand/20 dark:border-brand/30 text-brand px-5 py-3 rounded-2xl text-xs font-black transition-all flex items-center justify-center gap-1.5 hover:scale-[1.02] active:scale-95 shrink-0">
+                    <span class="flex items-center" style="pointer-events:none;"><i data-lucide="pencil-line" class="w-4 h-4"></i></span>
+                    <span x-text="document.getElementById('quarto-descricao-input').value ? 'Editar Descrição' : 'Adicionar Descrição'"></span>
+                </button>
+                <div id="editor-summary-card" class="text-xs text-slate-500 dark:text-slate-400 italic truncate max-w-lg">
+                    {% if quarto.descricao %}{{ quarto.descricao|striptags|truncatechars:60 }}{% else %}Nenhuma descrição adicionada ainda.{% endif %}
+                </div>
+            </div>
             <input type="hidden" name="descricao" id="quarto-descricao-input" value="{{ quarto.descricao|default:'' }}">
         </div>
 
-        <hr class="border-slate-100 dark:border-white/5 my-6">
+        <!-- Glassmorphic Screen-bound Modal for Quill Rich-Text Editor -->
+        <div x-show="editorOpen" style="display: none;" 
+             class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-hidden animate-in fade-in duration-300">
+            <!-- Modal backdrop overlay -->
+            <div class="absolute inset-0 bg-slate-900/60 dark:bg-black/70 backdrop-blur-md" @click="editorOpen = false"></div>
+            
+            <!-- Modal Box -->
+            <div class="relative bg-white/95 dark:bg-slate-950/95 border border-slate-200 dark:border-white/10 rounded-3xl w-full max-w-3xl max-h-[85vh] flex flex-col justify-between shadow-2xl backdrop-blur-xl animate-in zoom-in-95 duration-300 overflow-hidden">
+                <!-- Modal Header -->
+                <div class="px-5 py-4 border-b border-slate-100 dark:border-white/5 flex flex-col gap-3 shrink-0">
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-xs sm:text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                            <span class="flex items-center text-brand"><i data-lucide="pencil-line" class="w-4 h-4"></i></span>
+                            Editor de Descrição (Texto Rico)
+                        </h4>
+                        <button type="button" @click="editorOpen = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <!-- Slot for Quill Toolbar -->
+                    <div id="quill-toolbar-slot" class="w-full"></div>
+                </div>
+
+                <!-- Modal Editor Body -->
+                <div class="flex-1 p-5 overflow-y-auto min-h-[250px] bg-slate-50/20 dark:bg-black/5">
+                    <div id="editor-container"></div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="px-5 py-4 border-t border-slate-100 dark:border-white/5 flex items-center justify-end gap-3 bg-slate-50/50 dark:bg-black/25 shrink-0">
+                    <button type="button" @click="editorOpen = false"
+                            class="bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-2xl text-xs font-black transition-all hover:scale-[1.02] border border-slate-200/50 dark:border-white/5">
+                        Cancelar
+                    </button>
+                    <button type="button" @click="saveDescription(); editorOpen = false"
+                            class="bg-brand hover:bg-brand/90 text-white px-5 py-2 rounded-2xl text-xs font-black transition-all shadow-md shadow-brand/25 flex items-center gap-1.5 hover:scale-[1.02] active:scale-95">
+                        <span class="flex items-center" style="pointer-events:none;"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
+                        Confirmar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom Division Line with Animation -->
+        <div class="relative h-[2px] w-full bg-slate-100 dark:bg-white/5 my-8 rounded-full overflow-hidden shrink-0">
+            <div class="animated-divider-bar bg-brand absolute top-0 left-0"></div>
+        </div>
 
         <!-- ─────────────────────────────────────────────────────────────
-             ETAPA 4: CAPACIDADE E CATEGORIZAÇÃO (TAGS & AMENITIES)
+             SEÇÃO 4: CAPACIDADE (DROPDOWN ALPINE) E TAGS/COMODIDADES (PADDED)
              ───────────────────────────────────────────────────────────── -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Capacidade -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Capacidade Dropdown Padronizado -->
             <div>
-                <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-3">Capacidade Hóspedes</label>
-                <div class="flex items-center gap-2">
-                    {% for cap in "12345" %}
-                        <button type="button" onclick="selectCapacity(this, {{ cap }})" id="cap-pill-{{ cap }}"
-                                class="cap-pill px-4 py-2.5 rounded-2xl border text-xs font-bold transition-all {% if quarto.capacidade_pessoas == cap|add:0 or not quarto and cap == '2' %}bg-brand text-white border-brand{% else %}bg-slate-50 dark:bg-white/5 border-slate-200/60 dark:border-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10{% endif %}">
-                            {{ cap }} {% if cap == '5' %}+{% endif %} Pessoas
+                <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-3">Capacidade Recomendada</label>
+                <div x-data="{ open: false, selected: {{ quarto.capacidade_pessoas|default:2 }} }" class="relative w-full max-w-xs">
+                    <button type="button" @click="open = !open" @click.away="open = false"
+                            class="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-brand transition-all flex items-center justify-between font-bold hover:scale-[1.01]">
+                        <span x-text="selected === 8 ? '8 ou mais pessoas' : (selected === 1 ? '1 pessoa' : selected + ' pessoas')"></span>
+                        <span class="flex items-center text-slate-400"><i data-lucide="chevron-down" class="w-4 h-4"></i></span>
+                    </button>
+                    <!-- Standardized Checkable Dropdown -->
+                    <div x-show="open" style="display: none;" x-transition:enter="transition ease-out duration-100" x-transition:leave="transition ease-in duration-75"
+                         class="absolute z-40 mt-2 w-full bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border border-slate-200/50 dark:border-white/10 rounded-2xl shadow-xl overflow-hidden py-1 max-h-60 overflow-y-auto">
+                        
+                        <button type="button" @click="selected = 1; open = false; document.getElementById('capacidade-input').value = 1; updateSEOPreview()"
+                                class="w-full text-left px-4 py-2.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-brand hover:text-white transition-colors flex items-center justify-between font-bold">
+                            <span>1 pessoa</span>
+                            <span x-show="selected === 1" class="text-brand hover:text-white"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
                         </button>
-                    {% endfor %}
+                        <button type="button" @click="selected = 2; open = false; document.getElementById('capacidade-input').value = 2; updateSEOPreview()"
+                                class="w-full text-left px-4 py-2.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-brand hover:text-white transition-colors flex items-center justify-between font-bold">
+                            <span>2 pessoas</span>
+                            <span x-show="selected === 2" class="text-brand hover:text-white"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
+                        </button>
+                        <button type="button" @click="selected = 3; open = false; document.getElementById('capacidade-input').value = 3; updateSEOPreview()"
+                                class="w-full text-left px-4 py-2.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-brand hover:text-white transition-colors flex items-center justify-between font-bold">
+                            <span>3 pessoas</span>
+                            <span x-show="selected === 3" class="text-brand hover:text-white"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
+                        </button>
+                        <button type="button" @click="selected = 4; open = false; document.getElementById('capacidade-input').value = 4; updateSEOPreview()"
+                                class="w-full text-left px-4 py-2.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-brand hover:text-white transition-colors flex items-center justify-between font-bold">
+                            <span>4 pessoas</span>
+                            <span x-show="selected === 4" class="text-brand hover:text-white"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
+                        </button>
+                        <button type="button" @click="selected = 5; open = false; document.getElementById('capacidade-input').value = 5; updateSEOPreview()"
+                                class="w-full text-left px-4 py-2.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-brand hover:text-white transition-colors flex items-center justify-between font-bold">
+                            <span>5 pessoas</span>
+                            <span x-show="selected === 5" class="text-brand hover:text-white"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
+                        </button>
+                        <button type="button" @click="selected = 6; open = false; document.getElementById('capacidade-input').value = 6; updateSEOPreview()"
+                                class="w-full text-left px-4 py-2.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-brand hover:text-white transition-colors flex items-center justify-between font-bold">
+                            <span>6 pessoas</span>
+                            <span x-show="selected === 6" class="text-brand hover:text-white"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
+                        </button>
+                        <button type="button" @click="selected = 7; open = false; document.getElementById('capacidade-input').value = 7; updateSEOPreview()"
+                                class="w-full text-left px-4 py-2.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-brand hover:text-white transition-colors flex items-center justify-between font-bold">
+                            <span>7 pessoas</span>
+                            <span x-show="selected === 7" class="text-brand hover:text-white"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
+                        </button>
+                        <button type="button" @click="selected = 8; open = false; document.getElementById('capacidade-input').value = 8; updateSEOPreview()"
+                                class="w-full text-left px-4 py-2.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-brand hover:text-white transition-colors flex items-center justify-between font-bold">
+                            <span>8 ou mais pessoas</span>
+                            <span x-show="selected === 8" class="text-brand hover:text-white"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
+                        </button>
+                    </div>
                     <input type="hidden" name="capacidade_pessoas" id="capacidade-input" value="{{ quarto.capacidade_pessoas|default:2 }}">
                 </div>
             </div>
@@ -188,10 +357,10 @@
             <!-- Categorização por Tags (Seleção Dinâmica) -->
             <div>
                 <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-3">Tags Especiais (Ideal para IA)</label>
-                <div class="flex flex-wrap gap-2">
+                <div class="flex flex-wrap gap-2.5">
                     {% for tag in tags_disponiveis %}
                         <button type="button" onclick="toggleTag(this, '{{ tag }}')"
-                                class="tag-pill px-3 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-wider transition-all border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10">
+                                class="tag-pill px-3.5 py-2 rounded-full border text-[10px] font-black uppercase tracking-wider transition-all border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 hover:scale-[1.03]">
                             {{ tag }}
                         </button>
                     {% endfor %}
@@ -202,22 +371,25 @@
         <!-- Comodidades / Diferenciais -->
         <div>
             <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-3">Comodidades Inclusas</label>
-            <div class="flex flex-wrap gap-2">
+            <div class="flex flex-wrap gap-2.5">
                 {% for com in comodidades_disponiveis %}
                     <button type="button" onclick="toggleComodidade(this, '{{ com }}')"
-                            class="com-pill px-3 py-1.5 rounded-xl border text-[11px] font-bold transition-all border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 flex items-center gap-1">
+                            class="com-pill px-3.5 py-2.5 rounded-2xl border text-[11px] font-bold transition-all border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 flex items-center gap-1.5 hover:scale-[1.03]">
                         <i data-lucide="check" class="w-3.5 h-3.5 opacity-40"></i> {{ com }}
                     </button>
                 {% endfor %}
             </div>
         </div>
 
-        <hr class="border-slate-100 dark:border-white/5 my-6">
+        <!-- Custom Division Line with Animation -->
+        <div class="relative h-[2px] w-full bg-slate-100 dark:bg-white/5 my-8 rounded-full overflow-hidden shrink-0">
+            <div class="animated-divider-bar bg-brand absolute top-0 left-0"></div>
+        </div>
 
         <!-- ─────────────────────────────────────────────────────────────
-             ETAPA 5: PROGRESSIVO MULTI-DIÁRIAS
+             SEÇÃO 5: PROGRESSIVO MULTI-DIÁRIAS
              ───────────────────────────────────────────────────────────── -->
-        <div class="bg-slate-50/50 dark:bg-black/20 border border-slate-100 dark:border-white/5 rounded-3xl p-5">
+        <div class="bg-slate-50/50 dark:bg-black/20 border border-slate-100 dark:border-white/5 rounded-3xl p-5 shadow-sm">
             <div class="flex items-center justify-between gap-4">
                 <div>
                     <h5 class="text-xs font-black text-slate-700 dark:text-white uppercase tracking-wider">Desconto Progressivo Multidiárias</h5>
@@ -235,7 +407,7 @@
                     <label class="block text-[10px] font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-2">Hospedagem Mínima para Desconto</label>
                     <div class="flex items-center gap-1.5">
                         <input type="number" name="dias_minimos_desconto" id="dias-minimos-input" value="{{ quarto.dias_minimos_desconto|default:3 }}" min="2" oninput="updateSEOPreview()"
-                               class="w-24 bg-slate-100 dark:bg-black/30 border border-slate-200/50 dark:border-white/5 rounded-2xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-brand">
+                               class="w-24 bg-slate-100 dark:bg-black/30 border border-slate-200/50 dark:border-white/5 rounded-2xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-brand font-mono">
                         <span class="text-xs text-slate-400 font-bold">noites</span>
                     </div>
                 </div>
@@ -243,21 +415,24 @@
                     <label class="block text-[10px] font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-2">Desconto (%)</label>
                     <div class="flex items-center gap-1.5">
                         <input type="number" name="percentual_desconto" id="desconto-porcentagem-input" value="{{ quarto.percentual_desconto|default:0 }}" min="0" max="100" oninput="updateSEOPreview()"
-                               class="w-24 bg-slate-100 dark:bg-black/30 border border-slate-200/50 dark:border-white/5 rounded-2xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-brand">
+                               class="w-24 bg-slate-100 dark:bg-black/30 border border-slate-200/50 dark:border-white/5 rounded-2xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-brand font-mono">
                         <span class="text-xs text-slate-400 font-bold">% de desconto</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <hr class="border-slate-100 dark:border-white/5 my-6">
+        <!-- Custom Division Line with Animation -->
+        <div class="relative h-[2px] w-full bg-slate-100 dark:bg-white/5 my-8 rounded-full overflow-hidden shrink-0">
+            <div class="animated-divider-bar bg-brand absolute top-0 left-0"></div>
+        </div>
 
         <!-- ─────────────────────────────────────────────────────────────
-             ETAPA 6: OTIMIZADOR DE SEO DO GOOGLE E DE ASSISTENTE DE IA (GEMINI)
+             SEÇÃO 6: OTIMIZADOR DE SEO DO GOOGLE E DE ASSISTENTE DE IA (GEMINI)
              ───────────────────────────────────────────────────────────── -->
         <div class="border border-slate-200/50 dark:border-white/10 rounded-3xl p-5 bg-slate-50/50 dark:bg-black/25">
             <h5 class="text-xs font-black text-slate-700 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
-                <i data-lucide="sparkles" class="w-4 h-4 text-violet-600 dark:text-cyan-400 animate-pulse"></i>
+                <span class="flex items-center text-violet-600 dark:text-cyan-400 animate-pulse"><i data-lucide="sparkles" class="w-4 h-4"></i></span>
                 Otimizador SEO & AI Search Engine (Google & Gemini)
             </h5>
             <p class="text-[10px] text-slate-400 mt-1 leading-relaxed">Controle como o Google indexará e como o assistente virtual Gemini recomendará esta acomodação quando clientes pesquisarem.</p>
@@ -300,7 +475,7 @@
                             <span x-text="open ? 'Ocultar Estruturação JSON-LD Schema' : 'Visualizar Estruturação JSON-LD Schema'"></span>
                         </button>
                         <pre x-show="open" style="display: none;" id="schema-preview-code"
-                             class="mt-2 text-[9px] bg-slate-900 text-emerald-400 dark:text-emerald-400/90 p-3 rounded-xl border border-white/5 overflow-x-auto select-all leading-normal max-h-36"></pre>
+                             class="mt-2 text-[9px] bg-slate-900 text-emerald-400 dark:text-emerald-400/90 p-3 rounded-xl border border-white/5 overflow-x-auto select-all leading-normal max-h-36 font-mono"></pre>
                     </div>
                 </div>
             </div>
@@ -313,7 +488,7 @@
                 Cancelar
             </button>
             <button type="submit"
-                    class="bg-brand hover:bg-brand/90 text-white px-6 py-3 rounded-2xl text-xs font-black transition-all shadow-md shadow-brand/25 flex items-center gap-2 hover:scale-[1.02] active:scale-95">
+                    class="bg-brand hover:bg-brand/90 text-white px-6 py-3 rounded-2xl text-xs font-black transition-all shadow-md shadow-brand/25 flex items-center gap-2 hover:scale-[1.02] active:scale-95 font-bold">
                 <span class="flex items-center" style="pointer-events:none;"><i data-lucide="save" class="w-4 h-4"></i></span>
                 Salvar Acomodação
             </button>
@@ -336,16 +511,33 @@
         }
     });
 
+    // Move Quill Toolbar to Modal Header Slot
+    (function relocateToolbar() {
+        const toolbar = document.querySelector('.ql-toolbar');
+        const targetSlot = document.getElementById('quill-toolbar-slot');
+        if (toolbar && targetSlot) {
+            targetSlot.appendChild(toolbar);
+        }
+    })();
+
     // Hydrate Quill Editor with existing HTML description
     var initialDesc = document.getElementById('quarto-descricao-input').value;
     if (initialDesc) {
         quill.root.innerHTML = initialDesc;
     }
 
-    // Sync Quill changes to hidden input on form submit
-    document.getElementById('quarto-form').addEventListener('submit', function() {
-        document.getElementById('quarto-descricao-input').value = quill.root.innerHTML;
-    });
+    // Sync Quill changes to hidden input and summary card
+    function saveDescription() {
+        const html = quill.root.innerHTML;
+        document.getElementById('quarto-descricao-input').value = html;
+        
+        // Update raw text preview summary card
+        const text = quill.getText().trim();
+        const summary = text.length > 60 ? text.substring(0, 60) + '...' : (text || 'Nenhuma descrição adicionada ainda.');
+        document.getElementById('editor-summary-card').textContent = summary;
+        
+        updateSEOPreview();
+    }
 
     // Hydrate checkable pills from pre-existing input value on edit
     (function hydrateCheckablePills() {
@@ -388,49 +580,99 @@
                 input.value = '';
                 return;
             }
-            Array.from(input.files).forEach((file) => {
+            Array.from(input.files).forEach((file, index) => {
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const card = document.createElement('div');
-                    card.className = "relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border border-slate-100 dark:border-white/5 shadow-inner shrink-0 animate-in zoom-in-95 duration-200";
+                    
+                    // Check if it is the first photo overall
+                    const existingCount = document.querySelectorAll('[id^="quarto-img-card-"]').length;
+                    const isFirstOverall = (existingCount === 0 && index === 0);
+                    
+                    card.className = isFirstOverall 
+                        ? "relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 border-brand shadow-md scale-95 shrink-0 animate-in zoom-in-95 duration-200" 
+                        : "relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border border-slate-100 dark:border-white/5 shadow-inner shrink-0 animate-in zoom-in-95 duration-200";
+                    
+                    let badgeHtml = isFirstOverall
+                        ? `<div class="absolute top-1.5 left-1.5 w-5 h-5 rounded-full border border-brand bg-brand flex items-center justify-center text-white shadow"><i data-lucide="crown" class="w-2.5 h-2.5"></i></div>
+                           <div class="absolute bottom-1 right-1 bg-brand/80 backdrop-blur-sm text-[8px] text-white px-1.5 py-0.5 rounded font-black shadow-sm">Principal</div>`
+                        : `<div class="absolute bottom-1 left-1 bg-brand/80 backdrop-blur-sm text-[8px] text-white px-1.5 py-0.5 rounded font-black">Nova</div>`;
+
                     card.innerHTML = `
                         <img src="${e.target.result}" class="w-full h-full object-cover">
-                        <div class="absolute bottom-1 left-1 bg-brand/80 backdrop-blur-sm text-[8px] text-white px-1.5 py-0.5 rounded font-black">Nova</div>
+                        ${badgeHtml}
                     `;
                     container.appendChild(card);
+                    if(typeof lucide !== 'undefined') { lucide.createIcons(); }
                 };
                 reader.readAsDataURL(file);
             });
         }
     }
 
-    // Function to update looping video URL player previewer
-    function updateVideoPreview(url) {
-        const previewBox = document.getElementById('video-preview-box');
-        const emptyBox = document.getElementById('video-empty-box');
-        const player = document.getElementById('quarto-video-player');
-        if (url && url.trim().length > 5) {
-            player.src = url.trim();
-            player.load();
-            player.play().catch(err => console.log('Video autoplay blocked'));
-            previewBox.style.display = 'block';
-            emptyBox.style.display = 'none';
-        } else {
-            player.src = '';
-            previewBox.style.display = 'none';
-            emptyBox.style.display = 'flex';
+    // Function to render local previews of direct video files inside double mockups
+    function previewLocalVideo(input) {
+        const file = input.files[0];
+        if (file) {
+            if (file.size > 20 * 1024 * 1024) {
+                alert("O arquivo de vídeo tour excede o limite máximo de 20MB.");
+                input.value = '';
+                return;
+            }
+            document.getElementById('video-filename-display').textContent = file.name;
+            
+            const localUrl = URL.createObjectURL(file);
+            
+            const dPlayer = document.getElementById('quarto-video-desktop');
+            const mPlayer = document.getElementById('quarto-video-mobile');
+            const dPlaceholder = document.getElementById('quarto-video-desktop-placeholder');
+            const mPlaceholder = document.getElementById('quarto-video-mobile-placeholder');
+            const removalControl = document.getElementById('video-removal-control');
+            const removalInput = document.getElementById('remover-video-input');
+            
+            dPlayer.src = localUrl;
+            mPlayer.src = localUrl;
+            
+            dPlayer.load();
+            mPlayer.load();
+            
+            dPlayer.play().catch(e => console.log('Desktop video autoplay blocked'));
+            mPlayer.play().catch(e => console.log('Mobile video autoplay blocked'));
+            
+            dPlayer.style.display = 'block';
+            mPlayer.style.display = 'block';
+            dPlaceholder.style.display = 'none';
+            mPlaceholder.style.display = 'none';
+            
+            removalControl.style.display = 'flex';
+            removalInput.value = 'false';
+            
+            updateSEOPreview();
         }
     }
 
-    // Toggle Capacity selection pills
-    function selectCapacity(btn, cap) {
-        document.querySelectorAll('.cap-pill').forEach(b => {
-            b.classList.remove('bg-brand', 'text-white', 'border-brand');
-            b.classList.add('bg-slate-50', 'dark:bg-white/5', 'text-slate-600', 'dark:text-slate-300', 'border-slate-200/60');
-        });
-        btn.classList.add('bg-brand', 'text-white', 'border-brand');
-        btn.classList.remove('bg-slate-50', 'dark:bg-white/5', 'text-slate-600', 'dark:text-slate-300', 'border-slate-200/60');
-        document.getElementById('capacidade-input').value = cap;
+    // Function to clear/remove active video tour uploads
+    function clearVideoTour() {
+        const dPlayer = document.getElementById('quarto-video-desktop');
+        const mPlayer = document.getElementById('quarto-video-mobile');
+        const dPlaceholder = document.getElementById('quarto-video-desktop-placeholder');
+        const mPlaceholder = document.getElementById('quarto-video-mobile-placeholder');
+        const removalControl = document.getElementById('video-removal-control');
+        const removalInput = document.getElementById('remover-video-input');
+        const uploadInput = document.getElementById('upload-video');
+        
+        dPlayer.src = '';
+        mPlayer.src = '';
+        dPlayer.style.display = 'none';
+        mPlayer.style.display = 'none';
+        dPlaceholder.style.display = 'block';
+        mPlaceholder.style.display = 'block';
+        
+        removalControl.style.display = 'none';
+        removalInput.value = 'true';
+        uploadInput.value = '';
+        
+        document.getElementById('video-filename-display').textContent = "MP4, MOV ou WebM de até 20MB";
         updateSEOPreview();
     }
 

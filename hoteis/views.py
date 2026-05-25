@@ -1043,6 +1043,14 @@ def partner_quarto_salvar(request):
         
     quarto.video_url = request.POST.get('video_url', '').strip() or None
     
+    # Processa upload do arquivo de vídeo local
+    if request.POST.get('remover_video') == 'true':
+        quarto.video_arquivo = None
+    elif 'video_arquivo' in request.FILES:
+        vid_file = request.FILES['video_arquivo']
+        if vid_file.size <= 20 * 1024 * 1024:  # Limite de 20MB
+            quarto.video_arquivo = vid_file
+    
     try:
         quarto.capacidade_pessoas = int(request.POST.get('capacidade_pessoas', '2'))
     except ValueError:
