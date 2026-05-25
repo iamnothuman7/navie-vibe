@@ -20,6 +20,15 @@ urlpatterns = [
     path('hospedagens/atividades/deletar/<int:tarefa_id>/', views.partner_deletar_tarefa, name='partner_deletar_tarefa'),
     path('hospedagens/atividades/mudar-status/<int:tarefa_id>/', views.partner_mudar_status_tarefa, name='partner_mudar_status_tarefa'),
     path('hospedagens/configuracoes/salvar/', views.partner_salvar_configuracoes, name='partner_salvar_configuracoes'),
+    
+    # Gestão de Quartos (Reativa via HTMX)
+    path('hospedagens/quartos/formulario/', views.partner_quarto_formulario, name='partner_quarto_formulario'),
+    path('hospedagens/quartos/formulario/<int:quarto_id>/', views.partner_quarto_formulario, name='partner_quarto_formulario'),
+    path('hospedagens/quartos/lista/', views.partner_quarto_lista, name='partner_quarto_lista'),
+    path('hospedagens/quartos/salvar/', views.partner_quarto_salvar, name='partner_quarto_salvar'),
+    path('hospedagens/quartos/deletar/<int:quarto_id>/', views.partner_quarto_deletar, name='partner_quarto_deletar'),
+    path('hospedagens/quartos/imagem/deletar/<int:imagem_id>/', views.partner_quarto_deletar_imagem, name='partner_quarto_deletar_imagem'),
+    
     path('<slug:slug>/', views.vanity_url, name='vanity_url'),
 ]
 

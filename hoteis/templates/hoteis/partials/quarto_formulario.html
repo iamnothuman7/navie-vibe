@@ -1,0 +1,558 @@
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+
+<style>
+    /* Quill Rich Text Editor Dark Mode Overrides */
+    .ql-toolbar.ql-snow {
+        border: 1px solid rgba(226, 232, 240, 0.8) !important;
+        background: #f8fafc !important;
+        border-top-left-radius: 1rem;
+        border-top-right-radius: 1rem;
+    }
+    .dark .ql-toolbar.ql-snow {
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        background: rgba(0, 0, 0, 0.25) !important;
+    }
+    .ql-container.ql-snow {
+        border: 1px solid rgba(226, 232, 240, 0.8) !important;
+        border-top: 0 !important;
+        background: #ffffff !important;
+        border-bottom-left-radius: 1rem;
+        border-bottom-right-radius: 1rem;
+        font-family: inherit;
+    }
+    .dark .ql-container.ql-snow {
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-top: 0 !important;
+        background: rgba(0, 0, 0, 0.15) !important;
+    }
+    .ql-editor {
+        font-size: 0.875rem;
+        min-height: 120px;
+        color: inherit;
+    }
+    .dark .ql-stroke {
+        stroke: #cbd5e1 !important;
+    }
+    .dark .ql-fill {
+        fill: #cbd5e1 !important;
+    }
+    .dark .ql-picker {
+        color: #cbd5e1 !important;
+    }
+    .dark .ql-picker-options {
+        background-color: #1e293b !important;
+        border-color: rgba(255, 255, 255, 0.08) !important;
+    }
+</style>
+
+<div class="bg-white/80 dark:bg-black/30 border border-slate-200/80 dark:border-navie-border rounded-3xl p-5 sm:p-6 shadow-sm backdrop-blur-md animate-in fade-in zoom-in-95 duration-300">
+    <!-- Form Header and Back triggers -->
+    <div class="flex items-center justify-between gap-4 border-b border-slate-100 dark:border-white/5 pb-4 mb-6">
+        <div>
+            <h4 class="text-base sm:text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                <i data-lucide="bed" class="w-5 h-5 text-brand"></i>
+                {% if quarto %}Editar Acomodação: <span class="text-brand">{{ quarto.nome }}</span>{% else %}Nova Acomodação{% endif %}
+            </h4>
+            <p class="text-xs text-slate-400 mt-0.5">Gerenciamento completo e otimização para IA da categoria de quarto</p>
+        </div>
+        <button type="button" hx-get="{% url 'hoteis:partner_quarto_lista' %}" hx-target="#quartos-container" hx-swap="innerHTML"
+                class="bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-200 px-3.5 py-2 rounded-2xl text-xs font-black transition-all flex items-center gap-1.5 hover:scale-[1.02] active:scale-95 border border-slate-200/50 dark:border-white/5">
+            <span class="flex items-center" style="pointer-events:none;"><i data-lucide="arrow-left" class="w-3.5 h-3.5"></i></span>
+            <span>Voltar</span>
+        </button>
+    </div>
+
+    <!-- Main Dynamic Form -->
+    <form id="quarto-form" hx-post="{% url 'hoteis:partner_quarto_salvar' %}" hx-target="#quartos-container" hx-swap="innerHTML" enctype="multipart/form-data" class="space-y-6">
+        {% csrf_token %}
+        {% if quarto %}
+        <input type="hidden" name="quarto_id" value="{{ quarto.id }}">
+        {% endif %}
+        <input type="hidden" name="tags" id="tags-input" value="{{ quarto.tags|default:'' }}">
+        <input type="hidden" name="comodidades" id="comodidades-input" value="{{ quarto.comodidades|default:'' }}">
+        <input type="hidden" name="tem_desconto_multidias" id="tem-desconto-input" value="{% if quarto.tem_desconto_multidias %}true{% else %}false{% endif %}">
+
+        <!-- ─────────────────────────────────────────────────────────────
+             ETAPA 1: GALERIA DE FOTOS (MÁXIMO 10 FOTOS)
+             ───────────────────────────────────────────────────────────── -->
+        <div>
+            <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-3">Galeria de Fotos (Máximo 10 Fotos)</label>
+            <div class="flex flex-wrap gap-3">
+                <!-- Imagens Existentes no Banco -->
+                {% if quarto %}
+                    {% for img in quarto.imagens.all %}
+                    <div id="quarto-img-card-{{ img.id }}" class="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border border-slate-100 dark:border-white/5 shadow-inner shrink-0 group/img animate-in zoom-in-95 duration-200">
+                        <img src="{{ img.url_imagem.url }}" class="w-full h-full object-cover">
+                        <!-- Botão Deletar Imagem Existente via HTMX -->
+                        <button type="button" hx-delete="{% url 'hoteis:partner_quarto_deletar_imagem' img.id %}" hx-target="#quarto-img-card-{{ img.id }}" hx-swap="outerHTML"
+                                class="absolute top-1 right-1 bg-red-500/90 text-white rounded-full p-1 hover:bg-red-600 transition-all shadow opacity-0 group-hover/img:opacity-100 flex items-center justify-center">
+                            <i data-lucide="x" class="w-3 h-3"></i>
+                        </button>
+                        <div class="absolute bottom-1 left-1 bg-black/60 backdrop-blur-sm text-[8px] text-white px-1.5 py-0.5 rounded font-black">Salva</div>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+
+                <!-- Container de novas fotos locais temporárias -->
+                <div id="local-previews-grid" class="contents"></div>
+
+                <!-- Card Trigger para carregar fotos -->
+                <label class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-2 border-dashed border-slate-300 dark:border-white/10 hover:border-brand dark:hover:border-brand flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.02] active:scale-95 group shrink-0">
+                    <span class="flex items-center text-slate-400 dark:text-slate-500 group-hover:text-brand transition-colors"><i data-lucide="image-plus" class="w-5 h-5"></i></span>
+                    <span class="text-[9px] font-bold text-slate-400 dark:text-slate-500 mt-1">Add Foto</span>
+                    <input type="file" name="imagens" id="upload-galeria" multiple accept="image/*" class="hidden" onchange="previewLocalImages(this)">
+                </label>
+            </div>
+            <p class="text-[10px] text-slate-400 mt-2">Dica: Selecione múltiplas imagens. Formatos válidos: PNG, JPG ou WEBP de até 2MB.</p>
+        </div>
+
+        <hr class="border-slate-100 dark:border-white/5 my-6">
+
+        <!-- ─────────────────────────────────────────────────────────────
+             ETAPA 2: TOUR EM VÍDEO
+             ───────────────────────────────────────────────────────────── -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
+            <div>
+                <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-2">Vídeo Tour da Acomodação</label>
+                <input type="url" name="video_url" id="video-url-input" value="{{ quarto.video_url|default:'' }}" placeholder="https://exemplo.com/tour.mp4" oninput="updateVideoPreview(this.value)"
+                       class="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-brand transition-colors">
+                <p class="text-[10px] text-slate-400 mt-2 leading-relaxed">Cole o link direto de um vídeo em MP4 (com suporte a loops de carregamento) para o tour de exibição. O vídeo rodará automaticamente no seu site público e nos resultados do assistente virtual.</p>
+            </div>
+            <div>
+                <!-- Looping Player Preview -->
+                <div id="video-preview-box" class="relative rounded-2xl overflow-hidden bg-slate-900 border border-slate-200/50 dark:border-white/5 aspect-video w-full max-w-sm mx-auto shadow-inner flex items-center justify-center group" style="display: {% if quarto.video_url %}block{% else %}none{% endif %};">
+                    <video id="quarto-video-player" src="{{ quarto.video_url|default:'' }}" autoplay loop muted playsinline class="w-full h-full object-cover"></video>
+                    <div class="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md text-[9px] font-bold text-white px-2 py-0.5 rounded-md flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Vídeo Ativo
+                    </div>
+                </div>
+                <!-- Box Vazio -->
+                <div id="video-empty-box" class="rounded-2xl border-2 border-dashed border-slate-300 dark:border-white/10 aspect-video w-full max-w-sm mx-auto flex flex-col items-center justify-center text-slate-400 dark:text-slate-500" style="display: {% if quarto.video_url %}none{% else %}flex{% endif %};">
+                    <span class="flex items-center text-slate-400 dark:text-slate-500 opacity-60"><i data-lucide="video" class="w-8 h-8"></i></span>
+                    <span class="text-xs font-bold mt-2">Nenhum vídeo carregado</span>
+                </div>
+            </div>
+        </div>
+
+        <hr class="border-slate-100 dark:border-white/5 my-6">
+
+        <!-- ─────────────────────────────────────────────────────────────
+             ETAPA 3: INFORMAÇÕES DA ACOMODAÇÃO
+             ───────────────────────────────────────────────────────────── -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Nome -->
+            <div class="md:col-span-2">
+                <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-2">Nome do Quarto / Categoria</label>
+                <input type="text" name="nome" id="room-name-input" required value="{{ quarto.nome|default:'' }}" placeholder="Ex: Suíte Presidencial Vista da Serra" oninput="updateSEOPreview()"
+                       class="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-brand transition-colors">
+            </div>
+            <!-- Preço -->
+            <div>
+                <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-2">Preço da Diária</label>
+                <div class="relative">
+                    <span class="absolute left-4 top-3 text-xs font-bold text-slate-400">R$</span>
+                    <input type="text" name="preco" id="room-price-input" required value="{{ quarto.preco|default:'' }}" placeholder="250.00" oninput="updateSEOPreview()"
+                           class="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl pl-10 pr-4 py-3 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-brand transition-colors font-bold">
+                </div>
+            </div>
+        </div>
+
+        <!-- Descrição Completa com Quill.js Editor -->
+        <div>
+            <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-2">Descrição da Acomodação (Texto Rico)</label>
+            <div id="editor-container" class="dark:text-white"></div>
+            <input type="hidden" name="descricao" id="quarto-descricao-input" value="{{ quarto.descricao|default:'' }}">
+        </div>
+
+        <hr class="border-slate-100 dark:border-white/5 my-6">
+
+        <!-- ─────────────────────────────────────────────────────────────
+             ETAPA 4: CAPACIDADE E CATEGORIZAÇÃO (TAGS & AMENITIES)
+             ───────────────────────────────────────────────────────────── -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Capacidade -->
+            <div>
+                <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-3">Capacidade Hóspedes</label>
+                <div class="flex items-center gap-2">
+                    {% for cap in "12345" %}
+                        <button type="button" onclick="selectCapacity(this, {{ cap }})" id="cap-pill-{{ cap }}"
+                                class="cap-pill px-4 py-2.5 rounded-2xl border text-xs font-bold transition-all {% if quarto.capacidade_pessoas == cap|add:0 or not quarto and cap == '2' %}bg-brand text-white border-brand{% else %}bg-slate-50 dark:bg-white/5 border-slate-200/60 dark:border-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10{% endif %}">
+                            {{ cap }} {% if cap == '5' %}+{% endif %} Pessoas
+                        </button>
+                    {% endfor %}
+                    <input type="hidden" name="capacidade_pessoas" id="capacidade-input" value="{{ quarto.capacidade_pessoas|default:2 }}">
+                </div>
+            </div>
+
+            <!-- Categorização por Tags (Seleção Dinâmica) -->
+            <div>
+                <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-3">Tags Especiais (Ideal para IA)</label>
+                <div class="flex flex-wrap gap-2">
+                    {% for tag in tags_disponiveis %}
+                        <button type="button" onclick="toggleTag(this, '{{ tag }}')"
+                                class="tag-pill px-3 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-wider transition-all border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10">
+                            {{ tag }}
+                        </button>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Comodidades / Diferenciais -->
+        <div>
+            <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-3">Comodidades Inclusas</label>
+            <div class="flex flex-wrap gap-2">
+                {% for com in comodidades_disponiveis %}
+                    <button type="button" onclick="toggleComodidade(this, '{{ com }}')"
+                            class="com-pill px-3 py-1.5 rounded-xl border text-[11px] font-bold transition-all border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 flex items-center gap-1">
+                        <i data-lucide="check" class="w-3.5 h-3.5 opacity-40"></i> {{ com }}
+                    </button>
+                {% endfor %}
+            </div>
+        </div>
+
+        <hr class="border-slate-100 dark:border-white/5 my-6">
+
+        <!-- ─────────────────────────────────────────────────────────────
+             ETAPA 5: PROGRESSIVO MULTI-DIÁRIAS
+             ───────────────────────────────────────────────────────────── -->
+        <div class="bg-slate-50/50 dark:bg-black/20 border border-slate-100 dark:border-white/5 rounded-3xl p-5">
+            <div class="flex items-center justify-between gap-4">
+                <div>
+                    <h5 class="text-xs font-black text-slate-700 dark:text-white uppercase tracking-wider">Desconto Progressivo Multidiárias</h5>
+                    <p class="text-[10px] text-slate-400 mt-1 leading-relaxed">Ative descontos automáticos para estadias de longa permanência. Incentiva a conversão de reservas maiores.</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="desconto-toggle" class="sr-only peer" onchange="toggleDiscountFields(this)" {% if quarto.tem_desconto_multidias %}checked{% endif %}>
+                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none dark:bg-white/10 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-brand"></div>
+                </label>
+            </div>
+
+            <!-- Painel Ajustável Progressivo (Fade in) -->
+            <div id="discount-config-pane" class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-5 border-t border-slate-100 dark:border-white/5 pt-5 animate-in slide-in-from-top-2 duration-300" style="display: {% if quarto.tem_desconto_multidias %}grid{% else %}none{% endif %};">
+                <div>
+                    <label class="block text-[10px] font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-2">Hospedagem Mínima para Desconto</label>
+                    <div class="flex items-center gap-1.5">
+                        <input type="number" name="dias_minimos_desconto" id="dias-minimos-input" value="{{ quarto.dias_minimos_desconto|default:3 }}" min="2" oninput="updateSEOPreview()"
+                               class="w-24 bg-slate-100 dark:bg-black/30 border border-slate-200/50 dark:border-white/5 rounded-2xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-brand">
+                        <span class="text-xs text-slate-400 font-bold">noites</span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-2">Desconto (%)</label>
+                    <div class="flex items-center gap-1.5">
+                        <input type="number" name="percentual_desconto" id="desconto-porcentagem-input" value="{{ quarto.percentual_desconto|default:0 }}" min="0" max="100" oninput="updateSEOPreview()"
+                               class="w-24 bg-slate-100 dark:bg-black/30 border border-slate-200/50 dark:border-white/5 rounded-2xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-brand">
+                        <span class="text-xs text-slate-400 font-bold">% de desconto</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <hr class="border-slate-100 dark:border-white/5 my-6">
+
+        <!-- ─────────────────────────────────────────────────────────────
+             ETAPA 6: OTIMIZADOR DE SEO DO GOOGLE E DE ASSISTENTE DE IA (GEMINI)
+             ───────────────────────────────────────────────────────────── -->
+        <div class="border border-slate-200/50 dark:border-white/10 rounded-3xl p-5 bg-slate-50/50 dark:bg-black/25">
+            <h5 class="text-xs font-black text-slate-700 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                <i data-lucide="sparkles" class="w-4 h-4 text-violet-600 dark:text-cyan-400 animate-pulse"></i>
+                Otimizador SEO & AI Search Engine (Google & Gemini)
+            </h5>
+            <p class="text-[10px] text-slate-400 mt-1 leading-relaxed">Controle como o Google indexará e como o assistente virtual Gemini recomendará esta acomodação quando clientes pesquisarem.</p>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
+                <!-- Inputs Otimização -->
+                <div class="lg:col-span-6 space-y-4">
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-2">Título Customizado para IA / SEO (Meta Title)</label>
+                        <input type="text" name="seo_titulo" id="seo-title-input" value="{{ quarto.seo_titulo|default:'' }}" placeholder="Ex: Acomodação Romântica com Banheira e Vista da Serra em Tianguá" oninput="updateSEOPreview()"
+                               class="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-2.5 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-brand transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-2">Descrição de Contexto para IA (Meta Description)</label>
+                        <textarea name="seo_descricao" id="seo-desc-input" rows="3" placeholder="Ex: Luxuosa suíte master equipada com banheira de hidromassagem aquecida, frigobar repleto, Wi-Fi de fibra óptica de 500mbps, cama King size, decoração romântica e vista completa do nascer do sol nas montanhas da serra da Ibiapaba." oninput="updateSEOPreview()"
+                                  class="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-2.5 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-brand transition-colors resize-none"></textarea>
+                    </div>
+                </div>
+
+                <!-- Painel de Mockups (Visualização) -->
+                <div class="lg:col-span-6 space-y-4">
+                    <!-- Google Preview -->
+                    <div class="bg-white dark:bg-slate-900/60 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-white/5">
+                        <div class="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2"><i data-lucide="search" class="w-3 h-3"></i> Google Search Engine</div>
+                        <h4 id="google-preview-title" class="text-blue-700 dark:text-blue-400 text-sm hover:underline cursor-pointer font-semibold truncate"></h4>
+                        <span class="text-green-700 dark:text-green-400 text-[10px] block truncate">navievibe.com/{{ hotel.slug|default:'pousadaramilostiangua' }}/acomodacao/</span>
+                        <p id="google-preview-desc" class="text-slate-600 dark:text-slate-400 text-xs mt-0.5 line-clamp-2 leading-relaxed"></p>
+                    </div>
+
+                    <!-- Gemini AI Preview Mockup -->
+                    <div class="relative bg-gradient-to-br from-violet-500/10 to-cyan-500/10 border border-violet-500/20 dark:border-cyan-500/20 rounded-2xl p-4 shadow-sm">
+                        <div class="flex items-center gap-1.5 text-[10px] font-black text-violet-600 dark:text-cyan-400 uppercase tracking-widest mb-2"><i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Gemini Search Recommendation</div>
+                        <p id="gemini-preview-response" class="text-[11px] leading-relaxed text-slate-600 dark:text-slate-300"></p>
+                    </div>
+
+                    <!-- Schema.org Microdata JSON Collapsible -->
+                    <div x-data="{ open: false }">
+                        <button type="button" @click="open = !open" class="text-[10px] font-bold text-slate-400 dark:text-navie-textsec hover:text-brand transition-colors flex items-center gap-1">
+                            <span class="flex items-center" style="pointer-events:none;"><i data-lucide="code" class="w-3 h-3"></i></span>
+                            <span x-text="open ? 'Ocultar Estruturação JSON-LD Schema' : 'Visualizar Estruturação JSON-LD Schema'"></span>
+                        </button>
+                        <pre x-show="open" style="display: none;" id="schema-preview-code"
+                             class="mt-2 text-[9px] bg-slate-900 text-emerald-400 dark:text-emerald-400/90 p-3 rounded-xl border border-white/5 overflow-x-auto select-all leading-normal max-h-36"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Buttons Row -->
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-white/5">
+            <button type="button" hx-get="{% url 'hoteis:partner_quarto_lista' %}" hx-target="#quartos-container" hx-swap="innerHTML"
+                    class="bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 px-5 py-3 rounded-2xl text-xs font-black transition-all hover:scale-[1.02] active:scale-95 border border-slate-200/50 dark:border-white/5">
+                Cancelar
+            </button>
+            <button type="submit"
+                    class="bg-brand hover:bg-brand/90 text-white px-6 py-3 rounded-2xl text-xs font-black transition-all shadow-md shadow-brand/25 flex items-center gap-2 hover:scale-[1.02] active:scale-95">
+                <span class="flex items-center" style="pointer-events:none;"><i data-lucide="save" class="w-4 h-4"></i></span>
+                Salvar Acomodação
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Initialization and Dynamic SEO Optimizer scripts -->
+<script>
+    // Initialize Quill Editor
+    var quill = new Quill('#editor-container', {
+        theme: 'snow',
+        modules: {
+            toolbar: [
+                ['bold', 'italic', 'underline'],
+                [{ 'align': [] }],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                ['clean']
+            ]
+        }
+    });
+
+    // Hydrate Quill Editor with existing HTML description
+    var initialDesc = document.getElementById('quarto-descricao-input').value;
+    if (initialDesc) {
+        quill.root.innerHTML = initialDesc;
+    }
+
+    // Sync Quill changes to hidden input on form submit
+    document.getElementById('quarto-form').addEventListener('submit', function() {
+        document.getElementById('quarto-descricao-input').value = quill.root.innerHTML;
+    });
+
+    // Hydrate checkable pills from pre-existing input value on edit
+    (function hydrateCheckablePills() {
+        // Tags
+        var tagsVal = document.getElementById('tags-input').value;
+        if (tagsVal) {
+            var tagsList = tagsVal.split(',').map(t => t.trim());
+            document.querySelectorAll('.tag-pill').forEach(btn => {
+                var txt = btn.textContent.trim();
+                if (tagsList.includes(txt)) {
+                    btn.classList.add('bg-brand', 'text-white', 'border-brand');
+                    btn.classList.remove('bg-slate-50', 'dark:bg-white/5', 'text-slate-600', 'dark:text-slate-300', 'border-slate-200/60');
+                }
+            });
+        }
+        // Comodidades
+        var comVal = document.getElementById('comodidades-input').value;
+        if (comVal) {
+            var comList = comVal.split(',').map(c => c.trim());
+            document.querySelectorAll('.com-pill').forEach(btn => {
+                var txt = btn.textContent.trim();
+                if (comList.includes(txt)) {
+                    btn.classList.add('bg-brand', 'text-white', 'border-brand');
+                    btn.classList.remove('bg-slate-50', 'dark:bg-white/5', 'text-slate-600', 'dark:text-slate-300', 'border-slate-200/60');
+                    var icon = btn.querySelector('i');
+                    if (icon) icon.classList.remove('opacity-40');
+                }
+            });
+        }
+    })();
+
+    // Function to render local previews of uploaded files
+    function previewLocalImages(input) {
+        const container = document.getElementById('local-previews-grid');
+        container.innerHTML = '';
+        if (input.files) {
+            const count = input.files.length;
+            if (count > 10) {
+                alert("O limite máximo de fotos é 10. Por favor, remova ou selecione até 10.");
+                input.value = '';
+                return;
+            }
+            Array.from(input.files).forEach((file) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const card = document.createElement('div');
+                    card.className = "relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border border-slate-100 dark:border-white/5 shadow-inner shrink-0 animate-in zoom-in-95 duration-200";
+                    card.innerHTML = `
+                        <img src="${e.target.result}" class="w-full h-full object-cover">
+                        <div class="absolute bottom-1 left-1 bg-brand/80 backdrop-blur-sm text-[8px] text-white px-1.5 py-0.5 rounded font-black">Nova</div>
+                    `;
+                    container.appendChild(card);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+    }
+
+    // Function to update looping video URL player previewer
+    function updateVideoPreview(url) {
+        const previewBox = document.getElementById('video-preview-box');
+        const emptyBox = document.getElementById('video-empty-box');
+        const player = document.getElementById('quarto-video-player');
+        if (url && url.trim().length > 5) {
+            player.src = url.trim();
+            player.load();
+            player.play().catch(err => console.log('Video autoplay blocked'));
+            previewBox.style.display = 'block';
+            emptyBox.style.display = 'none';
+        } else {
+            player.src = '';
+            previewBox.style.display = 'none';
+            emptyBox.style.display = 'flex';
+        }
+    }
+
+    // Toggle Capacity selection pills
+    function selectCapacity(btn, cap) {
+        document.querySelectorAll('.cap-pill').forEach(b => {
+            b.classList.remove('bg-brand', 'text-white', 'border-brand');
+            b.classList.add('bg-slate-50', 'dark:bg-white/5', 'text-slate-600', 'dark:text-slate-300', 'border-slate-200/60');
+        });
+        btn.classList.add('bg-brand', 'text-white', 'border-brand');
+        btn.classList.remove('bg-slate-50', 'dark:bg-white/5', 'text-slate-600', 'dark:text-slate-300', 'border-slate-200/60');
+        document.getElementById('capacidade-input').value = cap;
+        updateSEOPreview();
+    }
+
+    // Toggle Taxonomy tag pills
+    function toggleTag(btn, tag) {
+        const input = document.getElementById('tags-input');
+        let tags = input.value ? input.value.split(',').map(t => t.trim()) : [];
+        if (tags.includes(tag)) {
+            tags = tags.filter(t => t !== tag);
+            btn.classList.remove('bg-brand', 'text-white', 'border-brand');
+            btn.classList.add('bg-slate-50', 'dark:bg-white/5', 'text-slate-600', 'dark:text-slate-300', 'border-slate-200/60');
+        } else {
+            tags.push(tag);
+            btn.classList.add('bg-brand', 'text-white', 'border-brand');
+            btn.classList.remove('bg-slate-50', 'dark:bg-white/5', 'text-slate-600', 'dark:text-slate-300', 'border-slate-200/60');
+        }
+        input.value = tags.join(',');
+        updateSEOPreview();
+    }
+
+    // Toggle Amenities checks pills
+    function toggleComodidade(btn, com) {
+        const input = document.getElementById('comodidades-input');
+        let list = input.value ? input.value.split(',').map(c => c.trim()) : [];
+        const icon = btn.querySelector('i');
+        
+        if (list.includes(com)) {
+            list = list.filter(c => c !== com);
+            btn.classList.remove('bg-brand', 'text-white', 'border-brand');
+            btn.classList.add('bg-slate-50', 'dark:bg-white/5', 'text-slate-600', 'dark:text-slate-300', 'border-slate-200/60');
+            if (icon) icon.classList.add('opacity-40');
+        } else {
+            list.push(com);
+            btn.classList.add('bg-brand', 'text-white', 'border-brand');
+            btn.classList.remove('bg-slate-50', 'dark:bg-white/5', 'text-slate-600', 'dark:text-slate-300', 'border-slate-200/60');
+            if (icon) icon.classList.remove('opacity-40');
+        }
+        input.value = list.join(',');
+        updateSEOPreview();
+    }
+
+    // Fades progressive discount panel
+    function toggleDiscountFields(checkbox) {
+        const pane = document.getElementById('discount-config-pane');
+        const hiddenInput = document.getElementById('tem-desconto-input');
+        if (checkbox.checked) {
+            pane.style.display = 'grid';
+            hiddenInput.value = 'true';
+        } else {
+            pane.style.display = 'none';
+            hiddenInput.value = 'false';
+        }
+        updateSEOPreview();
+    }
+
+    // SEO, Gemini Discovery, and JSON-LD Mockups Real-Time Update
+    function updateSEOPreview() {
+        const nameVal = document.getElementById('room-name-input').value.trim() || "{Nome da Acomodação}";
+        const priceVal = document.getElementById('room-price-input').value.trim() || "0.00";
+        const capVal = document.getElementById('capacidade-input').value;
+        const seoTitleVal = document.getElementById('seo-title-input').value.trim();
+        const seoDescVal = document.getElementById('seo-desc-input').value.trim();
+        
+        const tagsInput = document.getElementById('tags-input').value;
+        const tagsList = tagsInput ? tagsInput.split(',').map(t => t.trim()) : [];
+        const comsInput = document.getElementById('comodidades-input').value;
+        const comsList = comsInput ? comsInput.split(',').map(c => c.trim()) : [];
+
+        // 1. Google SEO Preview
+        const googleTitle = seoTitleVal || `${nameVal} | Hospedagem em Tianguá - Naviê Vibe`;
+        const googleDesc = seoDescVal || `Aproveite as melhores diárias de R$ ${priceVal} na acomodação ${nameVal}. Ideal para até ${capVal} hóspedes. Reserve agora pelo Naviê Vibe!`;
+        document.getElementById('google-preview-title').textContent = googleTitle;
+        document.getElementById('google-preview-desc').textContent = googleDesc;
+
+        // 2. Gemini Recommendation Preview Mockup
+        let geminiResponse = `Recomendo a **${nameVal}** localizada na Pousada Ramilos em Tianguá. É uma excelente opção com diárias a R$ ${priceVal}`;
+        if (tagsList.length > 0) {
+            geminiResponse += `, perfeita para quem procura uma experiência de **${tagsList.slice(0, 3).join(', ')}**`;
+        }
+        if (comsList.length > 0) {
+            geminiResponse += `. O quarto conta com diferenciais como **${comsList.slice(0, 3).join(', ')}**`;
+        }
+        geminiResponse += `. O assistente local do Naviê identificou disponibilidade ativa com reserva 100% online garantida.`;
+        document.getElementById('gemini-preview-response').innerHTML = geminiResponse.replace(/\*\*(.*?)\*\*/g, '<b class="text-violet-600 dark:text-cyan-400 font-extrabold">$1</b>');
+
+        // 3. JSON-LD Schema Preview
+        const schema = {
+            "@context": "https://schema.org",
+            "@type": "HotelRoom",
+            "name": nameVal,
+            "description": seoDescVal || "Acomodação premium disponível via rede parceira Naviê Vibe.",
+            "occupancy": {
+                "@type": "QuantitativeValue",
+                "maxValue": parseInt(capVal)
+            },
+            "amenityFeature": comsList.map(c => ({
+                "@type": "LocationFeatureSpecification",
+                "name": c,
+                "value": true
+            })),
+            "offers": {
+                "@type": "Offer",
+                "price": parseFloat(priceVal.replace(',', '.')) || 0.00,
+                "priceCurrency": "BRL"
+            }
+        };
+
+        const isDiscountActive = document.getElementById('desconto-toggle').checked;
+        if (isDiscountActive) {
+            const minDays = document.getElementById('dias-minimos-input').value;
+            const pct = document.getElementById('desconto-porcentagem-input').value;
+            schema.offers.priceSpecification = {
+                "@type": "UnitPriceSpecification",
+                "price": parseFloat((parseFloat(priceVal.replace(',', '.')) * (1 - parseFloat(pct)/100)).toFixed(2)) || 0.00,
+                "priceCurrency": "BRL",
+                "description": `Desconto progressivo de ${pct}% para estadias a partir de ${minDays} dias`
+            };
+        }
+
+        document.getElementById('schema-preview-code').textContent = JSON.stringify(schema, null, 2);
+    }
+
+    // Pre-hydrate preview on load
+    setTimeout(updateSEOPreview, 200);
+</script>

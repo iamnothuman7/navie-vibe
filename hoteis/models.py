@@ -74,8 +74,23 @@ class HotelImagem(models.Model):
 class Quarto(models.Model): # Antigo 'Tipos de Ingresso'
     hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE, related_name='quartos')
     nome = models.CharField(max_length=150) # Ex: Suite Master
-    descricao = models.CharField(max_length=255, blank=True)
+    descricao = models.TextField(blank=True)
     preco = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    # Novos campos para gestão avançada, SEO e IA
+    video_url = models.CharField(max_length=500, blank=True, null=True, help_text="Link para vídeo MP4 ou embed")
+    capacidade_pessoas = models.IntegerField(default=2, help_text="Capacidade de hóspedes")
+    tags = models.CharField(max_length=255, blank=True, default="", help_text="Categorização (ex: Família, Romântico)")
+    comodidades = models.CharField(max_length=255, blank=True, default="", help_text="Comodidades (ex: Ar Condicionado, Wi-Fi)")
+    
+    # Descontos progressivos
+    tem_desconto_multidias = models.BooleanField(default=False)
+    dias_minimos_desconto = models.IntegerField(default=3, help_text="Mínimo de dias para ativar desconto")
+    percentual_desconto = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, help_text="Desconto em percentual (ex: 10.00 para 10%)")
+    
+    # Otimização SEO e Assistentes IA (ex: Google Gemini)
+    seo_titulo = models.CharField(max_length=150, blank=True, null=True, help_text="Título customizado para buscadores/IA")
+    seo_descricao = models.TextField(blank=True, null=True, help_text="Descrição customizada para buscadores/IA")
     
     def __str__(self):
         return f"{self.nome} - R$ {self.preco}"

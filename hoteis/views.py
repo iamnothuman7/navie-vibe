@@ -969,5 +969,165 @@ def partner_salvar_configuracoes(request):
     return redirect('hoteis:partner_dashboard')
 
 
+# ─────────────────────────────────────────────────────────────
+# GESTÃO REATIVA DE ACOMODAÇÕES (B2B HTMX CONTROLLERS)
+# ─────────────────────────────────────────────────────────────
+
+from django.views.decorators.http import require_http_methods, require_POST
+from django.http import HttpResponse
+from .models import QuartoImagem
+
+@login_required(login_url='hoteis:partner_login')
+def partner_quarto_formulario(request, quarto_id=None):
+    """
+    Carrega o formulário completo de criação ou edição de quarto via HTMX.
+    """
+    if not hasattr(request.user, 'perfil_parceiro'):
+        return HttpResponse("Não autorizado", status=403)
+        
+    hotel = request.user.perfil_parceiro.hotel
+    quarto = None
+    if quarto_id:
+        quarto = get_object_or_404(Quarto, id=quarto_id, hotel=hotel)
+        
+    context = {
+        'quarto': quarto,
+        'hotel': hotel,
+        'tags_disponiveis': ["Família", "Casal", "Romântico", "Serra", "Trabalho Remoto", "Pet Friendly", "Silencioso"],
+        'comodidades_disponiveis': ["Ar Condicionado", "Wi-Fi de Alta Velocidade", "Copa Completa", "Piscina Privativa", "Hidromassagem", "Frigobar Abastecido", "Café no Quarto"]
+    }
+    return render(request, 'hoteis/partials/quarto_formulario.html', context)
+
+
+@login_required(login_url='hoteis:partner_login')
+def partner_quarto_lista(request):
+    """
+    Retorna apenas a grade de cards dos quartos via HTMX.
+    """
+    if not hasattr(request.user, 'perfil_parceiro'):
+        return HttpResponse("Não autorizado", status=403)
+        
+    hotel = request.user.perfil_parceiro.hotel
+    quartos = hotel.quartos.all()
+    
+    return render(request, 'hoteis/partials/quarto_grid.html', {'quartos': quartos})
+
+
+@login_required(login_url='hoteis:partner_login')
+@require_POST
+def partner_quarto_salvar(request):
+    """
+    Salva ou atualiza um quarto com suporte a upload de múltiplas imagens,
+    descontos multidias, categorização e SEO/IA. Retorna a grade atualizada via HTMX.
+    """
+    if not hasattr(request.user, 'perfil_parceiro'):
+        return HttpResponse("Não autorizado", status=403)
+        
+    hotel = request.user.perfil_parceiro.hotel
+    quarto_id = request.POST.get('quarto_id')
+    
+    if quarto_id:
+        quarto = get_object_or_404(Quarto, id=quarto_id, hotel=hotel)
+    else:
+        quarto = Quarto(hotel=hotel)
+        
+    quarto.nome = request.POST.get('nome', '').strip()
+    quarto.descricao = request.POST.get('descricao', '').strip()
+    
+    # Tratamento de preço decimal
+    preco_raw = request.POST.get('preco', '0').replace(',', '.')
+    try:
+        quarto.preco = float(preco_raw)
+    except ValueError:
+        quarto.preco = 0.00
+        
+    quarto.video_url = request.POST.get('video_url', '').strip() or None
+    
+    try:
+        quarto.capacidade_pessoas = int(request.POST.get('capacidade_pessoas', '2'))
+    except ValueError:
+        quarto.capacidade_pessoas = 2
+        
+    # Tags e comodidades selecionadas
+    quarto.tags = request.POST.get('tags', '').strip()
+    quarto.comodidades = request.POST.get('comodidades', '').strip()
+    
+    # Descontos
+    quarto.tem_desconto_multidias = request.POST.get('tem_desconto_multidias') == 'true'
+    try:
+        quarto.dias_minimos_desconto = int(request.POST.get('dias_minimos_desconto', '3'))
+    except ValueError:
+        quarto.dias_minimos_desconto = 3
+        
+    desc_raw = request.POST.get('percentual_desconto', '0').replace(',', '.')
+    try:
+        quarto.percentual_desconto = float(desc_raw)
+    except ValueError:
+        quarto.percentual_desconto = 0.00
+        
+    # SEO e IA
+    quarto.seo_titulo = request.POST.get('seo_titulo', '').strip() or None
+    quarto.seo_descricao = request.POST.get('seo_descricao', '').strip() or None
+    
+    quarto.save()
+    
+    # Processa uploads de múltiplas imagens
+    imagens_carregadas = request.FILES.getlist('imagens')
+    current_count = QuartoImagem.objects.filter(quarto=quarto).count()
+    for idx, img in enumerate(imagens_carregadas):
+        # Limite de no máximo 10 fotos no total
+        if current_count + idx >= 10:
+            break
+        QuartoImagem.objects.create(
+            quarto=quarto,
+            url_imagem=img,
+            ordem=current_count + idx
+        )
+        
+    messages.success(request, f"Acomodação '{quarto.nome}' salva com sucesso!")
+    
+    # Retorna a grade atualizada
+    quartos = hotel.quartos.all()
+    return render(request, 'hoteis/partials/quarto_grid.html', {'quartos': quartos})
+
+
+@login_required(login_url='hoteis:partner_login')
+@require_http_methods(["DELETE", "POST"])
+def partner_quarto_deletar(request, quarto_id):
+    """
+    Exclui um quarto do estabelecimento e retorna a grade atualizada via HTMX.
+    """
+    if not hasattr(request.user, 'perfil_parceiro'):
+        return HttpResponse("Não autorizado", status=403)
+        
+    hotel = request.user.perfil_parceiro.hotel
+    quarto = get_object_or_404(Quarto, id=quarto_id, hotel=hotel)
+    quarto_nome = quarto.nome
+    quarto.delete()
+    
+    messages.success(request, f"Quarto '{quarto_nome}' excluído com sucesso!")
+    
+    # Retorna a grade atualizada
+    quartos = hotel.quartos.all()
+    return render(request, 'hoteis/partials/quarto_grid.html', {'quartos': quartos})
+
+
+@login_required(login_url='hoteis:partner_login')
+@require_http_methods(["DELETE", "POST"])
+def partner_quarto_deletar_imagem(request, imagem_id):
+    """
+    Exclui uma imagem específica do quarto via HTMX. Retorna string vazia para remover o card.
+    """
+    if not hasattr(request.user, 'perfil_parceiro'):
+        return HttpResponse("Não autorizado", status=403)
+        
+    hotel = request.user.perfil_parceiro.hotel
+    img = get_object_or_404(QuartoImagem, id=imagem_id, quarto__hotel=hotel)
+    img.delete()
+    
+    return HttpResponse("")
+
+
+
 
 
