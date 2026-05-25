@@ -1048,7 +1048,7 @@ def partner_quarto_salvar(request):
         quarto.video_arquivo = None
     elif 'video_arquivo' in request.FILES:
         vid_file = request.FILES['video_arquivo']
-        if vid_file.size <= 20 * 1024 * 1024:  # Limite de 20MB
+        if vid_file.size <= 30 * 1024 * 1024:  # Limite de 30MB
             quarto.video_arquivo = vid_file
     
     try:

@@ -364,9 +364,25 @@
                                     <p class="text-sm text-gray-600 leading-relaxed">{{ quarto.descricao }}</p>
                                     
                                     <!-- Mini Swiper do Quarto -->
-                                    {% if quarto.imagens.all %}
+                                    {% if quarto.imagens.all or quarto.video_arquivo or quarto.video_url %}
                                     <div class="swiper quarto-swiper-{{ quarto.id }} quarto-swiper-container z-0">
                                         <div class="swiper-wrapper">
+                                            {% if quarto.video_arquivo %}
+                                            <div class="swiper-slide relative">
+                                                <video src="{{ quarto.video_arquivo.url }}" class="w-full h-full object-cover" autoplay loop muted playsinline></video>
+                                                <div class="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md text-[9px] font-bold text-white px-2 py-0.5 rounded flex items-center gap-1">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Vídeo Tour
+                                                </div>
+                                            </div>
+                                            {% elif quarto.video_url %}
+                                            <div class="swiper-slide relative">
+                                                <video src="{{ quarto.video_url }}" class="w-full h-full object-cover" autoplay loop muted playsinline></video>
+                                                <div class="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md text-[9px] font-bold text-white px-2 py-0.5 rounded flex items-center gap-1">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Vídeo Tour
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                            
                                             {% for img in quarto.imagens.all %}
                                             <div class="swiper-slide">
                                                 <img src="{{ img.url_imagem.url }}" class="w-full h-full object-cover">
