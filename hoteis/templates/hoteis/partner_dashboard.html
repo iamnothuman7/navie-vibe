@@ -338,19 +338,19 @@
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 b2b-element-gap">
                                 <div>
-                                    <label class="block text-[10px] font-black text-slate-400 dark:text-navie-textsec uppercase tracking-widest mb-2">Nome do Estabelecimento</label>
+                                    <label class="block text-[10px] font-black text-slate-400 dark:text-navie-textsec uppercase tracking-widest b2b-label-gap">Nome do Estabelecimento</label>
                                     <input type="text" name="nome" value="{{ hotel.nome }}" class="w-full h-12 px-4 rounded-2xl input-glass text-sm focus:outline-none" required>
                                 </div>
                                 
                                 <div>
-                                    <label class="block text-[10px] font-black text-slate-400 dark:text-navie-textsec uppercase tracking-widest mb-2">WhatsApp de Contato</label>
+                                    <label class="block text-[10px] font-black text-slate-400 dark:text-navie-textsec uppercase tracking-widest b2b-label-gap">WhatsApp de Contato</label>
                                     <input type="text" name="whatsapp" value="{{ hotel.whatsapp|default:'' }}" placeholder="Ex: 5588999999999" class="w-full h-12 px-4 rounded-2xl input-glass text-sm focus:outline-none">
                                 </div>
 
                                 <div>
-                                    <label class="block text-[10px] font-black text-slate-400 dark:text-navie-textsec uppercase tracking-widest mb-2">Link da Vitrine (Slug URL)</label>
+                                    <label class="block text-[10px] font-black text-slate-400 dark:text-navie-textsec uppercase tracking-widest b2b-label-gap">Link da Vitrine (Slug URL)</label>
                                     <div class="relative flex items-center">
                                         <span class="absolute left-4 text-xs font-mono text-slate-400">/</span>
                                         <input type="text" name="slug" value="{{ hotel.slug|default:'' }}" placeholder="pousadaramilostiangua" class="w-full h-12 pl-7 pr-4 rounded-2xl input-glass text-sm font-mono focus:outline-none" required
@@ -359,15 +359,15 @@
                                 </div>
                             </div>
 
-                            <div>
-                                <label class="block text-[10px] font-black text-slate-400 dark:text-navie-textsec uppercase tracking-widest mb-2">Descrição Institucional</label>
+                            <div class="b2b-element-gap">
+                                <label class="block text-[10px] font-black text-slate-400 dark:text-navie-textsec uppercase tracking-widest b2b-label-gap">Descrição Institucional</label>
                                 <textarea name="descricao" rows="3" class="w-full p-4 rounded-2xl input-glass text-sm focus:outline-none" placeholder="Conte mais sobre o diferencial da sua pousada..." required>{{ hotel.descricao }}</textarea>
                             </div>
 
                             <!-- Paleta de Cores e Personalização -->
-                            <div class="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-navie-border space-y-4">
+                            <div class="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-navie-border space-y-4 b2b-element-gap">
                                 <div>
-                                    <label class="block text-[10px] font-black text-slate-400 dark:text-navie-textsec uppercase tracking-widest mb-2">Cor Padrão do Sistema & Site</label>
+                                    <label class="block text-[10px] font-black text-slate-400 dark:text-navie-textsec uppercase tracking-widest b2b-label-gap">Cor Padrão do Sistema & Site</label>
                                     <div class="flex items-center gap-3">
                                         <input type="color" id="cor_primaria_picker" value="{{ hotel.cor_primaria|default:'#f97316' }}" 
                                                class="w-12 h-12 rounded-xl border-0 cursor-pointer overflow-hidden bg-transparent"
@@ -495,22 +495,83 @@
                                 {% endif %}
                             </div>
 
-                            <!-- Campo Upload Vídeo -->
-                            <div x-show="tipoMidia === 'video'" class="space-y-3" style="display:none;">
-                                <div class="relative w-full h-48 border-2 border-dashed border-slate-300 dark:border-navie-border rounded-2xl overflow-hidden flex flex-col items-center justify-center bg-slate-50/50 dark:bg-black/10 transition-colors hover:border-brand/40">
-                                    <input type="file" name="hero_video" accept="video/mp4" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20">
-                                    <span class="flex items-center" style="pointer-events:none;"><i data-lucide="video" class="w-8 h-8 text-slate-400 dark:text-navie-textsec mb-2"></i></span>
-                                    <span class="text-xs text-slate-500 font-bold dark:text-navie-textsec">Clique ou arraste para subir o Vídeo MP4</span>
-                                    <span class="text-[10px] text-slate-400 mt-1">Tamanho máximo: 8MB. Duração: até 15s</span>
-                                </div>
-                                {% if hotel.hero_video %}
-                                <div class="relative rounded-2xl overflow-hidden border border-slate-200 dark:border-navie-border h-32">
-                                    <video src="{{ hotel.hero_video.url }}" class="w-full h-full object-cover" muted autoplay loop></video>
-                                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
-                                        <span class="text-[10px] font-black text-white bg-black/50 px-3 py-1 rounded-full uppercase tracking-wider">Vídeo Atual</span>
+                            <!-- Campo Upload Vídeo com double mockup -->
+                            <div x-show="tipoMidia === 'video'" class="space-y-4 pt-2" style="display:none;">
+                                <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-center">
+                                    <!-- Left Column: Video uploader -->
+                                    <div class="xl:col-span-5 flex flex-col gap-4">
+                                        <label class="block text-[10px] font-black text-slate-400 dark:text-navie-textsec uppercase tracking-widest b2b-label-gap">Vídeo de Fundo do Banner (Hero)</label>
+                                        
+                                        <label class="relative rounded-3xl border-2 border-dashed border-slate-300 dark:border-navie-border hover:border-brand dark:hover:border-brand p-6 flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.01] active:scale-99 bg-slate-50/50 dark:bg-black/10 group h-36">
+                                            <span class="flex items-center text-slate-400 dark:text-slate-500 group-hover:text-brand transition-colors"><i data-lucide="video" class="w-8 h-8"></i></span>
+                                            <span class="text-xs font-bold text-slate-600 dark:text-slate-300 mt-2">Escolher Vídeo de Entrada</span>
+                                            <span class="text-[10px] text-slate-400 mt-1" id="hero-video-filename-display">
+                                                {% if hotel.hero_video %}
+                                                    {{ hotel.hero_video.name|slice:"14:" }}
+                                                {% else %}
+                                                    MP4, MOV ou WebM de até 30MB
+                                                {% endif %}
+                                            </span>
+                                            <input type="file" name="hero_video" id="upload-hero-video" accept="video/*" class="hidden" onchange="previewLocalHeroVideo(this)">
+                                        </label>
+                                        
+                                        <!-- Controle de remoção de video -->
+                                        <div class="flex items-center justify-between" id="hero-video-removal-control" style="display: {% if hotel.hero_video %}flex{% else %}none{% endif %};">
+                                            <span class="text-[10px] text-slate-400 font-bold">Vídeo ativo carregado</span>
+                                            <button type="button" onclick="clearHeroVideo()" 
+                                                    class="bg-red-500/10 hover:bg-red-500/20 text-red-500 px-3.5 py-2 rounded-full text-[10px] font-black transition-all flex items-center gap-1.5 border border-red-500/20 hover:scale-102">
+                                                <span class="flex items-center" style="pointer-events:none;"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></span>
+                                                <span>Remover Vídeo</span>
+                                            </button>
+                                        </div>
+                                        <input type="hidden" name="remover_hero_video" id="remover-hero-video-input" value="false">
+                                        <p class="text-[10px] text-slate-400 b2b-text-media-gap leading-relaxed">Faça o upload do tour de vídeo principal do seu estabelecimento. Ele rodará de forma contínua no banner de entrada da sua pousada para os clientes.</p>
+                                    </div>
+
+                                    <!-- Right Column: Double devices -->
+                                    <div class="xl:col-span-7 flex flex-row items-end justify-center gap-4 bg-slate-50/40 dark:bg-black/10 p-5 rounded-3xl border border-slate-100 dark:border-white/5">
+                                        
+                                        <!-- Desktop Safari Mockup -->
+                                        <div class="flex flex-col gap-2 shrink-0">
+                                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Entrada (Desktop)</span>
+                                            <div class="w-48 sm:w-64 aspect-video rounded-xl border border-slate-200 dark:border-white/10 bg-slate-900 overflow-hidden shadow-lg flex flex-col relative group">
+                                                <!-- Browser Header -->
+                                                <div class="h-3.5 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-white/5 flex items-center px-1.5 gap-1 shrink-0 relative z-10">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-yellow-400"></span>
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>
+                                                    <div class="h-2.5 w-32 bg-white dark:bg-slate-900 rounded-[2px] ml-2 flex items-center justify-center text-[5px] text-slate-400 truncate px-1" id="mockup-url-desktop">
+                                                        navievibe.com/{{ hotel.slug|default:'pousadaramilostiangua' }}
+                                                    </div>
+                                                </div>
+                                                <!-- Scaling Iframe Area -->
+                                                <div class="flex-1 w-full bg-slate-950 relative overflow-hidden">
+                                                    <iframe id="hero-preview-iframe-desktop" 
+                                                            src="{% if hotel.slug %}/{% url 'hoteis:vanity_url' hotel.slug %}{% else %}/hotel/{{ hotel.id }}/{% endif %}?preview=1" 
+                                                            class="absolute top-0 left-0 w-[1280px] h-[720px] border-0 origin-top-left pointer-events-none select-none"
+                                                            style="transform: scale(0.20);"></iframe>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Smartphone Mockup -->
+                                        <div class="flex flex-col gap-2 shrink-0">
+                                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Entrada (Mobile)</span>
+                                            <div class="w-[85px] h-[150px] rounded-[20px] border-[3px] border-slate-800 dark:border-slate-700 bg-slate-900 overflow-hidden shadow-2xl relative flex flex-col shrink-0 z-0">
+                                                <!-- notch -->
+                                                <div class="absolute top-1 left-1/2 -translate-x-1/2 w-6 h-1.5 bg-slate-800 rounded-full z-20"></div>
+                                                <!-- Scaling Iframe Area -->
+                                                <div class="w-full h-full bg-slate-950 relative overflow-hidden">
+                                                    <iframe id="hero-preview-iframe-mobile" 
+                                                            src="{% if hotel.slug %}/{% url 'hoteis:vanity_url' hotel.slug %}{% else %}/hotel/{{ hotel.id }}/{% endif %}?preview=1" 
+                                                            class="absolute top-0 left-0 w-[375px] h-[675px] border-0 origin-top-left pointer-events-none select-none"
+                                                            style="transform: scale(0.226);"></iframe>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
                                     </div>
                                 </div>
-                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -798,6 +859,179 @@
                         alert("Erro de conexão ao buscar endereço.");
                     });
             }
+
+            // ─────────────────────────────────────────────────────────────
+            // WYSIWYG REAL-TIME IFRAME HYDRATOR & BANNER VIDEO TOUR ENGINE
+            // ─────────────────────────────────────────────────────────────
+            var activeHeroVideoLocalUrl = null;
+
+            function hydrateHeroIframeVideo(iframeId) {
+                const iframe = document.getElementById(iframeId);
+                if (iframe) {
+                    try {
+                        const doc = iframe.contentDocument || iframe.contentWindow.document;
+                        if (doc) {
+                            if (activeHeroVideoLocalUrl) {
+                                const heroVideo = doc.querySelector('.hero-banner-b2c video');
+                                if (heroVideo) {
+                                    heroVideo.src = activeHeroVideoLocalUrl;
+                                    heroVideo.load();
+                                    heroVideo.play().catch(e => console.log('Autoplay blocked in hero preview'));
+                                } else {
+                                    const bannerWrapper = doc.querySelector('.hero-banner-b2c');
+                                    if (bannerWrapper) {
+                                        const bannerImg = bannerWrapper.querySelector('img');
+                                        if (bannerImg) bannerImg.style.display = 'none';
+                                        
+                                        let videoEl = bannerWrapper.querySelector('video');
+                                        if (!videoEl) {
+                                            videoEl = doc.createElement('video');
+                                            videoEl.className = "w-full h-full object-cover opacity-80 absolute inset-0 z-0";
+                                            videoEl.autoplay = true;
+                                            videoEl.loop = true;
+                                            videoEl.muted = true;
+                                            videoEl.playsInline = true;
+                                            bannerWrapper.appendChild(videoEl);
+                                        }
+                                        videoEl.src = activeHeroVideoLocalUrl;
+                                        videoEl.load();
+                                        videoEl.play().catch(e => console.log('Autoplay blocked in hero preview'));
+                                    }
+                                }
+                            }
+                            syncIframeTexts(doc);
+                        }
+                    } catch(e) {
+                        console.log("Iframe hydration access blocked: ", e);
+                    }
+                }
+            }
+
+            function syncIframeTexts(doc) {
+                if (!doc) return;
+                
+                // 1. Sync Hotel Name
+                const nameInput = document.querySelector('input[name="nome"]');
+                if (nameInput) {
+                    const hotelH1 = doc.querySelector('h1');
+                    if (hotelH1) {
+                        hotelH1.textContent = nameInput.value || "Nome do Hotel";
+                    }
+                }
+                
+                // 2. Sync Brand Color
+                const colorInput = document.getElementById('cor_primaria_hex');
+                if (colorInput && colorInput.value) {
+                    const rawColor = colorInput.value;
+                    let hex = rawColor.replace('#', '');
+                    if (hex.length === 3) {
+                        hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+                    }
+                    const r = parseInt(hex.substring(0, 2), 16) || 37;
+                    const g = parseInt(hex.substring(2, 4), 16) || 99;
+                    const b = parseInt(hex.substring(4, 6), 16) || 235;
+                    
+                    doc.documentElement.style.setProperty('--brand-color', rawColor);
+                    doc.documentElement.style.setProperty('--brand-color-alpha', `rgba(${r}, ${g}, ${b}, 0.15)`);
+                    doc.documentElement.style.setProperty('--navie-primary', rawColor);
+                }
+            }
+
+            function updateAllIframes() {
+                ['hero-preview-iframe-desktop', 'hero-preview-iframe-mobile'].forEach(iframeId => {
+                    const iframe = document.getElementById(iframeId);
+                    if (iframe) {
+                        try {
+                            const doc = iframe.contentDocument || iframe.contentWindow.document;
+                            if (doc) {
+                                syncIframeTexts(doc);
+                            }
+                        } catch(e) {}
+                    }
+                });
+            }
+
+            // Preview local uploaded video
+            function previewLocalHeroVideo(input) {
+                const file = input.files[0];
+                if (file) {
+                    if (file.size > 30 * 1024 * 1024) {
+                        alert("O arquivo de vídeo tour excede o limite máximo de 30MB.");
+                        input.value = '';
+                        return;
+                    }
+                    document.getElementById('hero-video-filename-display').textContent = file.name;
+                    
+                    activeHeroVideoLocalUrl = URL.createObjectURL(file);
+                    
+                    const removalControl = document.getElementById('hero-video-removal-control');
+                    const removalInput = document.getElementById('remover-hero-video-input');
+                    removalControl.style.display = 'flex';
+                    removalInput.value = 'false';
+                    
+                    // Force refresh inside iframes
+                    hydrateHeroIframeVideo('hero-preview-iframe-desktop');
+                    hydrateHeroIframeVideo('hero-preview-iframe-mobile');
+                }
+            }
+
+            // Remove current hero video
+            function clearHeroVideo() {
+                activeHeroVideoLocalUrl = null;
+                
+                const removalControl = document.getElementById('hero-video-removal-control');
+                const removalInput = document.getElementById('remover-hero-video-input');
+                const uploadInput = document.getElementById('upload-hero-video');
+                
+                removalControl.style.display = 'none';
+                removalInput.value = 'true';
+                uploadInput.value = '';
+                
+                // Reload iframes
+                document.getElementById('hero-preview-iframe-desktop').src += '';
+                document.getElementById('hero-preview-iframe-mobile').src += '';
+                
+                document.getElementById('hero-video-filename-display').textContent = "MP4, MOV ou WebM de até 30MB";
+            }
+
+            // Bind change triggers and iframe load dynamically
+            window.addEventListener('DOMContentLoaded', () => {
+                const nameInput = document.querySelector('input[name="nome"]');
+                const colorInput = document.getElementById('cor_primaria_hex');
+                const slugInput = document.querySelector('input[name="slug"]');
+                
+                if (nameInput) {
+                    nameInput.addEventListener('input', updateAllIframes);
+                }
+                
+                if (colorInput) {
+                    colorInput.addEventListener('input', updateAllIframes);
+                }
+                
+                if (slugInput) {
+                    slugInput.addEventListener('input', function() {
+                        const slugVal = slugInput.value.toLowerCase().replace(/[^a-z0-9-_]/g, '');
+                        const urlText = document.getElementById('mockup-url-desktop');
+                        if (urlText) {
+                            urlText.textContent = `navievibe.com/${slugVal || 'pousada'}`;
+                        }
+                    });
+                }
+
+                // Bind iframe load events dynamically
+                const desktopIframe = document.getElementById('hero-preview-iframe-desktop');
+                const mobileIframe = document.getElementById('hero-preview-iframe-mobile');
+                
+                if (desktopIframe) {
+                    desktopIframe.addEventListener('load', () => hydrateHeroIframeVideo('hero-preview-iframe-desktop'));
+                }
+                if (mobileIframe) {
+                    mobileIframe.addEventListener('load', () => hydrateHeroIframeVideo('hero-preview-iframe-mobile'));
+                }
+                
+                // Trigger initial text/color sync with a small timeout
+                setTimeout(updateAllIframes, 1000);
+            });
         </script>
     </div>
     {% endif %}

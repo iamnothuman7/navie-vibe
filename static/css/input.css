@@ -37,3 +37,28 @@
     box-shadow: 0 0 0 2px var(--color-action-blue); 
   }
 }
+
+/* ─────────────────────────────────────────────────────────────
+   B2B SYSTEMATIC SPACING RULES (DESIGN SYSTEM TOKENS)
+   ───────────────────────────────────────────────────────────── */
+@layer utilities {
+  .b2b-section-gap {
+    margin-top: 2.25rem;
+    margin-bottom: 2.25rem;
+  }
+  .b2b-element-gap {
+    margin-bottom: 1.5rem;
+  }
+  .b2b-label-gap {
+    margin-bottom: 0.625rem;
+  }
+  .b2b-text-media-gap {
+    margin-top: 0.875rem;
+  }
+  .b2b-pill-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.625rem;
+  }
+}
+

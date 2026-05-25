@@ -956,11 +956,14 @@ def partner_salvar_configuracoes(request):
     if 'foto_fundo' in request.FILES:
         hotel.foto_fundo = request.FILES['foto_fundo']
         
-    if 'hero_video' in request.FILES:
+    # Processa remoção ou novo upload do vídeo do banner
+    if request.POST.get('remover_hero_video') == 'true':
+        hotel.hero_video = None
+    elif 'hero_video' in request.FILES:
         video_file = request.FILES['hero_video']
-        # Limitar a 8MB
-        if video_file.size > 8 * 1024 * 1024:
-            messages.error(request, "O vídeo em loop ultrapassa o limite de 8MB permitido.")
+        # Limitar a 30MB
+        if video_file.size > 30 * 1024 * 1024:
+            messages.error(request, "O vídeo em loop ultrapassa o limite de 30MB permitido.")
             return redirect('hoteis:partner_dashboard')
         hotel.hero_video = video_file
         

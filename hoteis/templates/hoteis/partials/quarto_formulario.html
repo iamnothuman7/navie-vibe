@@ -88,9 +88,9 @@
         <!-- ─────────────────────────────────────────────────────────────
              SEÇÃO 1: GALERIA DE FOTOS (PRINCIPAL DESTAQUE CORONA)
              ───────────────────────────────────────────────────────────── -->
-        <div class="space-y-3.5">
-            <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider">Galeria de Fotos (Máximo 10 Fotos)</label>
-            <div class="flex flex-wrap gap-3.5">
+        <div class="b2b-element-gap">
+            <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider b2b-label-gap">Galeria de Fotos (Máximo 10 Fotos)</label>
+            <div class="b2b-pill-grid">
                 <!-- Imagens Existentes no Banco -->
                 {% if quarto %}
                     {% for img in quarto.imagens.all %}
@@ -124,7 +124,7 @@
                     <input type="file" name="imagens" id="upload-galeria" multiple accept="image/*" class="hidden" onchange="previewLocalImages(this)">
                 </label>
             </div>
-            <p class="text-[10px] text-slate-400 mt-3.5">O primeiro card (borda destacada com coroa) é a imagem de capa da pousada no site. Selecione até 10 fotos.</p>
+            <p class="text-[10px] text-slate-400 b2b-text-media-gap">O primeiro card (borda destacada com coroa) é a imagem de capa da pousada no site. Selecione até 10 fotos.</p>
         </div>
 
         <!-- Custom Division Line with Animation -->
@@ -138,7 +138,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             <!-- Upload de Video Card -->
             <div class="lg:col-span-5 flex flex-col gap-4">
-                <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider">Vídeo Tour da Acomodação</label>
+                <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider b2b-label-gap">Vídeo Tour da Acomodação</label>
                 
                 <label class="relative rounded-3xl border-2 border-dashed border-slate-300 dark:border-white/10 hover:border-brand dark:hover:border-brand p-6 flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.01] active:scale-99 bg-slate-50/50 dark:bg-black/10 group h-36">
                     <span class="flex items-center text-slate-400 dark:text-slate-500 group-hover:text-brand transition-colors"><i data-lucide="video" class="w-8 h-8"></i></span>
@@ -163,7 +163,7 @@
                     </button>
                 </div>
                 <input type="hidden" name="remover_video" id="remover-video-input" value="false">
-                <p class="text-[10px] text-slate-400 mt-1.5 leading-relaxed">Faça o upload do tour de vídeo local. Ele rodará de forma silenciosa e contínua dentro dos dispositivos de visualização de clientes.</p>
+                <p class="text-[10px] text-slate-400 b2b-text-media-gap leading-relaxed">Faça o upload do tour de vídeo local. Ele rodará de forma silenciosa e contínua dentro dos dispositivos de visualização de clientes.</p>
             </div>
 
             <!-- Previews lado a lado em Mockups com website real -->
@@ -187,8 +187,7 @@
                             <iframe id="quarto-preview-iframe-desktop" 
                                     src="{% if hotel.slug %}/{% url 'hoteis:vanity_url' hotel.slug %}{% else %}/hotel/{{ hotel.id }}/{% endif %}?preview=1" 
                                     class="absolute top-0 left-0 w-[1280px] h-[720px] border-0 origin-top-left pointer-events-none select-none"
-                                    style="transform: scale(0.25);"
-                                    onload="hydrateIframeVideo('quarto-preview-iframe-desktop')"></iframe>
+                                    style="transform: scale(0.25);"></iframe>
                         </div>
                     </div>
                 </div>
@@ -204,8 +203,7 @@
                             <iframe id="quarto-preview-iframe-mobile" 
                                     src="{% if hotel.slug %}/{% url 'hoteis:vanity_url' hotel.slug %}{% else %}/hotel/{{ hotel.id }}/{% endif %}?preview=1" 
                                     class="absolute top-0 left-0 w-[375px] h-[675px] border-0 origin-top-left pointer-events-none select-none"
-                                    style="transform: scale(0.266);"
-                                    onload="hydrateIframeVideo('quarto-preview-iframe-mobile')"></iframe>
+                                    style="transform: scale(0.266);"></iframe>
                         </div>
                     </div>
                 </div>
@@ -221,16 +219,16 @@
         <!-- ─────────────────────────────────────────────────────────────
              SEÇÃO 3: INFORMAÇÕES DA ACOMODAÇÃO E TEXTO EM MODAL
              ───────────────────────────────────────────────────────────── -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 b2b-element-gap">
             <!-- Nome -->
             <div class="md:col-span-2">
-                <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-2.5">Nome do Quarto / Categoria</label>
+                <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider b2b-label-gap">Nome do Quarto / Categoria</label>
                 <input type="text" name="nome" id="room-name-input" required value="{{ quarto.nome|default:'' }}" placeholder="Ex: Suíte Presidencial Vista da Serra" oninput="updateSEOPreview()"
                        class="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-brand transition-colors">
             </div>
             <!-- Preço -->
             <div>
-                <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-2.5">Preço da Diária</label>
+                <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider b2b-label-gap">Preço da Diária</label>
                 <div class="relative">
                     <span class="absolute left-4 top-3 text-xs font-bold text-slate-400">R$</span>
                     <input type="text" name="preco" id="room-price-input" required value="{{ quarto.preco|default:'' }}" placeholder="250.00" oninput="updateSEOPreview()"
@@ -240,8 +238,8 @@
         </div>
 
         <!-- Botão Editor de Descrição em Modal -->
-        <div class="space-y-3.5">
-            <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider">Descrição Completa</label>
+        <div class="b2b-element-gap">
+            <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider b2b-label-gap">Descrição Completa</label>
             <div class="flex flex-col sm:flex-row sm:items-center gap-3.5">
                 <button type="button" @click="editorOpen = true"
                         class="bg-brand/10 hover:bg-brand/20 border border-brand/20 dark:border-brand/30 text-brand px-5 py-3 rounded-2xl text-xs font-black transition-all flex items-center justify-center gap-1.5 hover:scale-[1.02] active:scale-95 shrink-0 shadow-sm">
@@ -306,10 +304,10 @@
         <!-- ─────────────────────────────────────────────────────────────
              SEÇÃO 4: CAPACIDADE (DROPDOWN ALPINE) E TAGS/COMODIDADES (PADDED)
              ───────────────────────────────────────────────────────────── -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 b2b-element-gap">
             <!-- Capacidade Dropdown Padronizado -->
-            <div class="space-y-3.5">
-                <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider">Capacidade Recomendada</label>
+            <div class="b2b-element-gap">
+                <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider b2b-label-gap">Capacidade Recomendada</label>
                 <div x-data="{ open: false, selected: {{ quarto.capacidade_pessoas|default:2 }} }" class="relative w-full max-w-xs">
                     <button type="button" @click="open = !open" @click.away="open = false"
                             class="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-brand transition-all flex items-center justify-between font-bold hover:scale-[1.01]">
@@ -338,9 +336,9 @@
             </div>
 
             <!-- Categorização por Tags (Seleção Dinâmica) -->
-            <div class="space-y-3.5">
-                <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider">Tags Especiais (Ideal para IA)</label>
-                <div class="flex flex-wrap gap-2.5 sm:gap-3">
+            <div class="b2b-element-gap">
+                <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider b2b-label-gap">Tags Especiais (Ideal para IA)</label>
+                <div class="b2b-pill-grid">
                     {% for tag in tags_disponiveis %}
                         <button type="button" onclick="toggleTag(this, '{{ tag }}')"
                                 class="tag-pill px-3.5 py-2 rounded-full border text-[10px] font-black uppercase tracking-wider transition-all border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 hover:scale-[1.03]">
@@ -352,9 +350,9 @@
         </div>
 
         <!-- Comodidades / Diferenciais -->
-        <div class="space-y-3.5">
-            <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider">Comodidades Inclusas</label>
-            <div class="flex flex-wrap gap-2.5 sm:gap-3">
+        <div class="b2b-element-gap">
+            <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider b2b-label-gap">Comodidades Inclusas</label>
+            <div class="b2b-pill-grid">
                 {% for com in comodidades_disponiveis %}
                     <button type="button" onclick="toggleComodidade(this, '{{ com }}')"
                             class="com-pill px-3.5 py-2.5 rounded-2xl border text-[11px] font-bold transition-all border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 flex items-center gap-1.5 hover:scale-[1.03]">
@@ -616,6 +614,18 @@
             }
         }
     }
+
+    // Bind room preview iframes load events dynamically
+    (function bindRoomIframeEvents() {
+        const desktopI = document.getElementById('quarto-preview-iframe-desktop');
+        const mobileI = document.getElementById('quarto-preview-iframe-mobile');
+        if (desktopI) {
+            desktopI.addEventListener('load', () => hydrateIframeVideo('quarto-preview-iframe-desktop'));
+        }
+        if (mobileI) {
+            mobileI.addEventListener('load', () => hydrateIframeVideo('quarto-preview-iframe-mobile'));
+        }
+    })();
 
     // Function to render local previews of direct video files inside double mockups
     function previewLocalVideo(input) {
