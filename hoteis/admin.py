@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Produtor, Local, Hotel, HotelImagem, Quarto
+from .models import Produtor, Local, Hotel, HotelImagem, Quarto, QuartoImagem, UnidadeQuarto, Reserva, BloqueioQuarto
 
 class HotelImagemInline(admin.TabularInline):
     model = HotelImagem
@@ -18,3 +18,22 @@ class HotelAdmin(admin.ModelAdmin):
 
 admin.site.register(Produtor)
 admin.site.register(Local)
+
+class UnidadeQuartoInline(admin.TabularInline):
+    model = UnidadeQuarto
+    extra = 1
+
+@admin.register(Quarto)
+class QuartoAdmin(admin.ModelAdmin):
+    list_display = ('nome', 'hotel', 'preco')
+    inlines = [UnidadeQuartoInline]
+
+@admin.register(Reserva)
+class ReservaAdmin(admin.ModelAdmin):
+    list_display = ('id', 'unidade', 'data_checkin', 'data_checkout', 'status', 'valor_total')
+    list_filter = ('status', 'data_checkin')
+
+@admin.register(BloqueioQuarto)
+class BloqueioQuartoAdmin(admin.ModelAdmin):
+    list_display = ('unidade', 'data_inicio', 'data_fim', 'motivo')
+

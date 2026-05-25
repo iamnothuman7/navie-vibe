@@ -21,8 +21,11 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('accounts/', include('allauth.urls')),  # Login Social / OAuth
     path('api/', include('api.urls')),
+    path('clientes/', include('clientes.urls')),
     path('', include('hoteis.urls')),
+    path('', include('parceiros.urls')),
 ]
 
 if settings.DEBUG:

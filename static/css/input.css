@@ -3,6 +3,11 @@
 /* Pastas a serem escaneadas pelo Tailwind v4 */
 @source "../../templates";
 @source "../../hoteis/templates";
+@source "../../clientes/templates";
+@source "../../parceiros/templates";
+@source "../../cinema/templates";
+@source "../../eventos/templates";
+@source "../../parques/templates";
 
 /* Variáveis de tema */
 @theme {

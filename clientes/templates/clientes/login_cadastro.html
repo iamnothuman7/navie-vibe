@@ -1,0 +1,761 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Naviê Vibe - Acessar Conta{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Sleek center alignment */
+    .auth-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: calc(100vh - 180px);
+        padding: 2.5rem 1rem;
+        background-color: #f8fafc;
+        background-image: radial-gradient(circle at 10% 20%, rgba(37, 99, 235, 0.04) 0%, transparent 45%),
+                          radial-gradient(circle at 90% 80%, rgba(30, 58, 138, 0.04) 0%, transparent 45%);
+    }
+
+    /* Robust Card container fallback */
+    .auth-card-box {
+        width: 100%;
+        max-width: 480px;
+        background-color: var(--navie-surface);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        border-radius: var(--navie-radius-lg);
+        box-shadow: var(--navie-shadow-lg);
+        padding: 2.5rem;
+        box-sizing: border-box;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    /* Premium inputs styling */
+    .auth-input-group {
+        position: relative;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .auth-input-field {
+        width: 100% !important;
+        height: 48px;
+        padding: 0 1rem 0 3rem !important;
+        background-color: #f8fafc;
+        border: 1px solid var(--navie-border);
+        border-radius: var(--navie-radius-md);
+        font-size: 14px;
+        font-family: inherit;
+        color: var(--navie-text);
+        box-sizing: border-box;
+        transition: var(--navie-transition);
+    }
+
+    .auth-input-field:focus {
+        background-color: #ffffff;
+        border-color: var(--navie-primary);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    .auth-input-icon {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--navie-text-muted);
+        display: flex;
+        align-items: center;
+        pointer-events: none;
+        z-index: 10;
+    }
+
+    /* No-icon inputs (such as CEP, logradouro, number, barrio) */
+    .auth-input-noicon {
+        width: 100% !important;
+        height: 48px;
+        padding: 0 1rem !important;
+        background-color: #f8fafc;
+        border: 1px solid var(--navie-border);
+        border-radius: var(--navie-radius-md);
+        font-size: 14px;
+        font-family: inherit;
+        color: var(--navie-text);
+        box-sizing: border-box;
+        transition: var(--navie-transition);
+    }
+
+    .auth-input-noicon:focus {
+        background-color: #ffffff;
+        border-color: var(--navie-primary);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    .auth-input-noicon[readonly] {
+        background-color: #f1f5f9;
+        color: var(--navie-text-muted);
+        border-color: #e2e8f0;
+        cursor: not-allowed;
+    }
+
+    /* Premium Labels styling */
+    .auth-label {
+        display: block;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--navie-text-muted);
+        margin-bottom: 0.5rem;
+    }
+
+    /* Clean, robust form geometries and spacing */
+    .auth-field-group {
+        margin-bottom: 1.5rem !important;
+        display: block;
+        width: 100%;
+    }
+
+    .auth-label-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem !important;
+        width: 100%;
+    }
+
+    .auth-label-row .auth-label {
+        margin-bottom: 0 !important;
+    }
+
+    .auth-btn-container {
+        margin-top: 2rem !important;
+        width: 100%;
+    }
+
+    /* Premium Buttons */
+    .auth-btn-primary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        height: 50px;
+        background-color: var(--navie-primary);
+        color: #ffffff;
+        font-size: 15px;
+        font-weight: 600;
+        border: none;
+        border-radius: var(--navie-radius-md);
+        cursor: pointer;
+        box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.15);
+        transition: var(--navie-transition);
+    }
+
+    .auth-btn-primary:hover {
+        background-color: var(--navie-primary-dark);
+    }
+
+    .auth-btn-primary:active {
+        transform: scale(0.98);
+    }
+
+    /* Alert styles */
+    .alert-panel {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 1rem;
+        border-radius: 12px;
+        font-size: 13.5px;
+        margin-bottom: 1.5rem;
+        box-sizing: border-box;
+    }
+
+    .alert-panel-error {
+        background-color: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #991b1b;
+    }
+
+    .alert-panel-success {
+        background-color: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        color: #166534;
+    }
+
+    .form-transition {
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    /* Responsive grid system for side-by-side fields on desktop */
+    .auth-grid-2,
+    .auth-grid-3,
+    .auth-grid-cep-addr {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+
+    @media (min-width: 768px) {
+        /* Wider card for Register section to place fields side-by-side cleanly */
+        .auth-card-box.register-mode {
+            max-width: 680px !important;
+        }
+
+        .auth-grid-2 {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .auth-grid-3 {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        .auth-grid-cep-addr {
+            grid-template-columns: 1fr 2fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container auth-bg min-h-screen py-16 px-4 flex items-center justify-center bg-slate-50">
+    <div class="auth-card-box w-full max-w-lg glass-card rounded-3xl shadow-2xl p-8 md:p-10 form-transition" id="auth-card">
+        
+        {% csrf_token %}
+        
+        <!-- Error Alerts Container -->
+        <div id="alert-box" class="hidden mb-6 p-4 rounded-2xl border flex items-start gap-3 text-sm">
+            <i data-lucide="alert-circle" class="w-5 h-5 flex-shrink-0 mt-0.5" id="alert-icon"></i>
+            <span id="alert-message" class="font-medium"></span>
+        </div>
+
+        <!-- ─────────────────────────────────────────────────────────────────
+             SECTION 1: LOGIN FORM
+             ───────────────────────────────────────────────────────────────── -->
+        <div id="login-section">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight">Bem-vindo de volta</h2>
+                <p class="text-slate-500 mt-2 text-sm">Acesse sua conta do Naviê Vibe para gerenciar suas compras</p>
+            </div>
+
+            <form id="login-form">
+                <div class="auth-field-group">
+                    <label for="login-cpf" class="auth-label block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">CPF</label>
+                    <div class="auth-input-group relative">
+                        <span class="auth-input-icon absolute inset-y-0 left-0 flex items-center text-slate-400">
+                            <i data-lucide="user" class="w-5 h-5"></i>
+                        </span>
+                        <input type="text" id="login-cpf" required placeholder="000.000.000-00" 
+                               class="auth-input-field w-full pl-12 pr-4 py-3 bg-slate-50/50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-action-blue focus:border-transparent transition-all">
+                    </div>
+                </div>
+
+                <div class="auth-field-group">
+                    <div class="auth-label-row">
+                        <label for="login-password" class="auth-label block text-xs font-bold text-slate-700 uppercase tracking-wider">Senha</label>
+                        <a href="#" class="text-xs font-semibold text-action-blue hover:underline">Esqueceu a senha?</a>
+                    </div>
+                    <div class="auth-input-group relative">
+                        <span class="auth-input-icon absolute inset-y-0 left-0 flex items-center text-slate-400">
+                            <i data-lucide="lock" class="w-5 h-5"></i>
+                        </span>
+                        <input type="password" id="login-password" required placeholder="Sua senha secreta" 
+                               class="auth-input-field w-full pl-12 pr-4 py-3 bg-slate-50/50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-action-blue focus:border-transparent transition-all">
+                    </div>
+                </div>
+
+                <div class="auth-btn-container">
+                    <button type="submit" class="auth-btn-primary w-full bg-action-blue text-white py-3.5 rounded-2xl font-semibold shadow-lg hover:bg-action-blue-dark transition-colors flex items-center justify-center gap-2">
+                        <span>Acessar Painel</span>
+                        <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <!-- Divider "ou entrar com" -->
+                <div class="relative my-6">
+                    <div class="absolute inset-0 flex items-center" aria-hidden="true">
+                        <div class="w-full border-t border-slate-200/80"></div>
+                    </div>
+                    <div class="relative flex justify-center text-xs uppercase">
+                        <span class="bg-white px-4 text-slate-400 font-bold tracking-wider">ou entrar com</span>
+                    </div>
+                </div>
+
+                <!-- Botões de Redes Sociais -->
+                <div class="grid grid-cols-3 gap-3">
+                    <a href="/accounts/google/login/?next=/clientes/painel/" class="flex items-center justify-center gap-2 py-3 px-4 bg-slate-50 hover:bg-slate-100/80 border border-slate-200/80 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer" title="Entrar com Google">
+                        <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="w-5 h-5">
+                    </a>
+                    <a href="/accounts/apple/login/?next=/clientes/painel/" class="flex items-center justify-center gap-2 py-3 px-4 bg-slate-50 hover:bg-slate-100/80 border border-slate-200/80 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer" title="Entrar com Apple">
+                        <img src="https://www.svgrepo.com/show/511330/apple-os.svg" alt="Apple" class="w-5 h-5">
+                    </a>
+                    <a href="/accounts/microsoft/login/?next=/clientes/painel/" class="flex items-center justify-center gap-2 py-3 px-4 bg-slate-50 hover:bg-slate-100/80 border border-slate-200/80 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer" title="Entrar com Outlook / Microsoft">
+                        <img src="https://www.svgrepo.com/show/512479/microsoft.svg" alt="Outlook" class="w-5 h-5">
+                    </a>
+                </div>
+            </form>
+
+            <div class="mt-8 text-center text-sm">
+                <span class="text-slate-500">Ainda não tem conta no Naviê?</span>
+                <button onclick="toggleAuthMode('register')" class="ml-1 font-bold text-action-blue hover:underline">Cadastre-se grátis</button>
+            </div>
+        </div>
+
+
+        <!-- ─────────────────────────────────────────────────────────────────
+             SECTION 2: REGISTER FORM
+             ───────────────────────────────────────────────────────────────── -->
+        <div id="register-section" class="hidden">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight">Criar nova conta</h2>
+                <p class="text-slate-500 mt-2 text-sm">Uma conta única "estilo Google" para todos os serviços da Ibiapaba</p>
+            </div>
+
+            <form id="register-form">
+                
+                <!-- Nome Completo -->
+                <div class="auth-field-group">
+                    <label for="reg-nome" class="auth-label block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Nome Completo</label>
+                    <div class="auth-input-group relative">
+                        <span class="auth-input-icon absolute inset-y-0 left-0 flex items-center text-slate-400">
+                            <i data-lucide="user" class="w-5 h-5"></i>
+                        </span>
+                        <input type="text" id="reg-nome" required placeholder="Seu nome completo" 
+                               class="auth-input-field w-full pl-12 pr-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-action-blue focus:border-transparent transition-all">
+                    </div>
+                </div>
+
+                <!-- CPF e Telefone -->
+                <div class="auth-grid-2">
+                    <!-- CPF -->
+                    <div>
+                        <label for="reg-cpf" class="auth-label block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">CPF</label>
+                        <div class="auth-input-group relative">
+                            <span class="auth-input-icon absolute inset-y-0 left-0 flex items-center text-slate-400">
+                                <i data-lucide="credit-card" class="w-5 h-5"></i>
+                            </span>
+                            <input type="text" id="reg-cpf" required placeholder="000.000.000-00" 
+                                   class="auth-input-field w-full pl-12 pr-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-action-blue focus:border-transparent transition-all">
+                        </div>
+                    </div>
+
+                    <!-- Telefone -->
+                    <div>
+                        <label for="reg-telefone" class="auth-label block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Telefone / WhatsApp</label>
+                        <div class="auth-input-group relative">
+                            <span class="auth-input-icon absolute inset-y-0 left-0 flex items-center text-slate-400">
+                                <i data-lucide="phone" class="w-5 h-5"></i>
+                            </span>
+                            <input type="text" id="reg-telefone" required placeholder="(00) 00000-0000" 
+                                   class="auth-input-field w-full pl-12 pr-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-action-blue focus:border-transparent transition-all">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- E-mail e Senha -->
+                <div class="auth-grid-2">
+                    <!-- E-mail -->
+                    <div>
+                        <label for="reg-email" class="auth-label block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">E-mail Pessoal</label>
+                        <div class="auth-input-group relative">
+                            <span class="auth-input-icon absolute inset-y-0 left-0 flex items-center text-slate-400">
+                                <i data-lucide="mail" class="w-5 h-5"></i>
+                            </span>
+                            <input type="email" id="reg-email" required placeholder="seuemail@exemplo.com" 
+                                   class="auth-input-field w-full pl-12 pr-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-action-blue focus:border-transparent transition-all">
+                        </div>
+                    </div>
+
+                    <!-- Senha -->
+                    <div>
+                        <label for="reg-password" class="auth-label block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Criar Senha Secreta</label>
+                        <div class="auth-input-group relative">
+                            <span class="auth-input-icon absolute inset-y-0 left-0 flex items-center text-slate-400">
+                                <i data-lucide="lock" class="w-5 h-5"></i>
+                            </span>
+                            <input type="password" id="reg-password" required placeholder="Mínimo 6 caracteres" 
+                                   class="auth-input-field w-full pl-12 pr-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-action-blue focus:border-transparent transition-all">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Endereço e CEP -->
+                <div class="auth-grid-cep-addr">
+                    <!-- CEP com autopreenchimento -->
+                    <div>
+                        <label for="reg-cep" class="auth-label block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                            CEP
+                            <span id="cep-loading" class="hidden"><i data-lucide="loader" class="w-3.5 h-3.5 animate-spin text-action-blue"></i></span>
+                        </label>
+                        <input type="text" id="reg-cep" required placeholder="00000-000" 
+                               class="auth-input-noicon w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-action-blue focus:border-transparent transition-all">
+                    </div>
+
+                    <!-- Logradouro -->
+                    <div>
+                        <label for="reg-endereco" class="auth-label block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Endereço (Rua/Av)</label>
+                        <input type="text" id="reg-endereco" required placeholder="Rua das Flores..." 
+                               class="auth-input-noicon w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-action-blue focus:border-transparent transition-all">
+                    </div>
+                </div>
+
+                <!-- Número, Bairro e Cidade/UF -->
+                <div class="auth-grid-3">
+                    <!-- Número -->
+                    <div>
+                        <label for="reg-numero" class="auth-label block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Número</label>
+                        <input type="text" id="reg-numero" required placeholder="Ex: 123, Ap 2" 
+                               class="auth-input-noicon w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-action-blue focus:border-transparent transition-all">
+                    </div>
+
+                    <!-- Bairro -->
+                    <div>
+                        <label for="reg-bairro" class="auth-label block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Bairro</label>
+                        <input type="text" id="reg-bairro" required placeholder="Centro" 
+                               class="auth-input-noicon w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-action-blue focus:border-transparent transition-all">
+                    </div>
+
+                    <!-- Cidade/UF -->
+                    <div>
+                        <label for="reg-cidade" class="auth-label block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Cidade/UF</label>
+                        <input type="text" id="reg-cidade-uf" readonly placeholder="Tianguá/CE" 
+                               class="auth-input-noicon w-full px-4 py-2.5 bg-slate-100 border border-slate-200 rounded-2xl focus:outline-none text-slate-500 cursor-not-allowed">
+                        <input type="hidden" id="reg-cidade">
+                        <input type="hidden" id="reg-estado">
+                    </div>
+                </div>
+
+                <!-- Aceite de Termos -->
+                <div class="auth-field-group flex items-start gap-2.5 py-1">
+                    <input type="checkbox" id="reg-termos" required 
+                           class="w-4 h-4 mt-0.5 rounded border-slate-300 text-action-blue focus:ring-action-blue focus:ring-offset-0 cursor-pointer">
+                    <label for="reg-termos" class="text-xs text-slate-500 leading-snug cursor-pointer">
+                        Eu li e aceito os <button type="button" onclick="openTermsModal()" class="font-bold text-action-blue hover:underline">Termos de Uso e Políticas de Privacidade</button> do Naviê Vibe.
+                    </label>
+                </div>
+
+                <div class="auth-btn-container">
+                    <button type="submit" class="auth-btn-primary w-full bg-action-blue text-white py-3 rounded-2xl font-semibold shadow-lg hover:bg-action-blue-dark transition-colors flex items-center justify-center gap-2">
+                        <i data-lucide="user-plus" class="w-5 h-5"></i>
+                        <span>Cadastrar e Entrar</span>
+                    </button>
+                </div>
+
+                <!-- Divider "ou cadastrar com" -->
+                <div class="relative my-6">
+                    <div class="absolute inset-0 flex items-center" aria-hidden="true">
+                        <div class="w-full border-t border-slate-200/80"></div>
+                    </div>
+                    <div class="relative flex justify-center text-xs uppercase">
+                        <span class="bg-white px-4 text-slate-400 font-bold tracking-wider">ou cadastrar com</span>
+                    </div>
+                </div>
+
+                <!-- Botões de Redes Sociais -->
+                <div class="grid grid-cols-3 gap-3">
+                    <a href="/accounts/google/login/?next=/clientes/painel/" class="flex items-center justify-center gap-2 py-3 px-4 bg-slate-50 hover:bg-slate-100/80 border border-slate-200/80 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer" title="Cadastrar com Google">
+                        <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="w-5 h-5">
+                    </a>
+                    <a href="/accounts/apple/login/?next=/clientes/painel/" class="flex items-center justify-center gap-2 py-3 px-4 bg-slate-50 hover:bg-slate-100/80 border border-slate-200/80 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer" title="Cadastrar com Apple">
+                        <img src="https://www.svgrepo.com/show/511330/apple-os.svg" alt="Apple" class="w-5 h-5">
+                    </a>
+                    <a href="/accounts/microsoft/login/?next=/clientes/painel/" class="flex items-center justify-center gap-2 py-3 px-4 bg-slate-50 hover:bg-slate-100/80 border border-slate-200/80 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer" title="Cadastrar com Outlook / Microsoft">
+                        <img src="https://www.svgrepo.com/show/512479/microsoft.svg" alt="Outlook" class="w-5 h-5">
+                    </a>
+                </div>
+            </form>
+
+            <div class="mt-6 text-center text-sm">
+                <span class="text-slate-500">Já possui uma conta ativa?</span>
+                <button onclick="toggleAuthMode('login')" class="ml-1 font-bold text-action-blue hover:underline">Fazer Login</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────────────────
+     SECTION 3: LEGAL TERMS MODAL
+     ───────────────────────────────────────────────────────────────── -->
+<div id="terms-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" aria-hidden="true" onclick="closeTermsModal()"></div>
+
+        <!-- Trick to center -->
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+        <!-- Modal panel -->
+        <div class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+            <div class="bg-white px-6 pt-6 pb-4 sm:p-8">
+                <div class="flex justify-between items-start border-b border-slate-100 pb-4 mb-5">
+                    <h3 class="text-xl font-bold text-slate-900" id="modal-title">Termos de Uso & Privacidade</h3>
+                    <button onclick="closeTermsModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+                        <i data-lucide="x" class="w-6 h-6"></i>
+                    </button>
+                </div>
+                
+                <div class="max-h-96 overflow-y-auto pr-2 space-y-4 text-sm text-slate-600 leading-relaxed scrollbar-premium">
+                    <h4 class="font-bold text-slate-800 text-base">1. Objeto e Aceitação Geral</h4>
+                    <p>Ao se cadastrar no Naviê Vibe, você firma um contrato de prestação de serviços de reserva e bilheteria eletrônica. Você declara que tem pelo menos 18 anos e que os dados fornecidos são verídicos e pessoais.</p>
+                    
+                    <h4 class="font-bold text-slate-800 text-base">2. Registro e Auditoria Digital de Consentimento</h4>
+                    <p>Em conformidade com o Marco Civil da Internet (Lei nº 12.965/14) e leis aplicáveis, o Naviê Vibe coleta, registra e armazena com segurança os metadados forenses de sua assinatura eletrônica no momento do cadastro. Isso inclui o seu <strong>Endereço IP</strong>, <strong>Carimbo de Data/Hora (UTC)</strong> e a <strong>Assinatura do seu Navegador/Dispositivo (User-Agent)</strong>. Esse registros são imutáveis e constituem prova material legal de sua anuência a este termo.</p>
+ 
+                    <h4 class="font-bold text-slate-800 text-base">3. Proteção de Dados (LGPD)</h4>
+                    <p>Em conformidade com a Lei Geral de Proteção de Dados Pessoais (LGPD - Lei nº 13.709/18), coletamos e processamos seus dados pessoais (Nome, CPF, E-mail, Telefone e Endereço) com a finalidade exclusiva de executar o contrato de reserva, emitir seus ingressos, combater fraudes fiscais/financeiras e auditar as autorizações do sistema. Não compartilhamos seus dados com terceiros não autorizados.</p>
+ 
+                    <h4 class="font-bold text-slate-800 text-base">4. Das Reservas e Cancelamentos</h4>
+                    <p>Cada estabelecimento parceiro (hotéis, cinemas, shows e parques) rege-se por políticas de cancelamento e no-show próprias, que serão listadas individualmente no ato da reserva. O Naviê Vibe atua como intermediador seguro e garante a integridade das transações financeiras.</p>
+                </div>
+            </div>
+            
+            <div class="bg-slate-50 px-6 py-4 flex justify-end gap-3 rounded-b-3xl">
+                <button type="button" onclick="closeTermsModal()" class="bg-action-blue text-white px-6 py-2.5 rounded-xl font-bold hover:bg-action-blue-dark transition-colors">
+                    Entendi e Concordo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Toggle login/register sections
+    function toggleAuthMode(mode) {
+        const card = document.getElementById('auth-card');
+        const loginSec = document.getElementById('login-section');
+        const regSec = document.getElementById('register-section');
+        
+        card.style.opacity = '0';
+        card.style.transform = 'scale(0.98)';
+        
+        setTimeout(() => {
+            if (mode === 'register') {
+                loginSec.classList.add('hidden');
+                regSec.classList.remove('hidden');
+                card.classList.add('register-mode');
+            } else {
+                regSec.classList.add('hidden');
+                loginSec.classList.remove('hidden');
+                card.classList.remove('register-mode');
+            }
+            // Clear alerts on switch
+            hideAlert();
+            card.style.opacity = '1';
+            card.style.transform = 'scale(1)';
+        }, 200);
+    }
+
+    // Terms modal control
+    function openTermsModal() {
+        document.getElementById('terms-modal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeTermsModal() {
+        document.getElementById('terms-modal').classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    }
+
+    // Custom alerts
+    function showAlert(message, type = 'error') {
+        const alertBox = document.getElementById('alert-box');
+        const alertMsg = document.getElementById('alert-message');
+        const alertIcon = document.getElementById('alert-icon');
+        
+        alertMsg.textContent = message;
+        alertBox.classList.remove('hidden');
+        
+        if (type === 'error') {
+            alertBox.className = "alert-panel alert-panel-error mb-6 p-4 rounded-2xl border flex items-start gap-3 text-sm bg-red-50 border-red-200 text-red-700";
+            alertIcon.className = "w-5 h-5 flex-shrink-0 mt-0.5 text-red-600";
+        } else {
+            alertBox.className = "alert-panel alert-panel-success mb-6 p-4 rounded-2xl border flex items-start gap-3 text-sm bg-green-50 border-green-200 text-green-700";
+            alertIcon.className = "w-5 h-5 flex-shrink-0 mt-0.5 text-green-600";
+        }
+        
+        // Scroll to top of form to see the error
+        document.getElementById('auth-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    
+    function hideAlert() {
+        document.getElementById('alert-box').classList.add('hidden');
+    }
+
+    // Input Masks Helpers
+    function maskCPF(value) {
+        return value
+            .replace(/\D/g, '') // remove all non-digits
+            .replace(/(\d{3})(\d)/, '$1.$2')
+            .replace(/(\d{3})(\d)/, '$1.$2')
+            .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+            .slice(0, 14);
+    }
+
+    function maskPhone(value) {
+        return value
+            .replace(/\D/g, '')
+            .replace(/^(\d{2})(\d)/g, '($1) $2')
+            .replace(/(\d{5})(\d)/, '$1-$2')
+            .slice(0, 15);
+    }
+
+    function maskCEP(value) {
+        return value
+            .replace(/\D/g, '')
+            .replace(/^(\d{5})(\d)/, '$1-$2')
+            .slice(0, 9);
+    }
+
+    // Bind masks
+    document.getElementById('login-cpf').addEventListener('input', function(e) {
+        e.target.value = maskCPF(e.target.value);
+    });
+
+    document.getElementById('reg-cpf').addEventListener('input', function(e) {
+        e.target.value = maskCPF(e.target.value);
+    });
+
+    document.getElementById('reg-telefone').addEventListener('input', function(e) {
+        e.target.value = maskPhone(e.target.value);
+    });
+
+    document.getElementById('reg-cep').addEventListener('input', function(e) {
+        let val = maskCEP(e.target.value);
+        e.target.value = val;
+        
+        // Auto-fill address when CEP reaches 8 digits (9 chars in format 00000-000)
+        let cleanCep = val.replace(/\D/g, '');
+        if (cleanCep.length === 8) {
+            fetchAddress(cleanCep);
+        }
+    });
+
+    // ViaCEP Integration
+    function fetchAddress(cep) {
+        const loading = document.getElementById('cep-loading');
+        loading.classList.remove('hidden');
+        
+        fetch(`https://viacep.com.br/ws/${cep}/json/`)
+            .then(res => res.json())
+            .then(data => {
+                loading.classList.add('hidden');
+                if (data.erro) {
+                    showAlert("CEP não localizado. Insira seu endereço manualmente.");
+                    return;
+                }
+                
+                hideAlert();
+                document.getElementById('reg-endereco').value = data.logradouro || '';
+                document.getElementById('reg-bairro').value = data.bairro || '';
+                
+                // Set city and state in visible block and hidden fields
+                document.getElementById('reg-cidade-uf').value = `${data.localidade}/${data.uf}`;
+                document.getElementById('reg-cidade').value = data.localidade;
+                document.getElementById('reg-estado').value = data.uf;
+                
+                // Focus number field for quick data entry
+                document.getElementById('reg-numero').focus();
+            })
+            .catch(() => {
+                loading.classList.add('hidden');
+                showAlert("Erro ao conectar ao serviço postal. Digite os dados manualmente.");
+            });
+    }
+
+    // CSRF Fetcher helper
+    function getCSRFToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]').value;
+    }
+
+    // Submit Forms via AJAX
+    document.getElementById('login-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        hideAlert();
+        
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.classList.add('navie-btn-loading');
+        
+        const cpf = document.getElementById('login-cpf').value;
+        const password = document.getElementById('login-password').value;
+        
+        fetch("{% url 'clientes:api_login' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({
+                username: cpf,
+                password: password
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.ok) {
+                window.location.href = data.redirect_url;
+            } else {
+                submitBtn.classList.remove('navie-btn-loading');
+                showAlert(data.erro);
+            }
+        })
+        .catch(() => {
+            submitBtn.classList.remove('navie-btn-loading');
+            showAlert("Erro de rede. Tente acessar novamente.");
+        });
+    });
+
+    document.getElementById('register-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        hideAlert();
+        
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.classList.add('navie-btn-loading');
+        
+        const payload = {
+            nome_completo: document.getElementById('reg-nome').value,
+            cpf: document.getElementById('reg-cpf').value,
+            telefone: document.getElementById('reg-telefone').value,
+            email: document.getElementById('reg-email').value,
+            cep: document.getElementById('reg-cep').value,
+            endereco: document.getElementById('reg-endereco').value,
+            numero: document.getElementById('reg-numero').value,
+            bairro: document.getElementById('reg-bairro').value,
+            cidade: document.getElementById('reg-cidade').value,
+            estado: document.getElementById('reg-estado').value,
+            password: document.getElementById('reg-password').value,
+            aceite_termos: document.getElementById('reg-termos').checked
+        };
+        
+        fetch("{% url 'clientes:api_registrar' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.ok) {
+                showAlert("Cadastro realizado com sucesso! Acessando painel...", "success");
+                setTimeout(() => {
+                    window.location.href = data.redirect_url;
+                }, 1000);
+            } else {
+                submitBtn.classList.remove('navie-btn-loading');
+                showAlert(data.erro);
+            }
+        })
+        .catch(() => {
+            submitBtn.classList.remove('navie-btn-loading');
+            showAlert("Ocorreu um erro ao processar o seu cadastro. Revise os campos.");
+        });
+    });
+</script>
+{% endblock %}

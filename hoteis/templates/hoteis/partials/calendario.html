@@ -1,0 +1,73 @@
+<div class="bg-white/80 dark:bg-black/30 border border-slate-200/80 dark:border-navie-border rounded-3xl overflow-hidden flex flex-col h-full min-h-[65vh] animate-in fade-in duration-300 backdrop-blur-md">
+    
+    <!-- Cabeçalho de Navegação Mensal -->
+    <div class="p-6 border-b border-slate-100 dark:border-navie-border flex justify-between items-center bg-slate-50/50 dark:bg-black/10">
+        <h2 class="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2 capitalize">
+            <span class="flex items-center text-brand" style="pointer-events:none;"><i data-lucide="calendar" class="w-6 h-6"></i></span>
+            {{ nome_mes }} {{ ano_atual }}
+        </h2>
+        
+        <div class="flex gap-2">
+            <button hx-get="?view=calendario&mes={{ mes_ant }}&ano={{ ano_ant }}" hx-target="#atividades-content" class="p-2 rounded-xl border border-slate-200/80 dark:border-navie-border hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-white transition-colors bg-white dark:bg-transparent shadow-sm">
+                <span class="flex items-center" style="pointer-events:none;"><i data-lucide="chevron-left" class="w-5 h-5"></i></span>
+            </button>
+            <button hx-get="?view=calendario&mes={{ mes_prox }}&ano={{ ano_prox }}" hx-target="#atividades-content" class="p-2 rounded-xl border border-slate-200/80 dark:border-navie-border hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-white transition-colors bg-white dark:bg-transparent shadow-sm">
+                <span class="flex items-center" style="pointer-events:none;"><i data-lucide="chevron-right" class="w-5 h-5"></i></span>
+            </button>
+        </div>
+    </div>
+
+    <div class="flex-1 p-6">
+        <!-- Dias da Semana -->
+        <div class="grid grid-cols-7 gap-4 mb-3">
+            <div class="text-center text-xs font-bold text-red-400 dark:text-red-400 uppercase tracking-wider pb-2">Dom</div>
+            <div class="text-center text-xs font-bold text-slate-400 dark:text-navie-textsec uppercase tracking-wider pb-2">Seg</div>
+            <div class="text-center text-xs font-bold text-slate-400 dark:text-navie-textsec uppercase tracking-wider pb-2">Ter</div>
+            <div class="text-center text-xs font-bold text-slate-400 dark:text-navie-textsec uppercase tracking-wider pb-2">Qua</div>
+            <div class="text-center text-xs font-bold text-slate-400 dark:text-navie-textsec uppercase tracking-wider pb-2">Qui</div>
+            <div class="text-center text-xs font-bold text-slate-400 dark:text-navie-textsec uppercase tracking-wider pb-2">Sex</div>
+            <div class="text-center text-xs font-bold text-slate-400 dark:text-navie-textsec uppercase tracking-wider pb-2">Sáb</div>
+        </div>
+
+        <!-- Grade de Dias -->
+        <div class="grid grid-cols-7 gap-3 h-full auto-rows-[minmax(110px,1fr)]">
+            {% for semana in dias_calendario %}
+                {% for dia in semana %}
+                    <div hx-get="{% url 'hoteis:partner_criar_tarefa' %}?data={{ dia.data|date:'Y-m-d' }}"
+                         hx-target="#modal-container"
+                         class="relative rounded-2xl border transition-all cursor-pointer hover:shadow-md md:hover:-translate-y-0.5 group flex flex-col overflow-hidden p-2.5 min-h-[100px]
+                        {% if not dia.is_current_month %}bg-slate-50/20 dark:bg-black/10 border-slate-100 dark:border-navie-border opacity-40{% else %}bg-white/40 dark:bg-white/[0.02] border-slate-200 dark:border-white/5{% endif %}
+                        {% if dia.is_today %}ring-2 ring-brand ring-offset-2 border-brand dark:ring-offset-black{% endif %}">
+                        
+                        <div class="flex justify-between items-start z-10 relative">
+                            <span class="text-sm font-bold {% if dia.is_today %}text-brand{% else %}text-slate-700 dark:text-white{% endif %}">
+                                {{ dia.dia }}
+                            </span>
+                        </div>
+                        
+                        <!-- Badges/Tags de Atividades no Dia -->
+                        <div class="hidden md:flex flex-col gap-1 mt-auto relative z-10 w-full">
+                            {% for t in dia.tarefas_preview %}
+                                <div class="px-2 py-0.5 rounded text-[8px] font-black truncate border flex items-center gap-1 w-full
+                                    {% if t.status == 'todo' %}bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-white border-slate-200 dark:border-white/5
+                                    {% elif t.status == 'doing' %}bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/15
+                                    {% elif t.status == 'done' %}bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/15
+                                    {% endif %}">
+                                    <span class="w-1 h-1 rounded-full {% if t.status == 'todo' %}bg-slate-400{% elif t.status == 'doing' %}bg-blue-500{% elif t.status == 'done' %}bg-green-500{% endif %}"></span>
+                                    <span class="truncate">{{ t.titulo }}</span>
+                                </div>
+                            {% endfor %}
+                            
+                            {% if dia.mais_tarefas > 0 %}
+                                <div class="text-[8px] font-black text-brand bg-brand/10 rounded px-1.5 py-0.5 mt-0.5 text-center border border-brand/20 uppercase tracking-wider">
+                                    +{{ dia.mais_tarefas }} tarefas
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="absolute inset-0 bg-brand/5 opacity-0 group-hover:opacity-100 transition-opacity z-0"></div>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+        </div>
+    </div>
+</div>

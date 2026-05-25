@@ -1,0 +1,137 @@
+<!-- Kanban Board adaptativo -->
+<div class="flex flex-col h-full animate-in fade-in zoom-in duration-500">
+    <div class="kanban-board kanban-board-mobile flex flex-row lg:grid lg:grid-cols-4 overflow-x-auto lg:overflow-x-visible snap-x snap-mandatory gap-6 pt-2 pb-20 px-2 flex-1 items-start min-h-[70vh] custom-scrollbar w-full">
+        
+        <!-- COLUNA ATRASADAS (AUTOMÁTICA) -->
+        <div class="kanban-column-mobile w-[85vw] sm:w-[320px] lg:w-full shrink-0 lg:shrink snap-center bg-red-50/40 dark:bg-red-500/[0.04] backdrop-blur-md border border-red-100 dark:border-red-500/10 rounded-2xl flex flex-col max-h-[65vh] lg:max-h-full shadow-lg shadow-red-500/5">
+            <div class="p-5 border-b border-red-100 dark:border-red-500/10 flex justify-between items-center bg-red-50/50 dark:bg-red-500/[0.02]">
+                <h3 class="font-black text-[11px] uppercase tracking-widest text-red-600 dark:text-red-400 flex items-center gap-2.5">
+                    <div class="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse"></div>
+                    Atrasadas
+                </h3>
+                <span class="bg-red-100/80 dark:bg-red-500/20 text-red-700 dark:text-red-400 text-[10px] font-black px-2.5 py-1 rounded-full border border-red-500/10">{{ overdue.count }}</span>
+            </div>
+            
+            <div class="p-3 flex-1 overflow-y-auto custom-scrollbar sortable-list min-h-[200px] flex flex-col gap-3" data-status="overdue">
+                {% for tarefa in overdue %}
+                    {% include 'hoteis/partials/card_tarefa.html' %}
+                {% empty %}
+                    <div class="empty-state text-center p-8 border border-dashed border-red-200/30 dark:border-red-500/10 rounded-2xl text-red-400 text-[10px] font-black uppercase tracking-widest opacity-40">
+                        Tudo em dia
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- COLUNA A FAZER -->
+        <div class="kanban-column-mobile w-[85vw] sm:w-[320px] lg:w-full shrink-0 lg:shrink snap-center bg-white/40 dark:bg-white/[0.03] backdrop-blur-md border border-slate-200 dark:border-white/5 rounded-2xl flex flex-col max-h-[65vh] lg:max-h-full shadow-lg shadow-black/5">
+            <div class="p-5 border-b border-slate-200/50 dark:border-white/5 flex justify-between items-center bg-white/20 dark:bg-white/[0.02]">
+                <h3 class="font-black text-[11px] uppercase tracking-widest text-slate-600 dark:text-white flex items-center gap-2.5">
+                    <div class="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-white/20 border border-white/20"></div>
+                    A Fazer
+                </h3>
+                <span class="bg-slate-200/50 dark:bg-white/10 text-slate-600 dark:text-white text-[10px] font-black px-2.5 py-1 rounded-full border border-white/10">{{ todo.count }}</span>
+            </div>
+            
+            <div class="p-3 flex-1 overflow-y-auto custom-scrollbar sortable-list min-h-[200px] flex flex-col gap-3" data-status="todo">
+                {% for tarefa in todo %}
+                    {% include 'hoteis/partials/card_tarefa.html' %}
+                {% empty %}
+                    <div class="empty-state text-center p-8 border border-dashed border-slate-200 dark:border-white/5 rounded-2xl text-slate-400 dark:text-navie-textsec text-[10px] font-black uppercase tracking-widest opacity-40">
+                        Vazio
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- COLUNA EM ANDAMENTO -->
+        <div class="kanban-column-mobile w-[85vw] sm:w-[320px] lg:w-full shrink-0 lg:shrink snap-center bg-brand-50/30 dark:bg-brand-500/[0.03] backdrop-blur-md border border-brand-100/50 dark:border-brand-500/10 rounded-2xl flex flex-col max-h-[65vh] lg:max-h-full shadow-lg shadow-brand-500/5">
+            <div class="p-5 border-b border-brand-100/50 dark:border-brand-500/10 flex justify-between items-center bg-brand-50/50 dark:bg-brand-500/[0.02]">
+                <h3 class="font-black text-[11px] uppercase tracking-widest text-brand dark:text-brand flex items-center gap-2.5">
+                    <div class="w-2.5 h-2.5 rounded-full bg-brand shadow-[0_0_10px_rgba(249,115,22,0.3)]"></div>
+                     Progresso
+                </h3>
+                <span class="bg-brand-100/80 dark:bg-brand/20 text-brand dark:text-brand text-[10px] font-black px-2.5 py-1 rounded-full border border-brand/10">{{ doing.count }}</span>
+            </div>
+            
+            <div class="p-3 flex-1 overflow-y-auto custom-scrollbar sortable-list min-h-[200px] flex flex-col gap-3" data-status="doing">
+                {% for tarefa in doing %}
+                    {% include 'hoteis/partials/card_tarefa.html' %}
+                {% empty %}
+                    <div class="empty-state text-center p-8 border border-dashed border-brand-200/30 dark:border-brand-500/10 rounded-2xl text-brand text-[10px] font-black uppercase tracking-widest opacity-40">
+                        Vazio
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- COLUNA CONCLUÍDO -->
+        <div class="kanban-column-mobile w-[85vw] sm:w-[320px] lg:w-full shrink-0 lg:shrink snap-center bg-green-50/30 dark:bg-green-500/[0.03] backdrop-blur-md border border-green-100/50 dark:border-green-500/10 rounded-2xl flex flex-col max-h-[65vh] lg:max-h-full shadow-lg shadow-green-500/5">
+            <div class="p-5 border-b border-green-100/50 dark:border-green-500/10 flex justify-between items-center bg-green-50/50 dark:bg-green-500/[0.02]">
+                <h3 class="font-black text-[11px] uppercase tracking-widest text-green-600 dark:text-green-400 flex items-center gap-2.5">
+                    <div class="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.3)]"></div>
+                    Concluído
+                </h3>
+                <span class="bg-green-100/80 dark:bg-green-500/20 text-green-700 dark:text-green-400 text-[10px] font-black px-2.5 py-1 rounded-full border border-green-500/10">{{ done.count }}</span>
+            </div>
+            
+            <div class="p-3 flex-1 overflow-y-auto custom-scrollbar sortable-list min-h-[200px] flex flex-col gap-3" data-status="done">
+                {% for tarefa in done %}
+                    {% include 'hoteis/partials/card_tarefa.html' %}
+                {% empty %}
+                    <div class="empty-state text-center p-8 border border-dashed border-green-200/30 dark:border-green-500/10 rounded-2xl text-green-400 text-[10px] font-black uppercase tracking-widest opacity-40">
+                        Vazio
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Scripts de Interação Drag-and-Drop (SortableJS) -->
+<script>
+    (function() {
+        const colunas = document.querySelectorAll('.sortable-list');
+        
+        colunas.forEach(coluna => {
+            new Sortable(coluna, {
+                group: 'kanban',
+                animation: 150, 
+                ghostClass: 'opacity-50', // Efeito translúcido ao arrastar
+                dragClass: 'shadow-2xl',
+                fallbackOnBody: true,
+                swapThreshold: 0.65,
+                
+                // Otimizações avançadas para Mobile Touch (evita travar o scroll vertical):
+                delay: 150, // Pressione e segure por 150ms para começar a arrastar no celular
+                delayOnTouchOnly: true,
+                touchStartThreshold: 5, // Limiar de tolerância a pequenos toques
+                
+                onEnd: function (evt) {
+                    const itemEl = evt.item;          
+                    const toList = evt.to;            
+                    const fromList = evt.from;        
+                    
+                    if (toList === fromList) return; // Nenhuma mudança de coluna
+                    const taskId = itemEl.getAttribute('data-task-id');
+                    const newStatus = toList.getAttribute('data-status');
+                    
+                    const emptyState = toList.querySelector('.empty-state');
+                    if(emptyState) emptyState.style.display = 'none';
+                    
+                    // Envia via HTMX AJAX a atualização em background (Sem Refresh!)
+                    htmx.ajax('POST', `/hospedagens/atividades/mudar-status/${taskId}/`, {
+                        values: { 'status': newStatus },
+                        headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                        swap: 'none' 
+                    }).catch((err) => {
+                        // Reverte o card caso a requisição ao backend falhe
+                        alert("Erro ao salvar a tarefa. Tente novamente.");
+                        fromList.appendChild(itemEl); 
+                    });
+                }
+            });
+        });
+    })();
+</script>

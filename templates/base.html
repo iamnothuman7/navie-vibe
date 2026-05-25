@@ -6,20 +6,201 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Naviê Vibe - Descubra os Melhores Destinos{% endblock %}</title>
     
-    <!-- CSS Compilado do Tailwind e Inter Font Local -->
-    <!-- (Nota: inter.css aponta para as fontes baixadas, ou para a API caso ainda precise baixar as woff2 locais) -->
+    <!-- CSS Compilado do Tailwind, Inter e Poppins -->
     <link rel="stylesheet" href="{% static 'css/inter.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/output.css' %}">
     
     <!-- Swiper CSS Local -->
     <link rel="stylesheet" href="{% static 'css/swiper-bundle.min.css' %}">
 
     <style>
+        :root {
+            /* Naviê Cohesive Design System Tokens */
+            --navie-primary: #2563eb;
+            --navie-primary-dark: #1d4ed8;
+            --navie-primary-darker: #1e40af;
+            
+            --navie-bg: #f8fafc;
+            --navie-surface: #ffffff;
+            --navie-border: #cbd5e1;
+            --navie-border-hover: #94a3b8;
+            
+            --navie-text: #1e293b;
+            --navie-text-muted: #64748b;
+            
+            --navie-radius-lg: 16px;
+            --navie-radius-md: 12px;
+            
+            --navie-shadow-sm: 0 2px 4px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.03);
+            --navie-shadow-md: 0 10px 15px -3px rgba(0,0,0,0.04), 0 4px 6px -4px rgba(0,0,0,0.02);
+            --navie-shadow-lg: 0 20px 25px -5px rgba(0,0,0,0.06), 0 10px 10px -5px rgba(0,0,0,0.03);
+            --navie-shadow-inset: inset 0 2px 4px 0 rgba(0,0,0,0.05);
+            
+            --navie-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
         /* Regras Customizadas Vanilla (Avançadas) */
         html { scroll-behavior: smooth; }
         body { 
             font-family: 'Inter', sans-serif; 
-            background-color: #f8fafc; 
+            background-color: var(--navie-bg); 
+            color: var(--navie-text);
+        }
+
+        /* ─────────────────────────────────────────────────────────────────
+           GLOBAL DESIGN SYSTEM CLASSES
+           ───────────────────────────────────────────────────────────────── */
+
+        /* 1. Camadas de Profundidade & Efeito 3D */
+        .navie-depth-xs { box-shadow: var(--navie-shadow-sm); border: 1px solid var(--navie-border); }
+        .navie-depth-md { box-shadow: var(--navie-shadow-md); border: 1px solid rgba(226, 232, 240, 0.8); }
+        .navie-depth-lg { box-shadow: var(--navie-shadow-lg); border: 1px solid rgba(226, 232, 240, 0.6); }
+
+        /* Efeito de Elevação 3D suave no hover */
+        .navie-lift {
+            transition: var(--navie-transition);
+        }
+        .navie-lift:hover {
+            transform: translateY(-4px) translateZ(0);
+            box-shadow: var(--navie-shadow-lg);
+        }
+
+        /* 2. Inputs de Texto Padronizados */
+        .navie-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--navie-text-muted);
+            margin-bottom: 0.5rem;
+            transition: var(--navie-transition);
+        }
+
+        .navie-input {
+            width: 100% !important;
+            height: 48px;
+            padding: 0 1rem !important;
+            background-color: #f8fafc;
+            border: 1px solid var(--navie-border);
+            border-radius: var(--navie-radius-md);
+            font-size: 14px;
+            font-family: inherit;
+            color: var(--navie-text);
+            box-sizing: border-box;
+            transition: var(--navie-transition);
+        }
+
+        .navie-input:focus {
+            background-color: #ffffff;
+            border-color: var(--navie-primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+
+        .navie-input[readonly] {
+            background-color: #f1f5f9;
+            color: var(--navie-text-muted);
+            border-color: #e2e8f0;
+            cursor: not-allowed;
+        }
+
+        /* 3. Listas e Dropdowns Flutuantes */
+        .navie-dropdown-list {
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: var(--navie-radius-lg);
+            box-shadow: var(--navie-shadow-lg);
+            padding: 0.5rem;
+            list-style: none;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            z-index: 100;
+        }
+
+        .navie-list-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: var(--navie-radius-md);
+            color: var(--navie-text);
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: var(--navie-transition);
+        }
+
+        .navie-list-item:hover {
+            background-color: rgba(37, 99, 235, 0.08);
+            color: var(--navie-primary);
+            padding-left: 1.25rem; /* Efeito micro-animação lateral */
+        }
+
+        /* 4. Animação de Carregamento de Botão */
+        @keyframes navie-btn-progress {
+            0% { width: 0%; }
+            25% { width: 40%; }
+            60% { width: 75%; }
+            90% { width: 92%; }
+            100% { width: 98%; }
+        }
+
+        .navie-btn-loading {
+            position: relative !important;
+            overflow: hidden !important;
+            pointer-events: none !important;
+        }
+
+        .navie-btn-loading::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background-color: rgba(30, 58, 138, 0.35); /* Preenchimento azul escuro */
+            width: 0%;
+            animation: navie-btn-progress 3.5s cubic-bezier(0.1, 0.8, 0.1, 1) forwards;
+            z-index: 1;
+        }
+
+        .navie-btn-loading > * {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Scrollbar premium - apenas desktop */
+        @media (min-width: 768px) {
+            ::-webkit-scrollbar {
+                width: 8px;
+            }
+            ::-webkit-scrollbar-track {
+                background: #f1f5f9;
+            }
+            ::-webkit-scrollbar-thumb {
+                background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 50%, #1e40af 100%);
+                border-radius: 99px;
+                border: 2px solid #f1f5f9;
+            }
+            ::-webkit-scrollbar-thumb:hover {
+                background: linear-gradient(180deg, #1d4ed8 0%, #1e40af 100%);
+            }
+            /* Firefox */
+            * {
+                scrollbar-width: thin;
+                scrollbar-color: #2563eb #f1f5f9;
+            }
+        }
+        /* Mobile: sem scrollbar visível */
+        @media (max-width: 767px) {
+            ::-webkit-scrollbar { display: none; }
+            * { scrollbar-width: none; }
         }
         
         .bg-action-blue { background-color: #2563eb; }
@@ -33,6 +214,22 @@
             transform: translateY(-5px); 
             box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); 
         }
+
+        /* Navie Logo Premium */
+        .font-poppins { font-family: 'Poppins', sans-serif; }
+        .type-cursor {
+            display: inline-block;
+            width: 3px;
+            height: 1.1em;
+            background-color: #2563eb;
+            vertical-align: -0.15em;
+            margin-left: 2px;
+            animation: blink-premium 0.8s step-end infinite;
+        }
+        @keyframes blink-premium {
+            from, to { opacity: 1; }
+            50% { opacity: 0; }
+        }
     </style>
     {% block extra_head %}{% endblock %}
 </head>
@@ -41,13 +238,17 @@
     <!-- Header Simples -->
     <header class="bg-white sticky top-0 z-50 shadow-sm">
         <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-            <a href="{% url 'hoteis:home' %}" class="flex items-center gap-3 text-2xl font-black text-gray-900 tracking-tight">
-                <img src="{% static 'images/logo.png' %}" alt="Logo Naviê" class="h-10 w-auto object-contain">
-                Naviê <span class="text-action-blue">Vibe</span>
+            <a href="{% url 'hoteis:home' %}" class="flex items-center gap-3 text-2xl font-black tracking-tight" style="min-width: 200px;">
+                {% if hotel and hotel.logo %}
+                    <img src="{{ hotel.logo.url }}" alt="{{ hotel.nome }}" class="h-10 w-auto max-w-[120px] object-contain rounded-lg">
+                {% else %}
+                    <img src="{% static 'images/logo.png' %}" alt="Logo Naviê" class="h-10 w-auto object-contain">
+                {% endif %}
+                <span class="font-poppins"><span id="typewriter-text"></span><span class="type-cursor"></span></span>
             </a>
             
             <nav class="hidden md:flex gap-6 items-center font-medium">
-                <a href="#" class="hover:text-action-blue transition-colors">Hotéis</a>
+                <a href="{% url 'hoteis:hotelaria' %}" class="hover:text-action-blue transition-colors">Hotéis</a>
                 <a href="#" class="hover:text-action-blue transition-colors">Eventos</a>
                 <a href="#" class="hover:text-action-blue transition-colors">Cinema</a>
             </nav>
@@ -57,9 +258,16 @@
                     <i data-lucide="shopping-cart" class="w-6 h-6"></i>
                     <span class="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center">0</span>
                 </a>
-                <a href="#" class="bg-gray-100 px-4 py-2 rounded-full font-semibold text-sm hover:bg-gray-200 transition-colors">
+                {% if request.user.is_authenticated %}
+                <a href="{% url 'clientes:painel' %}" class="bg-blue-50 text-action-blue border border-blue-200 px-4 py-2 rounded-full font-bold text-sm hover:bg-action-blue hover:text-white transition-colors flex items-center gap-1.5">
+                    <i data-lucide="user" class="w-4 h-4"></i>
+                    <span>Painel</span>
+                </a>
+                {% else %}
+                <a href="{% url 'clientes:login_cadastro' %}" class="bg-gray-100 px-4 py-2 rounded-full font-semibold text-sm hover:bg-gray-200 transition-colors">
                     Entrar
                 </a>
+                {% endif %}
             </div>
         </div>
     </header>
@@ -68,27 +276,164 @@
     <!-- Conteúdo da Página Aqui -->
     {% endblock %}
 
-    <footer class="bg-gray-900 text-white py-12 mt-16">
-        <div class="container mx-auto px-4 text-center">
-            <div class="flex items-center justify-center gap-3 mb-4">
-                <img src="{% static 'images/logo.png' %}" alt="Logo Naviê" class="h-10 w-auto opacity-80" style="filter: brightness(0) invert(1);">
-                <h2 class="text-2xl font-black">Naviê <span class="text-action-blue">Vibe</span></h2>
+    {% include 'parceiros/modal_cadastro.html' %}
+
+    <footer style="background:#030712; color:#fff; margin-top:4rem; border-top:1px solid rgba(255,255,255,0.05);">
+
+        <!-- Banner Área de Parceiros -->
+        <div style="background:linear-gradient(135deg,#1e3a8a 0%,#1d4ed8 50%,#2563eb 100%); padding:1.5rem 0;">
+            <div style="max-width:1280px; margin:0 auto; padding:0 2rem; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:1rem;">
+                <div>
+                    <p style="font-size:0.65rem; font-weight:800; letter-spacing:0.12em; text-transform:uppercase; color:#bfdbfe; margin:0 0 0.25rem;">Área de Parceiros</p>
+                    <h3 style="font-size:1.4rem; font-weight:900; color:#fff; margin:0 0 0.25rem;">Gerencie seu negócio no Naviê</h3>
+                    <p style="font-size:0.85rem; color:#bfdbfe; margin:0;">Acesso exclusivo para hotéis, cinemas e produtoras cadastradas</p>
+                </div>
+                <a href="javascript:void(0)" onclick="toggleModalEmpresa(true)" style="display:inline-flex;align-items:center;gap:0.5rem;background:#fff;color:#1e40af;font-weight:700;padding:0.75rem 1.5rem;border-radius:1rem;text-decoration:none;white-space:nowrap;box-shadow:0 4px 15px rgba(0,0,0,0.2);">
+                    <i data-lucide="building-2" style="width:18px;height:18px;"></i>
+                    Entrar como Empresa
+                </a>
             </div>
-            <p class="text-gray-400 mb-8 max-w-md mx-auto">O seu marketplace de experiências na Ibiapaba. Encontre os melhores hotéis, atrações e eventos num só lugar.</p>
-            <div class="border-t border-gray-800 pt-8 text-sm text-gray-500">
-                &copy; {% now "Y" %} Naviê Vibe. Todos os direitos reservados.
+        </div>
+
+        <!-- Corpo do Rodapé -->
+        <div style="max-width:1280px; margin:0 auto; padding:3.5rem 2rem 2rem;">
+
+            <!-- Grid 4 colunas -->
+            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:2.5rem; margin-bottom:3rem;">
+
+                <!-- Col 1: Marca -->
+                <div>
+                    <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;">
+                        <img src="{% static 'images/logo.png' %}" alt="Logo Naviê" style="height:36px;width:auto;flex-shrink:0;filter:brightness(0) invert(1);opacity:0.85;">
+                        <span style="font-family:'Poppins',sans-serif;font-size:1.2rem;font-weight:900;white-space:nowrap;">
+                            <span style="color:#93c5fd;">Naviê</span> <span style="color:#60a5fa;">Vibe</span>
+                        </span>
+                    </div>
+                    <p style="color:#9ca3af;font-size:0.85rem;line-height:1.6;margin:0 0 1.25rem;">O marketplace de experiências da Ibiapaba. Hotéis, shows, cinema e muito mais num só lugar.</p>
+                    <div style="display:flex;gap:0.6rem;">
+                        <a href="#" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(37,99,235,0.15);border:1px solid rgba(37,99,235,0.3);text-decoration:none;color:#60a5fa;"><i data-lucide="instagram" class="w-4 h-4"></i></a>
+                        <a href="#" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(37,99,235,0.15);border:1px solid rgba(37,99,235,0.3);text-decoration:none;color:#60a5fa;"><i data-lucide="facebook" class="w-4 h-4"></i></a>
+                        <a href="#" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(37,99,235,0.15);border:1px solid rgba(37,99,235,0.3);text-decoration:none;color:#60a5fa;"><i data-lucide="youtube" class="w-4 h-4"></i></a>
+                    </div>
+                </div>
+
+                <!-- Col 2: Para Você -->
+                <div>
+                    <h4 style="font-size:0.65rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#6b7280;margin:0 0 1.25rem;">Para Você</h4>
+                    <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0.75rem;">
+                        <li><a href="#" style="color:#9ca3af;text-decoration:none;font-size:0.875rem;display:flex;align-items:center;gap:0.5rem;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#9ca3af'"><i data-lucide="hotel" class="w-3.5 h-3.5 text-[#3b82f6] shrink-0"></i>Hotéis &amp; Pousadas</a></li>
+                        <li><a href="#" style="color:#9ca3af;text-decoration:none;font-size:0.875rem;display:flex;align-items:center;gap:0.5rem;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#9ca3af'"><i data-lucide="film" class="w-3.5 h-3.5 text-[#3b82f6] shrink-0"></i>Cinema</a></li>
+                        <li><a href="#" style="color:#9ca3af;text-decoration:none;font-size:0.875rem;display:flex;align-items:center;gap:0.5rem;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#9ca3af'"><i data-lucide="music" class="w-3.5 h-3.5 text-[#3b82f6] shrink-0"></i>Shows &amp; Eventos</a></li>
+                        <li><a href="#" style="color:#9ca3af;text-decoration:none;font-size:0.875rem;display:flex;align-items:center;gap:0.5rem;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#9ca3af'"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-[#3b82f6] shrink-0"></i>Destinos em Alta</a></li>
+                        <li><a href="#" style="color:#9ca3af;text-decoration:none;font-size:0.875rem;display:flex;align-items:center;gap:0.5rem;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#9ca3af'"><i data-lucide="gift" class="w-3.5 h-3.5 text-[#3b82f6] shrink-0"></i>Experiências</a></li>
+                    </ul>
+                </div>
+
+                <!-- Col 3: Produtos Naviê -->
+                <div>
+                    <h4 style="font-size:0.65rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#6b7280;margin:0 0 1.25rem;">Produtos Naviê</h4>
+                    <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0.75rem;">
+                        <li><a href="{% url 'hoteis:partner_login' %}" style="color:#9ca3af;text-decoration:none;font-size:0.875rem;display:flex;align-items:center;gap:0.5rem;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#9ca3af'"><i data-lucide="bed-double" class="w-3.5 h-3.5 text-[#3b82f6] shrink-0"></i>Naviê <span style="color:#60a5fa;font-weight:600;margin-left:3px;">Hospedagens</span></a></li>
+                        <li><a href="#" style="color:#9ca3af;text-decoration:none;font-size:0.875rem;display:flex;align-items:center;gap:0.5rem;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#9ca3af'"><i data-lucide="clapperboard" class="w-3.5 h-3.5 text-[#3b82f6] shrink-0"></i>Ciné <span style="color:#60a5fa;font-weight:600;margin-left:3px;">Naviê</span></a></li>
+                        <li><a href="#" style="color:#9ca3af;text-decoration:none;font-size:0.875rem;display:flex;align-items:center;gap:0.5rem;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#9ca3af'"><i data-lucide="ticket" class="w-3.5 h-3.5 text-[#3b82f6] shrink-0"></i>Naviê <span style="color:#60a5fa;font-weight:600;margin-left:3px;">Shows</span></a></li>
+                        <li><a href="#" style="color:#9ca3af;text-decoration:none;font-size:0.875rem;display:flex;align-items:center;gap:0.5rem;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#9ca3af'"><i data-lucide="bar-chart-2" class="w-3.5 h-3.5 text-[#3b82f6] shrink-0"></i>Naviê <span style="color:#60a5fa;font-weight:600;margin-left:3px;">Dashboard</span></a></li>
+                        <li><a href="#" style="color:#9ca3af;text-decoration:none;font-size:0.875rem;display:flex;align-items:center;gap:0.5rem;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#9ca3af'"><i data-lucide="handshake" class="w-3.5 h-3.5 text-[#3b82f6] shrink-0"></i>Seja um Parceiro</a></li>
+                    </ul>
+                </div>
+
+                <!-- Col 4: Suporte -->
+                <div>
+                    <h4 style="font-size:0.65rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#6b7280;margin:0 0 1.25rem;">Suporte</h4>
+                    <ul style="list-style:none;padding:0;margin:0 0 1.5rem;display:flex;flex-direction:column;gap:0.75rem;">
+                        <li><a href="#" style="color:#9ca3af;text-decoration:none;font-size:0.875rem;display:flex;align-items:center;gap:0.5rem;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#9ca3af'"><i data-lucide="circle-help" class="w-3.5 h-3.5 text-[#3b82f6] shrink-0"></i>Central de Ajuda</a></li>
+                        <li><a href="#" style="color:#9ca3af;text-decoration:none;font-size:0.875rem;display:flex;align-items:center;gap:0.5rem;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#9ca3af'"><i data-lucide="message-circle" class="w-3.5 h-3.5 text-[#3b82f6] shrink-0"></i>Fale Conosco</a></li>
+                        <li><a href="#" style="color:#9ca3af;text-decoration:none;font-size:0.875rem;display:flex;align-items:center;gap:0.5rem;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#9ca3af'"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-[#3b82f6] shrink-0"></i>Privacidade</a></li>
+                        <li><a href="#" style="color:#9ca3af;text-decoration:none;font-size:0.875rem;display:flex;align-items:center;gap:0.5rem;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#9ca3af'"><i data-lucide="file-text" class="w-3.5 h-3.5 text-[#3b82f6] shrink-0"></i>Termos de Uso</a></li>
+                    </ul>
+                    <div style="background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.18);border-radius:0.75rem;padding:0.75rem;display:flex;align-items:center;gap:0.75rem;">
+                        <i data-lucide="lock" class="w-[18px] h-[18px] text-[#60a5fa] shrink-0"></i>
+                        <p style="margin:0;font-size:0.75rem;color:#6b7280;line-height:1.4;">Pagamentos seguros com criptografia SSL</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Copyright -->
+            <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:1.5rem;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.75rem;">
+                <p style="margin:0;color:#4b5563;font-size:0.75rem;">&copy; {% now "Y" %} Naviê Vibe. Todos os direitos reservados. Ibiapaba, Ceará — Brasil.</p>
+                <div style="display:flex;align-items:center;gap:0.4rem;font-size:0.75rem;color:#374151;">
+                    <i data-lucide="heart" class="w-3 h-3 text-[#1e3a8a]"></i>
+                    Feito com carinho para a Serra da Ibiapaba
+                </div>
             </div>
         </div>
     </footer>
 
-    <!-- Scripts Locais -->
-    <script src="{% static 'js/lucide.min.js' %}"></script>
+    <!-- Scripts Locais e CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="{% static 'js/swiper-bundle.min.js' %}"></script>
     
     <script>
         // Inicializa ícones Lucide
         lucide.createIcons();
+
+        // Máquina de Escrever Fluida e Premium
+        document.addEventListener("DOMContentLoaded", function() {
+            const textToType = "Naviê Vibe";
+            const element = document.getElementById("typewriter-text");
+            let index = 0;
+            let isDeleting = false;
+            
+            function renderText(str) {
+                // Naviê = índices 0-4, espaço = 5, Vibe = 6-9
+                // Cada char recebe sua cor correta desde o início
+                let navie = 'Naviê'; // 5 chars
+                let result = '';
+                
+                for (let i = 0; i < str.length; i++) {
+                    const ch = str[i];
+                    if (i < 5) {
+                        // Parte "Naviê" -> azul escuro
+                        result += `<span style="color:#1e3a8a">${ch}</span>`;
+                    } else if (i === 5) {
+                        // espaço
+                        result += ch;
+                    } else {
+                        // Parte "Vibe" -> action-blue
+                        result += `<span style="color:#2563eb">${ch}</span>`;
+                    }
+                }
+                return result;
+            }
+            
+            function typeLoop() {
+                // Pegando a parcela do texto baseado no index fluído
+                const currentStr = textToType.substring(0, index);
+                element.innerHTML = renderText(currentStr);
+                
+                // Variância de velocidade pra ficar orgânico e premium
+                let speed = isDeleting ? 40 : 120 + Math.random() * 50;
+                
+                if (!isDeleting && index === textToType.length) {
+                    speed = 2500; // pausa longa lendo o final
+                    isDeleting = true;
+                } else if (isDeleting && index === 0) {
+                    isDeleting = false;
+                    speed = 600; // respira fundo e recomeça
+                }
+                
+                index += isDeleting ? -1 : 1;
+                setTimeout(typeLoop, speed);
+            }
+            
+            // Inicia com um leve atraso
+            setTimeout(typeLoop, 500);
+        });
     </script>
     {% block extra_scripts %}{% endblock %}
+    <script>
+        // Inicializar ícones Lucide em todo o site
+        lucide.createIcons();
+    </script>
 </body>
 </html>

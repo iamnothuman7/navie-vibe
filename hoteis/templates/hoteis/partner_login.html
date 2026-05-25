@@ -1,0 +1,494 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Naviê Hospedagens - Portal de Negócios</title>
+    
+    <!-- CSS Fonts, Tailwind and Lucide -->
+    <link rel="stylesheet" href="{% static 'css/inter.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/output.css' %}">
+    
+    <style>
+        :root {
+            --b2b-bg: #090d16;
+            --b2b-slate-deep: #080c14;
+            --b2b-surface: #0f172a;
+            --b2b-border: rgba(255, 255, 255, 0.08);
+            --b2b-text: #f8fafc;
+            --b2b-muted: #64748b;
+            --b2b-primary: #2563eb;
+            --b2b-primary-hover: #1d4ed8;
+            --b2b-success: #10b981;
+            --b2b-error: #ef4444;
+        }
+
+        body {
+            background-color: var(--b2b-bg);
+            color: var(--b2b-text);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            overflow-x: hidden;
+        }
+
+        /* Standalone Split Screen Layout */
+        .split-layout {
+            display: flex;
+            min-height: 100vh;
+            width: 100vw;
+        }
+
+        /* Left side: Premium B2B Banner */
+        .banner-side {
+            background: linear-gradient(135deg, #090d16 0%, #0f172a 100%);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 4rem 3.5rem;
+            width: 50%;
+            border-right: 1px solid var(--b2b-border);
+            box-sizing: border-box;
+        }
+
+        .banner-side::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(circle at 10% 20%, rgba(37, 99, 235, 0.14) 0%, transparent 45%),
+                              radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 45%);
+            pointer-events: none;
+        }
+
+        /* Right side: Fixed Full-Height Form container */
+        .form-side {
+            background-color: var(--b2b-slate-deep);
+            width: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 2.5rem;
+            box-sizing: border-box;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        /* Responsive Layout Breakpoint */
+        @media (max-width: 992px) {
+            .banner-side {
+                display: none;
+            }
+            .form-side {
+                width: 100%;
+                padding: 2.5rem 1.5rem;
+            }
+        }
+
+        /* ─────────────────────────────────────────────────────────────────
+           VANILLA CSS DESIGN SYSTEM (COHESIVE B2B BRANDING)
+           ───────────────────────────────────────────────────────────────── */
+
+        /* 1. Typography & Main Layout elements */
+        .partner-logo-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .partner-logo-text {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.35rem;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            color: #ffffff;
+        }
+
+        .partner-logo-highlight {
+            color: #60a5fa;
+        }
+
+        .partner-slogan-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 900;
+            line-height: 1.15;
+            color: #ffffff;
+            margin: 0 0 1rem 0;
+        }
+
+        .partner-slogan-desc {
+            font-size: 1rem;
+            color: #94a3b8;
+            line-height: 1.6;
+            margin: 0 0 2rem 0;
+        }
+
+        /* 2. Premium Features List (Cards Gaps fixed!) */
+        .partner-features-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem; /* Strict vertical padding/gap between cards */
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .feature-item {
+            background: rgba(255, 255, 255, 0.015);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 18px;
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            box-sizing: border-box;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-item:hover {
+            background: rgba(255, 255, 255, 0.035);
+            border-color: rgba(37, 99, 235, 0.2);
+            transform: translateX(6px) translateZ(0);
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.2);
+        }
+
+        .feature-icon-wrapper {
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .icon-bg-green { background-color: rgba(16, 185, 129, 0.1); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.15); }
+        .icon-bg-purple { background-color: rgba(139, 92, 246, 0.1); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.15); }
+        .icon-bg-blue { background-color: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.15); }
+
+        .feature-item-text {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .feature-item-title {
+            font-size: 14.5px;
+            font-weight: 700;
+            color: #ffffff;
+            margin: 0;
+        }
+
+        .feature-item-desc {
+            font-size: 12px;
+            color: #64748b;
+            font-weight: 500;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        /* 3. B2B Form Spacing and Layout (Absolute Icons Positioning) */
+        .partner-form-wrapper {
+            width: 100%;
+            max-width: 420px;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+
+        .partner-form-wrapper.register-mode {
+            max-width: 500px;
+        }
+
+        .partner-form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem; /* Precise geometrical vertical rhythm */
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .partner-label {
+            font-size: 11px;
+            font-weight: 750;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #94a3b8;
+            margin: 0;
+            transition: color 0.2s ease;
+        }
+
+        .partner-input-wrapper {
+            position: relative;
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            cursor: default; /* Arrow pointer outside the typing area */
+        }
+
+        /* Input field left icon positioning absolute */
+        .partner-input-icon {
+            position: absolute;
+            left: 1.15rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: #64748b;
+            pointer-events: none;
+            user-select: none; /* Prevent text selection highlights */
+            cursor: default;
+            z-index: 10;
+        }
+
+        /* Geometrically perfect input fields */
+        .partner-input-field {
+            width: 100% !important;
+            height: 50px !important;
+            padding: 0 1rem 0 3.2rem !important; /* Generate generous padding to left-align text away from absolute icon */
+            background-color: rgba(15, 23, 42, 0.65) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 16px !important;
+            font-size: 14.5px !important;
+            font-family: inherit !important;
+            color: #f8fafc !important;
+            box-sizing: border-box !important;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+
+        .partner-input-field:focus {
+            background-color: rgba(15, 23, 42, 0.9) !important;
+            border-color: var(--b2b-primary) !important;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2) !important;
+            outline: none !important;
+        }
+
+        /* Non-iconed text inputs */
+        .partner-input-noicon {
+            width: 100% !important;
+            height: 50px !important;
+            padding: 0 1.25rem !important;
+            background-color: rgba(15, 23, 42, 0.65) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 16px !important;
+            font-size: 14.5px !important;
+            font-family: inherit !important;
+            color: #f8fafc !important;
+            box-sizing: border-box !important;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+
+        .partner-input-noicon:focus {
+            background-color: rgba(15, 23, 42, 0.9) !important;
+            border-color: var(--b2b-primary) !important;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2) !important;
+            outline: none !important;
+        }
+
+        /* Dropdown custom styling */
+        select.partner-input-noicon {
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+            background-repeat: no-repeat !important;
+            background-position: right 1.2rem center !important;
+            background-size: 0.9em !important;
+            padding-right: 2.8rem !important;
+            cursor: pointer;
+        }
+
+        /* 4. Cohesive Button controls */
+        .partner-btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            width: 100%;
+            height: 52px;
+            background-color: var(--b2b-primary);
+            color: #ffffff;
+            font-family: inherit;
+            font-size: 15.5px;
+            font-weight: 750;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.25);
+            transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+            box-sizing: border-box;
+        }
+
+        .partner-btn-primary:hover {
+            background-color: var(--b2b-primary-hover);
+            transform: translateY(-1.5px);
+            box-shadow: 0 8px 22px rgba(37, 99, 235, 0.35);
+        }
+
+        .partner-btn-primary:active {
+            transform: scale(0.985);
+        }
+
+        /* 5. Geometrical grid splits for register form */
+        .partner-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        @media (max-width: 576px) {
+            .partner-grid-2 {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+
+        /* 6. Cohesive Alert blocks */
+        .partner-alert {
+            display: flex;
+            align-items: start;
+            gap: 0.85rem;
+            padding: 1.15rem 1.35rem;
+            border-radius: 16px;
+            font-size: 13.5px;
+            font-weight: 600;
+            line-height: 1.4;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 1.5rem;
+        }
+
+        .partner-alert-error {
+            background-color: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+
+        .partner-alert-success {
+            background-color: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+
+        /* Divider and links styling */
+        .partner-divider {
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            padding-top: 1.5rem;
+            margin-top: 1.75rem;
+            text-align: center;
+            font-size: 13.5px;
+            line-height: 1.5;
+            width: 100%;
+        }
+
+        .partner-link-btn {
+            font-weight: 750;
+            color: #60a5fa;
+            background: none;
+            border: none;
+            cursor: pointer;
+            text-decoration: underline;
+            padding: 0;
+            font-family: inherit;
+        }
+
+        .partner-link-btn:hover {
+            color: #93c5fd;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="split-layout">
+        
+        <!-- ─────────────────────────────────────────────────────────────
+             LADO ESQUERDO: BANNER VISUAL B2B (MÓDULOS DESTAQUES)
+             ───────────────────────────────────────────────────────────── -->
+        <div class="banner-side">
+            <!-- Brand / Logo -->
+            <div class="partner-logo-container">
+                <img src="{% static 'images/logo.png' %}" alt="Logo Naviê" class="h-10 w-auto object-contain filter brightness-0 invert opacity-90">
+                <span class="partner-logo-text">
+                    <span>Naviê</span> <span class="partner-logo-highlight">Hospedagens</span>
+                </span>
+            </div>
+
+            <!-- Main Marketing/Pitch -->
+            <div style="margin: auto 0; width: 100%;">
+                <h1 class="partner-slogan-title">O controle absoluto do seu hotel ou pousada.</h1>
+                <p class="partner-slogan-desc">
+                    Gerencie faturamento, fluxos operacionais de limpeza, ordens de serviços de infraestrutura e cadastro de unidades de forma 100% unificada no Naviê.
+                </p>
+
+                <!-- Features list (Gaps fixed!) -->
+                <div class="partner-features-list">
+                    <div class="feature-item">
+                        <div class="feature-icon-wrapper icon-bg-green">
+                            <i data-lucide="line-chart" class="w-5 h-5"></i>
+                        </div>
+                        <div class="feature-item-text">
+                            <h4 class="feature-item-title">Financeiro e Caixa</h4>
+                            <p class="feature-item-desc">Lançamento de despesas, receitas e fluxo de comissionamento.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <div class="feature-icon-wrapper icon-bg-purple">
+                            <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+                        </div>
+                        <div class="feature-item-text">
+                            <h4 class="feature-item-title">Workflow Operacional</h4>
+                            <p class="feature-item-desc">Tarefas automáticas pós-checkout para camareiras e manutenção.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <div class="feature-icon-wrapper icon-bg-blue">
+                            <i data-lucide="calendar" class="w-5 h-5"></i>
+                        </div>
+                        <div class="feature-item-text">
+                            <h4 class="feature-item-title">Motor Tarifário Dinâmico</h4>
+                            <p class="feature-item-desc">Ajustes sazonais de diárias e cupons de desconto.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer signature -->
+            <div class="text-[11px] text-slate-500 font-bold flex items-center gap-1.5 pt-4">
+                <i data-lucide="lock" class="w-4 h-4 text-blue-500"></i>
+                <span>Plataforma de gestão integrada certificada Naviê Vibe</span>
+            </div>
+        </div>
+
+        <!-- ─────────────────────────────────────────────────────────────
+             LADO DIREITO: CONTAINER DO FORMULÁRIO (HTMX DYNAMIC SWAPS)
+             ───────────────────────────────────────────────────────────── -->
+        <div class="form-side">
+            <!-- Include initial Form template inside the swap container -->
+            {% include 'hoteis/partner_login_form.html' %}
+        </div>
+
+    </div>
+
+    <!-- Scripts (Lucide, HTMX) -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        // Init Lucide on load
+        lucide.createIcons();
+        
+        // Ensure tokens are processed on HTMX swapping
+        document.body.addEventListener('htmx:afterSwap', function(evt) {
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>

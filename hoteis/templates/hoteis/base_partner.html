@@ -1,0 +1,843 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br" class="scroll-smooth" 
+x-data="{ 
+    theme: localStorage.getItem('theme') || 'light', 
+    sidebarMobileOpen: false,
+    sidebarExpanded: false,
+    notificationsOpen: false,
+    activeTab: localStorage.getItem('partner_active_tab') || '{% if perfil.role == 'proprietario' or perfil.role == 'gerente' %}financeiro{% elif perfil.role == 'portaria' %}checkin{% elif perfil.role == 'camareira' %}limpeza{% else %}manutencao{% endif %}', 
+    viewMode: localStorage.getItem('partner_view_mode') || 'kanban',
+    configTab: localStorage.getItem('partner_config_tab') || 'site',
+    
+    updateStatusColor() {
+        const meta = document.getElementById('theme-color-meta');
+        if (!meta) return;
+        meta.setAttribute('content', this.theme === 'glass' ? '#0f0f0f' : '#ffffff');
+    },
+
+    init() {
+        this.updateStatusColor();
+        if (this.theme === 'glass') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        
+        // Remove a folha de estilo temporária de bootstrap das abas
+        const bootstrapStyle = document.getElementById('active-tab-bootstrap-style');
+        if (bootstrapStyle) bootstrapStyle.remove();
+        
+        // Persistir a aba ativa ao mudar
+        this.$watch('activeTab', value => {
+            localStorage.setItem('partner_active_tab', value);
+        });
+        
+        // Persistir o modo de visualização (kanban/calendario) ao mudar
+        this.$watch('viewMode', value => {
+            localStorage.setItem('partner_view_mode', value);
+        });
+        
+        // Persistir a sub-aba de configurações
+        this.$watch('configTab', value => {
+            localStorage.setItem('partner_config_tab', value);
+        });
+    },
+    
+    toggleTheme() {
+        this.theme = this.theme === 'light' ? 'glass' : 'light';
+        localStorage.setItem('theme', this.theme);
+        this.updateStatusColor();
+        
+        if(this.theme === 'glass') {
+            document.documentElement.classList.add('dark');
+            const bgVideo = document.getElementById('bg-video');
+            if (bgVideo) bgVideo.play();
+        } else {
+            document.documentElement.classList.remove('dark');
+            const bgVideo = document.getElementById('bg-video');
+            if (bgVideo) bgVideo.pause();
+        }
+    }
+}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <!-- Cores Dinâmicas da Barra de Status do Celular -->
+    <meta name="theme-color" content="#ffffff" id="theme-color-meta">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>{% block title %}Painel Administrativo{% endblock %} | {{ hotel.nome }}</title>
+    
+    <!-- Favicon Dinâmico -->
+    {% if hotel.logo %}
+        <link rel="icon" type="image/png" href="{{ hotel.logo.url }}">
+        <link rel="apple-touch-icon" href="{{ hotel.logo.url }}">
+    {% else %}
+        <link rel="icon" type="image/png" href="{% static 'images/logo.png' %}">
+    {% endif %}
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Play CDN do Tailwind (Carrega dinamicamente em tempo de execução no navegador para evitar compilações quebradas) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Algoritmo matemático para geração dinâmica de paletas de cor B2B (Multi-Tenant)
+        function getDynamicPalette(hexColor) {
+            if (!hexColor || !hexColor.startsWith('#')) hexColor = '#f97316';
+            const hex = hexColor.replace('#', '');
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            
+            const blend = (r, g, b, factor) => {
+                let nr = Math.round(r * factor + (255 * (1 - factor)));
+                let ng = Math.round(g * factor + (255 * (1 - factor)));
+                let nb = Math.round(b * factor + (255 * (1 - factor)));
+                if (factor < 0) { // Escurecer
+                    nr = Math.round(r * (1 + factor));
+                    ng = Math.round(g * (1 + factor));
+                    nb = Math.round(b * (1 + factor));
+                }
+                return "#" + ((1 << 24) + (nr << 16) + (ng << 8) + nb).toString(16).slice(1);
+            };
+            
+            return {
+                50: blend(r, g, b, 0.96),
+                100: blend(r, g, b, 0.88),
+                500: hexColor,
+                600: blend(r, g, b, -0.15),
+                900: blend(r, g, b, -0.6)
+            };
+        }
+
+        const activeBrandColor = "{{ hotel.cor_primaria|default:'#f97316' }}";
+        const brandPalette = getDynamicPalette(activeBrandColor);
+
+        // Define variáveis de CSS globais para elementos nativos (não-Tailwind)
+        document.documentElement.style.setProperty('--brand-color', activeBrandColor);
+        const hex = activeBrandColor.replace('#', '');
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        document.documentElement.style.setProperty('--brand-color-alpha', `rgba(${r}, ${g}, ${b}, 0.15)`);
+        document.documentElement.style.setProperty('--brand-color-alpha-focus', `rgba(${r}, ${g}, ${b}, 0.25)`);
+
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { 
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Inter', 'monospace']
+                    },
+                    colors: {
+                        // Paleta de destaque dinâmica do hotel
+                        brand: {
+                            DEFAULT: activeBrandColor,
+                            50: brandPalette[50],
+                            100: brandPalette[100],
+                            500: brandPalette[500],
+                            600: brandPalette[600],
+                            900: brandPalette[900],
+                        },
+                        // Paleta do modo translúcido (Glassmorphism)
+                        navie: {
+                            bg: '#0f0f0f',             // Fundo mestre escuro
+                            overlay: 'rgba(0, 0, 0, 0.7)',
+                            glass: 'rgba(255, 255, 255, 0.05)', // Painel de vidro fosco
+                            border: 'rgba(255, 255, 255, 0.1)', // Linha divisória fina
+                            textsec: '#a0a0a0'          // Texto secundário discreto
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+
+    <!-- Bibliotecas Mestre (Estilo e Interação) -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://unpkg.com/alpinejs@3.13.5" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- PLUGINS PRESERVADOS DO BASE ORIGINAL PARA NÃO QUEBRAR O SISTEMA -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.snow.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script> 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Folha de Estilo Customizada (CSS Adicional de Vidro) -->
+    <style>
+        /* --- Estilos Globais e Reset --- */
+        html, body { 
+            margin: 0; 
+            padding: 0;
+            max-width: 100%;
+            width: 100%;
+            height: 100vh;
+            height: 100dvh; /* Evita quebra de layout/pulos no Safari iOS */
+            overflow: hidden;
+            scrollbar-gutter: auto;
+            position: relative;
+            background-color: #ffffff;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* --- Scrollbar Minimalista Premium --- */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        html.dark ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); }
+        html.dark ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.4); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        [x-cloak] { display: none !important; }
+
+        /* Evita setas chatas em inputs do tipo number */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none !important;
+            margin: 0 !important;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield !important;
+            appearance: textfield !important;
+        }
+
+        /* --- Classe Mestre: Glassmorphism (Inputs & Cards) --- */
+        .input-glass { 
+            background: rgba(255, 255, 255, 0.6) !important; 
+            border: 1px solid rgba(0, 0, 0, 0.08) !important; 
+            backdrop-filter: blur(8px); 
+            -webkit-backdrop-filter: blur(8px); 
+            color: #1a1a1a !important; 
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.03); 
+            transition: all 0.2s ease; 
+        }
+        /* Versão Dark do Glass */
+        .dark .input-glass { 
+            background: rgba(255, 255, 255, 0.03) !important; 
+            border: 1px solid rgba(255, 255, 255, 0.1) !important; 
+            color: white !important; 
+        }
+        /* Efeito de foco (Focus Glow e elevação suave) */
+        .input-glass:focus { 
+            background: rgba(255, 255, 255, 0.9) !important; 
+            border-color: var(--brand-color) !important; 
+            box-shadow: 0 0 0 4px var(--brand-color-alpha-focus) !important; 
+            transform: translateY(-1px); 
+        }
+        .dark .input-glass:focus { 
+            background: rgba(0, 0, 0, 0.4) !important; 
+        }
+        .input-glass::placeholder { color: rgba(156, 163, 175, 0.6); }
+        .dark .input-glass::placeholder { color: rgba(255, 255, 255, 0.3); }
+
+        .role-badge {
+            font-size: 9px;
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            padding: 0.15rem 0.5rem;
+            border-radius: 9999px;
+        }
+        .badge-proprietario { background-color: var(--brand-color-alpha); color: var(--brand-color); border: 1px solid var(--brand-color-alpha); }
+
+        .badge-gerente { background-color: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-portaria { background-color: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .badge-camareira { background-color: rgba(139, 92, 246, 0.15); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.3); }
+        .badge-manutencao { background-color: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    </style>
+
+    <!-- HACK ANTI-FLASH & BOOTSTRAP TABS (Previne tela branca e flicker ao recarregar a página) -->
+    <script>
+        (function() {
+            const theme = localStorage.getItem('theme');
+            const isDark = theme === 'glass' || (theme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+                document.documentElement.style.backgroundColor = '#0f0f0f';
+            } else {
+                document.documentElement.style.backgroundColor = '#ffffff';
+            }
+            
+            // Oculta abas não ativas instantaneamente antes da renderização do DOM
+            const activeTab = localStorage.getItem('partner_active_tab');
+            if (activeTab) {
+                const style = document.createElement('style');
+                style.id = 'active-tab-bootstrap-style';
+                style.innerHTML = `
+                    [x-show^="activeTab === '"]:not([x-show*="activeTab === '${activeTab}'"]) {
+                        display: none !important;
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        })();
+    </script>
+</head>
+
+<body class="text-slate-600 dark:text-white font-sans antialiased flex min-h-screen selection:bg-brand-100 selection:text-brand-900 bg-white dark:bg-navie-bg relative">
+
+    <!-- Fundo de Partículas (Apenas no Modo Claro para dar leveza e dinamismo) -->
+    <div id="particles-js" x-show="theme === 'light'" x-transition.opacity.duration.700ms class="fixed inset-0 z-0 pointer-events-none bg-white"></div>
+
+    <!-- MODO GLASS: Imagem de Fundo Dinâmica da Loja / Hotel -->
+    <div x-show="theme === 'glass'" x-transition.opacity.duration.1000ms 
+         class="fixed inset-0 z-0 pointer-events-none overflow-hidden bg-navie-bg"
+         style="display: none; height: 100dvh;">
+        
+        <div class="absolute inset-0 w-full h-full bg-black/45 z-10 backdrop-blur-[6px]"></div>
+        
+        {% if hotel.foto_fundo %}
+            <!-- Imagem de Fundo Exclusiva Glass Mode -->
+            <img src="{{ hotel.foto_fundo.url }}" class="absolute inset-0 w-full h-full object-cover opacity-50 brightness-[0.7] grayscale-[0.1]">
+        {% elif hotel.banner %}
+            <!-- Imagem Personalizada do Hotel (Fallback) -->
+            <img src="{{ hotel.banner.url }}" class="absolute inset-0 w-full h-full object-cover opacity-50 brightness-[0.7] grayscale-[0.1]">
+        {% else %}
+            <!-- Imagem de Backdrop Premium de Hotel / Cabana de Luxo -->
+            <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1920&q=80" class="absolute inset-0 w-full h-full object-cover opacity-45 brightness-[0.6]">
+        {% endif %}
+    </div>
+
+    <!-- Espaçador invisível para empurrar o conteúdo ao lado da Sidebar recolhida -->
+    <div class="hidden md:block w-[70px] hover:w-[260px] transition-all duration-300 min-h-screen flex-shrink-0 z-10 peer"></div>
+
+    <!-- ─────────────────────────────────────────────────────────────────
+         SIDEBAR RESPONSIVA LATERAL B2B HOTELEIRA
+         ───────────────────────────────────────────────────────────────── -->
+    <aside 
+        :class="sidebarMobileOpen ? 'translate-x-0' : '-translate-x-full'"
+        class="fixed top-0 left-0 h-[100dvh] bg-white/70 dark:bg-black/40 backdrop-blur-xl dark:backdrop-blur-[20px] border-r border-slate-200/80 dark:border-navie-border transition-all duration-300 ease-in-out z-50 flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.04)] md:translate-x-0 w-72 md:w-[70px] hover:w-[260px] overflow-hidden group/sidebar"
+    >
+        
+        <div class="h-20 flex items-center justify-center md:justify-start px-4 border-b border-slate-200/50 dark:border-navie-border flex-shrink-0 whitespace-nowrap transition-all duration-300">
+            <!-- EXPANDIDO (Aberto ou no Hover) -->
+            <div :class="sidebarMobileOpen ? 'flex' : 'hidden group-hover/sidebar:flex'" class="items-center justify-center gap-3 w-full animate-in fade-in zoom-in duration-300">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 flex-shrink-0 rounded-lg bg-brand flex items-center justify-center text-white font-bold text-sm shadow-md">
+                        {{ hotel.nome|default:"NH"|slice:":2"|upper }}
+                    </div>
+                    <span class="text-brand-900 dark:text-white font-black tracking-tight text-sm truncate max-w-[110px]">
+                        {{ hotel.nome|default:"Hospedagem" }}
+                    </span>
+                </div>
+                
+                <div class="w-[2px] h-6 bg-slate-200 dark:bg-navie-border rounded-full shrink-0"></div>
+                
+                {% if hotel.logo %}
+                    <img src="{{ hotel.logo.url }}" alt="{{ hotel.nome }}" class="h-6 w-auto max-w-[64px] object-contain opacity-95 rounded-lg" title="{{ hotel.nome }}">
+                {% else %}
+                    <img src="{% static 'images/logo.png' %}" alt="Naviê" class="h-5 w-auto object-contain opacity-95" title="Naviê Vibe">
+                {% endif %}
+            </div>
+
+            <!-- RECOLHIDO (Fechado) -->
+            <div :class="sidebarMobileOpen ? 'hidden' : 'flex group-hover/sidebar:hidden'" class="flex-col items-center justify-center gap-2 w-full h-full py-2">
+                <div class="w-7 h-7 flex-shrink-0 rounded-md bg-brand flex items-center justify-center text-white font-bold text-[10px]" title="{{ hotel.nome }}">
+                    {{ hotel.nome|default:"NH"|slice:":2"|upper }}
+                </div>
+                
+                <div class="w-4 h-[2px] bg-slate-200 dark:bg-navie-border rounded-full shrink-0"></div>
+                
+                {% if hotel.logo %}
+                    <img src="{{ hotel.logo.url }}" alt="{{ hotel.nome }}" class="h-5 w-auto max-w-[32px] object-contain opacity-80 rounded-md" title="{{ hotel.nome }}">
+                {% else %}
+                    <img src="{% static 'images/logo.png' %}" alt="Naviê" class="h-4 w-auto object-contain opacity-80" title="Naviê Vibe">
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Navegação Adaptativa Baseada em Cargos Operacionais -->
+        <nav class="flex-1 overflow-y-auto no-scrollbar py-4 flex flex-col gap-6 px-3">
+            
+            <div> 
+                <p class="px-3 text-[10px] font-bold text-slate-400 dark:text-navie-textsec uppercase tracking-wider mb-2 opacity-100 md:opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap">Gestão Hospedagem</p>
+                
+                <ul class="space-y-1">
+                    <!-- PROPRIETÁRIO / GERENTE -->
+                    {% if perfil.role == 'proprietario' or perfil.role == 'gerente' %}
+                    <li>
+                        <a href="javascript:void(0)" @click="activeTab = 'financeiro'" :class="activeTab === 'financeiro' ? 'text-brand dark:text-white bg-brand-50/80 dark:bg-white/10 font-semibold' : 'text-slate-500 dark:text-navie-textsec hover:text-brand-900 dark:hover:text-white hover:bg-slate-100/50 dark:hover:bg-white/10'" class="relative flex items-center p-2 text-sm font-medium rounded-lg transition-colors overflow-hidden whitespace-nowrap group/link">
+                            <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-md">
+                                <span class="flex items-center justify-center" style="pointer-events: none;"><i data-lucide="layout-dashboard" class="w-5 h-5"></i></span>
+                            </div>
+                            <span class="ml-3 opacity-100 md:opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300">Visão Geral / Financeiro</span>
+                        </a>
+                    </li>
+                    
+                    <li>
+                        <a href="javascript:void(0)" @click="activeTab = 'quartos'" :class="activeTab === 'quartos' ? 'text-brand dark:text-white bg-brand-50/80 dark:bg-white/10 font-semibold' : 'text-slate-500 dark:text-navie-textsec hover:text-brand-900 dark:hover:text-white hover:bg-slate-100/50 dark:hover:bg-white/10'" class="relative flex items-center p-2 text-sm font-medium rounded-lg transition-colors overflow-hidden whitespace-nowrap group/link">
+                            <div class="relative flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-md">
+                                <span class="flex items-center justify-center" style="pointer-events: none;"><i data-lucide="bed" class="w-5 h-5"></i></span>
+                            </div>
+                            <span class="ml-3 opacity-100 md:opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300">Quartos & Tarifas</span>
+                        </a>
+                    </li>
+                    
+                    <li>
+                        <a href="javascript:void(0)" @click="activeTab = 'reservas'" :class="activeTab === 'reservas' ? 'text-brand dark:text-white bg-brand-50/80 dark:bg-white/10 font-semibold' : 'text-slate-500 dark:text-navie-textsec hover:text-brand-900 dark:hover:text-white hover:bg-slate-100/50 dark:hover:bg-white/10'" class="relative flex items-center p-2 text-sm font-medium rounded-lg transition-colors overflow-hidden whitespace-nowrap group/link">
+                            <div class="relative flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-md">
+                                <span class="flex items-center justify-center" style="pointer-events: none;"><i data-lucide="calendar-check" class="w-5 h-5"></i></span>
+                            </div>
+                            <span class="ml-3 opacity-100 md:opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300">Reservas</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="javascript:void(0)" @click="activeTab = 'atividades'" :class="activeTab === 'atividades' ? 'text-brand dark:text-white bg-brand-50/80 dark:bg-white/10 font-semibold' : 'text-slate-500 dark:text-navie-textsec hover:text-brand-900 dark:hover:text-white hover:bg-slate-100/50 dark:hover:bg-white/10'" class="relative flex items-center p-2 text-sm font-medium rounded-lg transition-colors overflow-hidden whitespace-nowrap group/link">
+                            <div class="relative flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-md">
+                                <span class="flex items-center justify-center" style="pointer-events: none;"><i data-lucide="clipboard-list" class="w-5 h-5"></i></span>
+                            </div>
+                            <span class="ml-3 opacity-100 md:opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300">Organização / Tarefas</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="javascript:void(0)" @click="activeTab = 'equipe'" :class="activeTab === 'equipe' ? 'text-brand dark:text-white bg-brand-50/80 dark:bg-white/10 font-semibold' : 'text-slate-500 dark:text-navie-textsec hover:text-brand-900 dark:hover:text-white hover:bg-slate-100/50 dark:hover:bg-white/10'" class="relative flex items-center p-2 text-sm font-medium rounded-lg transition-colors overflow-hidden whitespace-nowrap group/link">
+                            <div class="relative flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-md">
+                                <span class="flex items-center justify-center" style="pointer-events: none;"><i data-lucide="users" class="w-5 h-5"></i></span>
+                            </div>
+                            <span class="ml-3 opacity-100 md:opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300">Equipe & Permissões</span>
+                        </a>
+                    </li>
+                    
+                    <li>
+                        <a href="javascript:void(0)" @click="activeTab = 'configuracoes'" :class="activeTab === 'configuracoes' ? 'text-brand dark:text-white bg-brand-50/80 dark:bg-white/10 font-semibold' : 'text-slate-500 dark:text-navie-textsec hover:text-brand-900 dark:hover:text-white hover:bg-slate-100/50 dark:hover:bg-white/10'" class="relative flex items-center p-2 text-sm font-medium rounded-lg transition-colors overflow-hidden whitespace-nowrap group/link">
+                            <div class="relative flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-md">
+                                <span class="flex items-center justify-center" style="pointer-events: none;"><i data-lucide="settings" class="w-5 h-5"></i></span>
+                            </div>
+                            <span class="ml-3 opacity-100 md:opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300">Configurações do Site</span>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <!-- PORTARIA / RECEPÇÃO -->
+                    {% if perfil.role == 'portaria' %}
+                    <li>
+                        <a href="javascript:void(0)" @click="activeTab = 'checkin'" :class="activeTab === 'checkin' ? 'text-brand dark:text-white bg-brand-50/80 dark:bg-white/10 font-semibold' : 'text-slate-500 dark:text-navie-textsec hover:text-brand-900 dark:hover:text-white hover:bg-slate-100/50 dark:hover:bg-white/10'" class="relative flex items-center p-2 text-sm font-medium rounded-lg transition-colors overflow-hidden whitespace-nowrap group/link">
+                            <div class="relative flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-md">
+                                <span class="flex items-center justify-center" style="pointer-events: none;"><i data-lucide="qr-code" class="w-5 h-5"></i></span>
+                            </div>
+                            <span class="ml-3 opacity-100 md:opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300">Check-in / Validador</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="javascript:void(0)" @click="activeTab = 'ocupacao'" :class="activeTab === 'ocupacao' ? 'text-brand dark:text-white bg-brand-50/80 dark:bg-white/10 font-semibold' : 'text-slate-500 dark:text-navie-textsec hover:text-brand-900 dark:hover:text-white hover:bg-slate-100/50 dark:hover:bg-white/10'" class="relative flex items-center p-2 text-sm font-medium rounded-lg transition-colors overflow-hidden whitespace-nowrap group/link">
+                            <div class="relative flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-md">
+                                <span class="flex items-center justify-center" style="pointer-events: none;"><i data-lucide="door-closed" class="w-5 h-5"></i></span>
+                            </div>
+                            <span class="ml-3 opacity-100 md:opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300">Ocupação do Dia</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="javascript:void(0)" @click="activeTab = 'pedidos'" :class="activeTab === 'pedidos' ? 'text-brand dark:text-white bg-brand-50/80 dark:bg-white/10 font-semibold' : 'text-slate-500 dark:text-navie-textsec hover:text-brand-900 dark:hover:text-white hover:bg-slate-100/50 dark:hover:bg-white/10'" class="relative flex items-center p-2 text-sm font-medium rounded-lg transition-colors overflow-hidden whitespace-nowrap group/link">
+                            <div class="relative flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-md">
+                                <span class="flex items-center justify-center" style="pointer-events: none;"><i data-lucide="bell" class="w-5 h-5"></i></span>
+                            </div>
+                            <span class="ml-3 opacity-100 md:opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300">Pedidos de Hóspedes</span>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <!-- CAMAREIRA -->
+                    {% if perfil.role == 'camareira' %}
+                    <li>
+                        <a href="javascript:void(0)" @click="activeTab = 'limpeza'" :class="activeTab === 'limpeza' ? 'text-brand dark:text-white bg-brand-50/80 dark:bg-white/10 font-semibold' : 'text-slate-500 dark:text-navie-textsec hover:text-brand-900 dark:hover:text-white hover:bg-slate-100/50 dark:hover:bg-white/10'" class="relative flex items-center p-2 text-sm font-medium rounded-lg transition-colors overflow-hidden whitespace-nowrap group/link">
+                            <div class="relative flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-md">
+                                <span class="flex items-center justify-center" style="pointer-events: none;"><i data-lucide="sparkles" class="w-5 h-5"></i></span>
+                            </div>
+                            <span class="ml-3 opacity-100 md:opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300">Quartos para Limpar</span>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <!-- MANUTENÇÃO -->
+                    {% if perfil.role == 'manutencao' %}
+                    <li>
+                        <a href="javascript:void(0)" @click="activeTab = 'manutencao'" :class="activeTab === 'manutencao' ? 'text-brand dark:text-white bg-brand-50/80 dark:bg-white/10 font-semibold' : 'text-slate-500 dark:text-navie-textsec hover:text-brand-900 dark:hover:text-white hover:bg-slate-100/50 dark:hover:bg-white/10'" class="relative flex items-center p-2 text-sm font-medium rounded-lg transition-colors overflow-hidden whitespace-nowrap group/link">
+                            <div class="relative flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-md">
+                                <span class="flex items-center justify-center" style="pointer-events: none;"><i data-lucide="wrench" class="w-5 h-5"></i></span>
+                            </div>
+                            <span class="ml-3 opacity-100 md:opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300">Ordens de Serviço</span>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                </ul>
+            </div>
+
+            <div>
+                <p class="px-3 text-[10px] font-bold text-slate-400 dark:text-navie-textsec uppercase tracking-wider mb-2 opacity-100 md:opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap">B2C Ativo</p>
+                <ul class="space-y-1">
+                    <li>
+                        <a href="{% url 'hoteis:home' %}" target="_blank" class="relative flex items-center p-2 text-sm font-medium rounded-lg text-slate-500 dark:text-navie-textsec hover:text-brand-900 dark:hover:text-white hover:bg-slate-100/50 dark:hover:bg-white/10 transition-colors overflow-hidden whitespace-nowrap group/link">
+                            <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-md">
+                                <span class="flex items-center justify-center" style="pointer-events: none;"><i data-lucide="external-link" class="w-5 h-5"></i></span>
+                            </div>
+                            <span class="ml-3 opacity-100 md:opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300">Página de Vendas</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Informações do Usuário e Logout Form -->
+        <div class="p-3 border-t border-slate-200/50 dark:border-navie-border flex-shrink-0 bg-white/50 dark:bg-black/20">
+            <div class="flex items-center gap-3 p-2 mb-2 min-w-[46px] overflow-hidden">
+                <div class="w-8 h-8 rounded-full bg-brand-100 dark:bg-white text-brand-700 dark:text-navie-bg flex items-center justify-center font-bold text-sm flex-shrink-0">
+                    {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                </div>
+                <div class="flex-1 min-w-0 opacity-100 md:opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 flex flex-col justify-center font-sans">
+                    <p class="font-semibold text-sm text-slate-800 dark:text-white leading-tight truncate">{{ request.user.get_full_name|default:request.user.username }}</p>
+                    <p class="text-[10px] text-slate-500 dark:text-navie-textsec leading-tight truncate">{{ perfil.get_role_display }}</p>
+                </div>
+            </div>
+
+            <form action="{% url 'hoteis:partner_logout' %}" method="post" class="w-full">
+                {% csrf_token %}
+                <button type="submit" class="w-full relative flex items-center p-2 text-sm font-medium rounded-lg text-slate-500 dark:text-navie-textsec hover:bg-red-50 dark:hover:bg-red-500/20 hover:text-red-600 dark:hover:text-red-400 transition-colors overflow-hidden whitespace-nowrap group/logout">
+                    <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-md">
+                        <span class="flex items-center justify-center" style="pointer-events: none;"><i data-lucide="log-out" class="w-5 h-5 text-slate-400 dark:text-navie-textsec group-hover/logout:text-red-500 transition-colors"></i></span>
+                    </div>
+                    <span class="ml-3 font-medium opacity-100 md:opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300">Sair do Sistema</span>
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <div 
+        x-show="sidebarMobileOpen" 
+        @click="sidebarMobileOpen = false"
+        x-transition.opacity
+        class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 md:hidden"
+        style="display: none;"
+    ></div>
+
+    <!-- ─────────────────────────────────────────────────────────────────
+         MAIN CONTENT AREA
+         ───────────────────────────────────────────────────────────────── -->
+    <main class="flex-1 flex flex-col h-screen relative z-10 min-w-0 overflow-hidden" style="height: 100dvh;">
+        
+        <header class="bg-white/60 dark:bg-navie-glass backdrop-blur-md dark:backdrop-blur-[20px] border-b border-slate-200/50 dark:border-navie-border flex items-center justify-between px-6 w-full flex-shrink-0 shadow-sm sticky top-0 z-[60] transition-colors"
+                style="height: calc(4.5rem + env(safe-area-inset-top, 0px)); padding-top: env(safe-area-inset-top, 0px);">
+            
+            <div class="flex items-center gap-4 shrink-0 mr-4">
+                <button @click="sidebarMobileOpen = !sidebarMobileOpen" class="md:hidden text-slate-500 dark:text-navie-textsec hover:text-brand transition-colors">
+                    <span class="flex items-center justify-center" style="pointer-events: none;"><i data-lucide="menu" class="w-6 h-6"></i></span>
+                </button>
+                <div class="hidden md:flex flex-col">
+                    <!-- Título Dinâmico do Cabeçalho por Abas AlpineJS -->
+                    <h1 class="text-sm sm:text-base font-black text-slate-800 dark:text-white tracking-tight leading-tight uppercase">
+                        <span x-show="activeTab === 'financeiro'">Visão Geral / Financeiro</span>
+                        <span x-show="activeTab === 'quartos'">Acomodações & Categorias</span>
+                        <span x-show="activeTab === 'reservas'">Aprovações & Reservas</span>
+                        <span x-show="activeTab === 'atividades'">Cronograma & Atividades da Equipe</span>
+                        <span x-show="activeTab === 'equipe'">Colaboradores & Acessos</span>
+                        <span x-show="activeTab === 'checkin'">Check-in / Validador</span>
+                        <span x-show="activeTab === 'ocupacao'">Mapa de Ocupação</span>
+                        <span x-show="activeTab === 'pedidos'">Pedidos de Hóspedes</span>
+                        <span x-show="activeTab === 'limpeza'">Quartos para Higienizar</span>
+                        <span x-show="activeTab === 'manutencao'">Ordens de Serviço Ativas</span>
+                        <span x-show="activeTab === 'configuracoes' && configTab === 'site'">Vitrine & Configurações do Site</span>
+                        <span x-show="activeTab === 'configuracoes' && configTab === 'assinatura'">Plano & Assinatura SaaS</span>
+                    </h1>
+                    <!-- Subtítulo Dinâmico do Cabeçalho (Ocultado no Mobile para manter respiro) -->
+                    <p class="text-[10px] text-slate-400 dark:text-navie-textsec mt-0.5 leading-tight font-bold hidden sm:block">
+                        <span x-show="activeTab === 'financeiro'">Histórico financeiro e fluxo de caixa em tempo real</span>
+                        <span x-show="activeTab === 'quartos'">Gerenciamento de tarifas e quartos do estabelecimento</span>
+                        <span x-show="activeTab === 'reservas'">Histórico de reservas ativas dos clientes</span>
+                        <span x-show="activeTab === 'atividades'">Gestão operacional de limpeza, manutenção e recepção B2B</span>
+                        <span x-show="activeTab === 'equipe'">Quadro operacional da pousada e níveis de acesso</span>
+                        <span x-show="activeTab === 'checkin'">Validador dinâmico de estadias da plataforma Naviê</span>
+                        <span x-show="activeTab === 'ocupacao'">Status e ocupação de quartos físicos hoje</span>
+                        <span x-show="activeTab === 'pedidos'">Solicitações de serviços de quarto e recepção</span>
+                        <span x-show="activeTab === 'limpeza'">Cronograma de limpeza do dia pós check-out</span>
+                        <span x-show="activeTab === 'manutencao'">Manutenções preventivas e corretivas dos quartos</span>
+                        <span x-show="activeTab === 'configuracoes' && configTab === 'site'">Personalização visual, branding, contatos e geolocalização do seu hotel</span>
+                        <span x-show="activeTab === 'configuracoes' && configTab === 'assinatura'">Gerencie seu plano de faturamento, limites e upgrade operacional</span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4 sm:gap-4 flex-1 justify-end">
+                
+                <div id="header_actions_area" class="flex items-center gap-4 flex-1 justify-end">
+                    {% block header_actions %}{% endblock %}
+                </div>
+
+                <div class="w-px h-6 bg-slate-200 dark:bg-navie-border hidden sm:block"></div>
+
+                <!-- Botão de Tela Cheia -->
+                <button 
+                    x-data="{ isFullscreen: false }"
+                    x-init="document.addEventListener('fullscreenchange', () => { isFullscreen = !!document.fullscreenElement; lucide.createIcons(); })"
+                    @click="
+                        if (document.fullscreenElement) {
+                            document.exitFullscreen();
+                        } else {
+                            const el = document.documentElement;
+                            if (el.requestFullscreen) el.requestFullscreen();
+                            else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+                            else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
+                        }
+                    "
+                    class="hidden sm:flex bg-white/80 dark:bg-transparent border border-slate-200/80 dark:border-navie-border text-slate-500 dark:text-navie-textsec hover:text-brand dark:hover:text-white px-3 h-9 rounded-full transition-colors items-center gap-2 text-xs font-medium shadow-sm dark:shadow-none">
+                    <span x-show="!isFullscreen" class="flex items-center" style="pointer-events: none;"><i data-lucide="maximize" class="w-3.5 h-3.5"></i></span>
+                    <span x-show="isFullscreen" style="display:none" class="flex items-center" style="pointer-events: none;"><i data-lucide="minimize" class="w-3.5 h-3.5"></i></span>
+                    <span x-text="isFullscreen ? 'Sair' : 'Tela Cheia'"></span>
+                </button>
+
+                <!-- Alternar Temas (Claro / Glass) -->
+                <button @click="toggleTheme()" class="w-9 h-9 rounded-full bg-white/80 dark:bg-transparent border border-slate-200/80 dark:border-navie-border flex items-center justify-center text-slate-400 dark:text-navie-textsec hover:text-brand dark:hover:text-white transition-colors shadow-sm dark:shadow-none relative group" title="Alternar Tema">
+                    <span x-show="theme === 'light'" class="flex items-center" style="pointer-events: none;"><i data-lucide="moon" class="w-4 h-4"></i></span>
+                    <span x-show="theme === 'glass'" style="display: none;" class="flex items-center" style="pointer-events: none;"><i data-lucide="sun" class="w-4 h-4"></i></span>
+                </button>
+
+                <!-- Notificações -->
+                <button class="w-9 h-9 rounded-full bg-white/80 dark:bg-transparent border border-slate-200/80 dark:border-navie-border flex items-center justify-center text-slate-400 dark:text-navie-textsec hover:text-brand dark:hover:text-white transition-colors shadow-sm dark:shadow-none relative group" title="Notificações">
+                    <span class="flex items-center" style="pointer-events: none;"><i data-lucide="bell" class="w-4.5 h-4.5 relative z-10"></i></span>
+                    <span class="absolute top-1.5 right-1.5 flex h-2 w-2 z-20">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-brand"></span>
+                    </span>
+                </button>
+
+            </div>
+        </header>
+        
+        <!-- SUB-HEADER -->
+        <div id="sub-header-container" class="relative z-10 flex-shrink-0">
+            {% block sub_header %}{% endblock %}
+        </div>
+
+        <!-- Conteúdo Interno Principal com Scroll customizado -->
+        <div class="flex-1 p-4 sm:p-6 md:pt-4 md:pb-8 md:px-8 relative z-20 overflow-y-auto custom-scrollbar" style="padding-bottom: calc(env(safe-area-inset-bottom) + 3rem);">
+            <div class="w-full max-w-[1440px] mx-auto">
+                {% block painel_content %}
+                {% endblock %}
+            </div>
+        </div>
+        
+    </main>
+
+    <!-- MODAL CONTAINER UNIFICADO PARA HTMX -->
+    <div id="modal-container" class="fixed inset-0 z-[9999] pointer-events-none"></div>
+
+    <!-- Inicialização do Canvas Particles no Tema Claro -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            if(typeof particlesJS !== 'undefined') {
+                particlesJS("particles-js", {
+                    "particles": {
+                        "number": { "value": 30, "density": { "enable": true, "value_area": 800 } },
+                        "color": { "value": "#94a3b8" },
+                        "shape": { "type": "circle" },
+                        "opacity": { "value": 0.2, "random": false },
+                        "size": { "value": 1.5, "random": true },
+                        "line_linked": { "enable": true, "distance": 150, "color": "#cbd5e1", "opacity": 0.3, "width": 1 },
+                        "move": { "enable": true, "speed": 1.2, "direction": "none", "random": true, "straight": false, "out_mode": "out", "bounce": false }
+                    },
+                    "interactivity": {
+                        "detect_on": "canvas",
+                        "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": false }, "resize": true },
+                        "modes": { "grab": { "distance": 180, "line_linked": { "opacity": 0.5 } } }
+                    },
+                    "retina_detect": true
+                });
+            }
+        });
+    </script>
+    
+    <script>
+        if(typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+
+        // Configuração CSRF global para requisições HTMX
+        document.body.addEventListener('htmx:configRequest', (event) => {
+            event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+        });
+        
+        document.body.addEventListener('htmx:afterSwap', (event) => {
+            lucide.createIcons();
+            if (typeof flatpickr !== 'undefined') {
+                flatpickr(".date-picker", { locale: "pt", dateFormat: "d/m/Y" });
+                flatpickr(".datetime-picker", { locale: "pt", enableTime: true, dateFormat: "d/m/Y H:i", disableMobile: "true" });
+            }
+            document.querySelectorAll('.moeda-br').forEach(el => {
+                let val = parseFloat(el.getAttribute('data-valor')) || 0;
+                el.innerText = val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            });
+        });
+    </script>
+
+    {% block scripts %}{% endblock %}
+
+    <!-- ─────────────────────────────────────────────────────────────────
+         ASSISTENTE VIRTUAL IN-APP HOTELEIRO (Chat Flutuante)
+         ───────────────────────────────────────────────────────────────── -->
+    <div x-data="{ chatOpen: false, scrollBottom() { const c = document.getElementById('chat-messages'); if (c) c.scrollTop = c.scrollHeight; } }" class="fixed bottom-6 right-6 z-[9999] font-sans">
+        
+        <!-- Botão Flutuante (FAB) -->
+        <button @click="chatOpen = !chatOpen; if(chatOpen) setTimeout(scrollBottom, 100)" 
+                class="w-12 h-12 bg-brand hover:bg-brand/95 text-white rounded-full flex items-center justify-center shadow-xl shadow-brand/30 hover:-translate-y-1 hover:scale-105 transition-all duration-300 relative group border border-white/20">
+            
+            <span x-show="!chatOpen" class="flex items-center justify-center">
+                <span class="flex items-center justify-center" style="pointer-events: none;"><i data-lucide="message-circle" class="w-5 h-5"></i></span>
+            </span>
+            
+            <span x-show="chatOpen" style="display: none;" class="flex items-center justify-center">
+                <span class="flex items-center justify-center" style="pointer-events: none;"><i data-lucide="x" class="w-5 h-5"></i></span>
+            </span>
+            <!-- Indicador Online -->
+            <span class="absolute top-0 right-0 flex h-4 w-4">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-4 w-4 border-2 border-white dark:border-navie-bg bg-green-500"></span>
+            </span>
+        </button>
+
+        <!-- Janela do Chat -->
+        <div x-show="chatOpen" style="display: none;"
+             x-transition:enter="transition ease-out duration-300 transform origin-bottom-right"
+             x-transition:enter-start="opacity-0 scale-50 translate-y-10"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-200 transform origin-bottom-right"
+             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+             x-transition:leave-end="opacity-0 scale-50 translate-y-10"
+             class="absolute bottom-16 right-0 w-[300px] sm:w-[340px] h-[450px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-3xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] border border-slate-200/60 dark:border-white/10 flex flex-col overflow-hidden">
+            
+            <!-- Header do Chat -->
+            <div class="h-[76px] bg-gradient-to-r from-brand to-brand/80 px-5 flex items-center justify-between shrink-0 relative overflow-hidden">
+                <div class="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+                
+                <div class="flex items-center gap-3 relative z-10">
+                    <div class="w-9 h-9 rounded-full bg-white flex items-center justify-center shadow-md p-1.5">
+                        <img src="{% static 'images/logo.png' %}" class="w-full h-full object-contain">
+                    </div>
+                    <div>
+                        <h3 class="text-white font-bold text-[14px] tracking-tight">Assistente Naviê</h3>
+                        <p class="text-brand-50 text-[11px] font-medium flex items-center gap-1.5 uppercase tracking-wider mt-0.5"><span class="w-1.5 h-1.5 rounded-full bg-green-400 shadow-[0_0_8px_#4ade80]"></span> Online</p>
+                    </div>
+                </div>
+                
+                <button @click="chatOpen = false" class="relative z-10 w-8 h-8 rounded-full bg-black/10 hover:bg-black/20 text-white flex items-center justify-center transition-colors">
+                    <span class="flex items-center justify-center" style="pointer-events: none;"><i data-lucide="minus" class="w-4 h-4"></i></span>
+                </button>
+            </div>
+
+            <!-- Área de Mensagens -->
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-5 bg-slate-50/50 dark:bg-slate-950/30 flex flex-col custom-scrollbar">
+                <!-- Mensagem de Boas Vindas -->
+                <div class="flex gap-3 mb-5">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-brand to-brand/75 flex items-center justify-center shrink-0 shadow-md">
+                        <span class="flex items-center justify-center" style="pointer-events: none;"><i data-lucide="bot" class="w-4 h-4 text-white"></i></span>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm text-[13px] leading-relaxed max-w-[85%]">
+                        Olá! Sou o assistente de IA integrado ao painel do <b>{{ hotel.nome }}</b>.<br><br>Como posso ajudar você na gestão operacional, verificação de quartos ou cronograma de atividades hoje?<br><br><span class="text-[11px] text-slate-400">Dica: Pergunte sobre faturamento, faxinas pendentes ou como me utilizar.</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulário de Envio -->
+            <div class="p-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-slate-200/60 dark:border-white/5 shrink-0 z-10">
+                <form id="chat-form" 
+                      hx-post="{% url 'hoteis:ia_enviar_chat' %}" 
+                      hx-target="#chat-messages" 
+                      hx-swap="beforeend"
+                      class="relative flex items-center">
+                    {% csrf_token %}
+                    <input type="text" name="mensagem" required autocomplete="off" placeholder="Escreva sua pergunta..." 
+                           class="w-full bg-slate-100/80 dark:bg-black/40 border border-transparent focus:border-brand/50 focus:bg-white dark:focus:bg-black/60 focus:ring-4 focus:ring-brand/10 rounded-full pl-5 pr-14 py-3 text-[13px] text-slate-800 dark:text-white transition-all shadow-inner">
+                    
+                    <button type="submit" class="absolute right-1.5 w-9 h-9 bg-brand hover:bg-brand/90 text-white rounded-full flex items-center justify-center transition-transform hover:scale-105 shadow-md">
+                        <span class="flex items-center justify-center" style="pointer-events: none;"><i data-lucide="send" class="w-4 h-4 ml-0.5"></i></span>
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Script Local do Chat -->
+            <script>
+                document.getElementById('chat-form').addEventListener('htmx:beforeRequest', function(e) {
+                    const input = this.querySelector('input[name="mensagem"]');
+                    const text = input.value;
+                    const messagesArea = document.getElementById('chat-messages');
+                    
+                    messagesArea.insertAdjacentHTML('beforeend', `
+                        <div class="flex justify-end mb-5">
+                            <div class="bg-brand text-white rounded-2xl rounded-tr-sm px-4 py-2 shadow-md text-[13px] leading-relaxed max-w-[85%]">
+                                ${text}
+                            </div>
+                        </div>
+                        <div id="typing-indicator" class="flex gap-3 mb-5">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-brand to-brand/75 flex items-center justify-center shrink-0 shadow-md">
+                                <span class="flex items-center justify-center" style="pointer-events: none;"><i data-lucide="bot" class="w-4 h-4 text-white"></i></span>
+                            </div>
+                            <div class="bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm flex gap-1 items-center max-w-[85%]">
+                                <div class="w-1.5 h-1.5 bg-brand/60 rounded-full animate-bounce"></div>
+                                <div class="w-1.5 h-1.5 bg-brand/60 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                                <div class="w-1.5 h-1.5 bg-brand/60 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                            </div>
+                        </div>
+                    `);
+                    input.value = '';
+                    messagesArea.scrollTop = messagesArea.scrollHeight;
+                });
+
+                document.getElementById('chat-form').addEventListener('htmx:afterRequest', function(e) {
+                    const indicator = document.getElementById('typing-indicator');
+                    if (indicator) indicator.remove();
+                    
+                    const messagesArea = document.getElementById('chat-messages');
+                    messagesArea.scrollTop = messagesArea.scrollHeight;
+                    
+                    if(typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
+                });
+            </script>
+        </div>
+    </div>
+
+    {% block extra_modals %}{% endblock %}
+
+    <!-- TOAST MESSAGES -->
+    <div class="fixed top-20 right-5 sm:right-6 sm:top-24 z-[999999] flex flex-col gap-3 pointer-events-none" id="toast-container">
+        {% if messages %}
+            {% for message in messages %}
+                <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4500)"
+                     x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-12" x-transition:enter-end="opacity-100 translate-x-0"
+                     x-transition:leave="transition ease-in duration-300" x-transition:leave-start="opacity-100 translate-x-0" x-transition:leave-end="opacity-0 translate-x-12"
+                     class="pointer-events-auto flex items-center gap-3 p-4 rounded-[1.25rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white/60 dark:border-navie-border backdrop-blur-2xl min-w-[280px] max-w-sm
+                     {% if message.tags == 'success' %}bg-green-50/95 dark:bg-green-900/50 text-green-800 dark:text-green-300
+                     {% elif message.tags == 'error' %}bg-red-50/95 dark:bg-red-900/50 text-red-800 dark:text-red-300
+                     {% else %}bg-blue-50/95 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300{% endif %}">
+                    
+                    <div class="shrink-0 p-1.5 rounded-full shadow-sm {% if message.tags == 'success' %}bg-green-100 dark:bg-green-800 text-green-600 dark:text-green-200{% elif message.tags == 'error' %}bg-red-100 dark:bg-red-800 text-red-600 dark:text-red-200{% else %}bg-blue-100 dark:bg-blue-800 text-blue-600 dark:text-blue-200{% endif %}">
+                        <span class="flex items-center justify-center" style="pointer-events: none;"><i data-lucide="{% if message.tags == 'success' %}check-circle-2{% elif message.tags == 'error' %}alert-octagon{% else %}info{% endif %}" class="w-5 h-5"></i></span>
+                    </div>
+                    
+                    <p class="text-sm font-semibold tracking-tight pr-2">{{ message }}</p>
+                    
+                    <button @click="show = false" class="ml-auto p-1.5 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 rounded-lg transition-colors shrink-0">
+                        <span class="flex items-center justify-center" style="pointer-events: none;"><i data-lucide="x" class="w-4 h-4"></i></span>
+                    </button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+</body>
+</html>

@@ -4,27 +4,72 @@
 {% block title %}Naviê Vibe - {{ hotel.nome }}{% endblock %}
 
 {% block extra_head %}
-<!-- O CSS do Swiper já está na base.html -->
+<!-- Injeção Dinâmica de Cores de Branding no Site do Anfitrião -->
+<style>
+    :root {
+        --navie-primary: {{ hotel.cor_primaria|default:"#2563eb" }};
+    }
+    
+    /* Mapeamento de Cores Dinâmicas da Pousada B2C */
+    .text-action-blue { color: {{ hotel.cor_primaria|default:"#2563eb" }} !important; }
+    .bg-action-blue, #buy-button.bg-action-blue { background-color: {{ hotel.cor_primaria|default:"#2563eb" }} !important; }
+    .border-action-blue { border-color: {{ hotel.cor_primaria|default:"#2563eb" }} !important; }
+    
+    /* Cor ativa no botão de compra se habilitado */
+    #buy-button:not([disabled]) {
+        background-color: {{ hotel.cor_primaria|default:"#2563eb" }} !important;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    }
+    
+    /* Foco do input com a cor do hotel */
+    .navie-input:focus {
+        border-color: {{ hotel.cor_primaria|default:"#2563eb" }} !important;
+        box-shadow: 0 0 0 3px {{ hotel.cor_primaria|default:"#2563eb" }}25 !important;
+    }
+    
+    /* Swiper e elementos dinâmicos */
+    .swiper-pagination-bullet-active {
+        background: {{ hotel.cor_primaria|default:"#2563eb" }} !important;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-<main class="container mx-auto px-4 py-8">
+<!-- Modal Premium Notification -->
+<div id="aviso-modal" class="fixed inset-0 flex items-center justify-center z-[100] hidden" style="background-color: rgba(0,0,0,0.5); backdrop-filter: blur(3px);">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full mx-4 overflow-hidden transform transition-all">
+        <div class="p-6">
+            <div class="flex justify-between items-start mb-4">
+                <div class="flex items-center gap-3 text-red-600">
+                    <i data-lucide="alert-circle" class="w-6 h-6"></i>
+                    <h3 class="text-xl font-bold text-gray-900">Aviso</h3>
+                </div>
+                <button type="button" onclick="closeModal()" class="text-gray-400 hover:text-gray-800 transition-colors">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <p id="modal-msg" class="text-gray-600 text-base leading-relaxed">Mensagem de alerta.</p>
+        </div>
+    </div>
+</div>
+
+<main class="container mx-auto px-4 md:px-8 xl:px-16 py-8">
     <div class="lg:grid lg:grid-cols-3 lg:gap-12 lg:items-start">
         
+        <!-- Coluna Esquerda: Informações do Hotel -->
         <div class="lg:col-span-2">
-            <!-- Carrossel -->
-            <div class="relative rounded-2xl overflow-hidden h-64 md:h-96 mb-8 bg-gray-200">
-                {% if imagens %}
-                <div class="swiper h-full">
+            <!-- Carrossel Principal do Hotel -->
+            <div class="relative rounded-2xl overflow-hidden h-64 md:h-96 mb-8 bg-gray-200 z-0">
+                {% if hotel.hero_tipo == 'video' and hotel.hero_video %}
+                    <video src="{{ hotel.hero_video.url }}" class="w-full h-full object-cover" autoplay loop muted playsinline></video>
+                {% elif imagens %}
+                <div class="swiper hotel-swiper h-full w-full">
                     <div class="swiper-wrapper">
-                        <!-- Imagem do Banner como primeira do swiper -->
                         {% if hotel.banner %}
                         <div class="swiper-slide">
                             <img src="{{ hotel.banner.url }}" class="w-full h-full object-cover" />
                         </div>
                         {% endif %}
-                        
-                        <!-- Demais Imagens da Galeria -->
                         {% for img in imagens %}
                         <div class="swiper-slide">
                             <img src="{{ img.url_imagem.url }}" class="w-full h-full object-cover" />
@@ -34,9 +79,8 @@
                     <div class="swiper-pagination"></div>
                 </div>
                 {% else %}
-                    <!-- Fallback se não tiver imagens extras -->
                     {% if hotel.banner %}
-                        <img src="{{ hotel.banner.url }}" alt="Imagem do hotel {{ hotel.nome }}" class="w-full h-full object-cover">
+                        <img src="{{ hotel.banner.url }}" class="w-full h-full object-cover">
                     {% else %}
                         <div class="w-full h-full bg-gray-300 flex items-center justify-center text-gray-500">Sem Imagem</div>
                     {% endif %}
@@ -45,12 +89,6 @@
 
             <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">{{ hotel.nome }}</h1>
             <div class="flex flex-col md:flex-row md:items-center gap-4 md:gap-8 text-gray-600 mb-8">
-                {% if hotel.data_inicio %}
-                <div class="flex items-center gap-3">
-                    <i data-lucide="calendar" class="w-6 h-6 text-action-blue"></i>
-                    <span class="font-semibold">{{ hotel.data_inicio|date:"d/m/Y" }}</span>
-                </div>
-                {% endif %}
                 {% if hotel.horario_inicio %}
                 <div class="flex items-center gap-3">
                     <i data-lucide="clock" class="w-6 h-6 text-action-blue"></i>
@@ -64,123 +102,663 @@
             </div>
             
             <div class="prose max-w-none text-gray-700 space-y-6 text-lg">
-                <h3 class="text-xl font-bold mb-2">Sobre</h3>
+                <h3 class="text-xl font-bold mb-2">Sobre este lugar</h3>
                 <p>{{ hotel.descricao|linebreaksbr }}</p>
+            </div>
+            
+            <div class="mt-12">
+                <h3 class="text-xl font-bold mb-4">Localização</h3>
+                <p class="text-gray-600 mb-4">{{ hotel.local.endereco }}, {{ hotel.local.cidade }} - {{ hotel.local.estado }}</p>
             </div>
         </div>
 
+        <!-- Coluna Direita: Reserva e Painel de Quartos -->
         <div class="lg:col-start-3 lg:row-start-1 lg:sticky lg:top-28 mt-8 lg:mt-0">
-            <!-- Sidebar / Reserve -->
-            <form id="cart-form" action="#" method="POST" class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
-                {% csrf_token %}
-                <h2 class="text-2xl font-bold mb-6">Quartos e Opções</h2>
+            
+            <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 flex flex-col">
+                <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><i data-lucide="calendar-check" class="text-action-blue w-6 h-6"></i> Planeje sua Viagem</h2>
                 
-                <div class="space-y-4">
-                    {% for quarto in quartos %}
-                    <div class="ticket-card border-2 border-gray-100 rounded-xl p-4 cursor-pointer transition-all" data-price="{{ quarto.preco }}">
-                        <div class="flex justify-between items-center">
-                            <div class="flex-1">
-                                <h4 class="font-bold text-lg text-gray-800">{{ quarto.nome }}</h4>
-                                <p class="text-sm text-gray-500">{{ quarto.descricao }}</p>
-                                <p class="font-bold text-action-blue mt-1">R$ {{ quarto.preco }}</p>
-                                <input type="hidden" name="tickets[{{ quarto.id }}][price]" value="{{ quarto.preco }}">
+                <!-- Buscador de Datas Customizado Premium -->
+                <div class="mb-8" style="z-index: 20; position: relative;">
+                    <div class="grid grid-cols-2 gap-4">
+                        <!-- Check-in -->
+                        <div id="btn-checkin" class="bg-white p-4 rounded-2xl text-left shadow-sm hover:shadow-md transition-all flex flex-col cursor-pointer" style="border: 1px solid #f3f4f6;">
+                            <span class="block text-xs uppercase tracking-wider font-bold text-gray-500 mb-2">Check-in</span>
+                            <div class="flex justify-between items-center w-full">
+                                <input type="text" id="label-checkin" placeholder="dd/mm/aaaa" class="font-bold text-gray-800 text-sm mr-2 w-full" style="background: transparent; border: none; outline: none; box-shadow: none;" maxlength="10" autocomplete="off">
+                                <i data-lucide="calendar" class="w-5 h-5 text-action-blue flex-shrink-0 cursor-pointer"></i>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <button type="button" class="quantity-btn-minus h-8 w-8 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-300">-</button>
-                                <input type="text" name="tickets[{{ quarto.id }}][quantity]" value="0" readonly class="quantity-value w-8 text-center font-bold bg-transparent">
-                                <button type="button" class="quantity-btn-plus h-8 w-8 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-300">+</button>
+                        </div>
+                        
+                        <!-- Check-out -->
+                        <div id="btn-checkout" class="bg-white p-4 rounded-2xl text-left shadow-sm hover:shadow-md transition-all flex flex-col cursor-pointer" style="border: 1px solid #f3f4f6;">
+                            <span class="block text-xs uppercase tracking-wider font-bold text-gray-500 mb-2">Check-out</span>
+                            <div class="flex justify-between items-center w-full">
+                                <input type="text" id="label-checkout" placeholder="dd/mm/aaaa" class="font-bold text-gray-800 text-sm mr-2 w-full" style="background: transparent; border: none; outline: none; box-shadow: none;" maxlength="10" autocomplete="off">
+                                <i data-lucide="calendar" class="w-5 h-5 text-action-blue flex-shrink-0 cursor-pointer"></i>
                             </div>
                         </div>
                     </div>
-                    {% empty %}
-                    <p class="text-gray-500 text-sm">Sem quartos cadastrados.</p>
-                    {% endfor %}
+                    
+                    <!-- Inputs reais ocultos -->
+                    <input type="hidden" id="input-checkin" name="checkin" value="">
+                    <input type="hidden" id="input-checkout" name="checkout" value="">
+                </div>
+
+                <!-- Popup global do Calendário - posicionado via JS com position:fixed -->
+                <div id="custom-calendar-popup" class="hidden bg-white rounded-2xl p-4" style="position: fixed; z-index: 9999; width: 320px; box-shadow: 0 10px 40px rgba(0,0,0,0.12); border: 1px solid rgba(0,0,0,0.06);">
+                    <div class="flex justify-between items-center mb-4">
+                        <button type="button" id="cal-prev" class="p-2 hover:bg-gray-100 rounded-full transition-colors"><i data-lucide="chevron-left" class="w-5 h-5 text-gray-600"></i></button>
+                        <div id="cal-month-year" class="font-bold text-gray-900 text-sm uppercase tracking-wide">Mês Ano</div>
+                        <button type="button" id="cal-next" class="p-2 hover:bg-gray-100 rounded-full transition-colors"><i data-lucide="chevron-right" class="w-5 h-5 text-gray-600"></i></button>
+                    </div>
+                    <div class="mb-2 uppercase" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; text-align: center; font-size: 10px; font-weight: 800; color: #1d4ed8;">
+                        <div>D</div><div>S</div><div>T</div><div>Q</div><div>Q</div><div>S</div><div>S</div>
+                    </div>
+                    <div id="cal-days" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; text-align: center;">
+                        <!-- Dias Injetados via JS -->
+                    </div>
                 </div>
                 
-                <button id="buy-button" type="button" class="w-full mt-6 bg-gray-300 cursor-not-allowed text-white py-4 rounded-xl font-semibold text-lg transition-colors" disabled>
-                    Adicionar à Reserva
-                </button>
-            </form>
+                <!-- Formulário de Compra -->
+                <form id="cart-form" action="#" method="POST">
+                    {% csrf_token %}
+                    <h3 class="text-lg font-bold mb-4 text-gray-800">Escolha seu Quarto</h3>
+                    
+                    <div class="space-y-4" id="lista-quartos">
+                        {% for quarto in quartos %}
+                        
+                        <div class="quarto-card bg-white rounded-2xl transition-all duration-300 overflow-hidden" style="box-shadow: 0 6px 20px rgba(0,0,0,0.04); border: 3px solid transparent;" id="quarto-{{ quarto.id }}" data-quarto-id="{{ quarto.id }}" data-preco-base="{{ quarto.preco|stringformat:'f' }}">
+                            
+                            <!-- Header do Acordeão (Sempre Visível) -->
+                            <div class="p-4 cursor-pointer hover:bg-gray-50 flex justify-between items-center accordion-header select-none">
+                                <div class="flex-1">
+                                    <h4 class="font-bold text-lg text-gray-900">{{ quarto.nome }}</h4>
+                                    <!-- Preço dinâmico atualizado via JS -->
+                                    <p class="font-bold text-action-blue mt-1 preco-label text-xl">R$ {{ quarto.preco }} <span class="text-xs text-gray-500 font-normal">/noite</span></p>
+                                    
+                                    <!-- Badges de Status (Invisível por padrão até carregar datas) -->
+                                    <div class="status-badge hidden mt-2 text-xs font-bold px-3 py-1 rounded inline-block bg-red-100 text-red-700">Indisponível</div>
+                                </div>
+                                <i data-lucide="chevron-down" class="w-6 h-6 text-gray-400 chevron-icon transition-transform"></i>
+                            </div>
+                            
+                            <!-- Corpo do Acordeão (Escondido via CSS height: 0 ou hidden) -->
+                            <div class="quarto-body hidden">
+                                <div class="p-4 bg-gray-50/50">
+                                    <p class="text-sm text-gray-600 mb-4">{{ quarto.descricao }}</p>
+                                    
+                                    <!-- Mini Swiper do Quarto -->
+                                    {% if quarto.imagens.all %}
+                                    <div class="swiper quarto-swiper-{{ quarto.id }} h-40 w-full rounded-lg overflow-hidden mb-4 z-0">
+                                        <div class="swiper-wrapper">
+                                            {% for img in quarto.imagens.all %}
+                                            <div class="swiper-slide">
+                                                <img src="{{ img.url_imagem.url }}" class="w-full h-full object-cover">
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                        <div class="swiper-pagination"></div>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <!-- Controls de Quantidade (Ativado apenas se disponível e com data) -->
+                                    <div class="flex justify-between items-center action-area mt-4">
+                                        <span class="text-sm font-semibold text-gray-500">Selecionar Unidades:</span>
+                                        <div class="flex items-center gap-2">
+                                            <button type="button" class="quantity-btn-minus h-8 w-8 flex justify-center items-center rounded-full bg-gray-200 text-gray-700 hover:bg-action-blue hover:text-white transition-colors" disabled>-</button>
+                                            <input type="text" name="tickets[{{ quarto.id }}][quantity]" value="0" readonly class="quantity-value w-8 text-center font-bold bg-transparent">
+                                            <button type="button" class="quantity-btn-plus h-8 w-8 flex justify-center items-center rounded-full bg-gray-200 text-gray-700 hover:bg-action-blue hover:text-white transition-colors" disabled>+</button>
+                                            <input type="hidden" class="preco-input" name="tickets[{{ quarto.id }}][price]" value="{{ quarto.preco|stringformat:'f' }}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                        </div>
+                        
+                        {% empty %}
+                        <p class="text-gray-500 text-sm">Sem quartos cadastrados.</p>
+                        {% endfor %}
+                    </div>
+                    
+                    <button id="buy-button" type="button" class="w-full mt-6 bg-gray-300 cursor-not-allowed text-white py-4 rounded-xl font-bold text-lg transition-colors" disabled>
+                        Selecione as Datas Acima
+                    </button>
+                    
+                </form>
+            </div>
+            
         </div>
-        
-        <div class="lg:col-span-2 mt-12">
-            <h3 class="text-xl font-bold mb-4">Localização</h3>
-            <p class="text-gray-600 mb-4">{{ hotel.local.endereco }}, {{ hotel.local.cidade }} - {{ hotel.local.estado }}</p>
-        </div>
-
-    </div>
+    {% if hotel.whatsapp %}
+    <!-- Botão Flutuante do WhatsApp do Hotel -->
+    <a href="https://wa.me/{{ hotel.whatsapp }}" target="_blank" class="fixed bottom-6 right-6 z-[999] bg-[#25d366] hover:bg-[#20ba5a] text-white p-4 rounded-full shadow-2xl transition-all hover:scale-110 active:scale-95 flex items-center justify-center group" title="Falar Conosco no WhatsApp">
+        <span class="flex items-center" style="pointer-events:none;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" class="w-6 h-6 fill-current"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7 .9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/></svg></span>
+        <span class="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300 ease-out whitespace-nowrap text-xs font-bold font-sans ml-0 group-hover:ml-2">WhatsApp</span>
+    </a>
+    {% endif %}
 </main>
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
-    // Inicialização do Swiper
-    if (document.querySelector('.swiper')) {
-        const swiper = new Swiper('.swiper', {
-            autoplay: {
-                delay: 5000,
-                disableOnInteraction: false,
-            },
-            loop: true,
-            pagination: {
-                el: '.swiper-pagination',
-                clickable: true,
-            },
-        });
-    }
-
-    // Lógica do carrinho local
-    const ticketCards = document.querySelectorAll('.ticket-card');
-    const buyButton = document.getElementById('buy-button');
-    
-    function updateCart() {
-        let total = 0;
-        let ticketCount = 0;
-        ticketCards.forEach(card => {
-            const price = parseFloat(card.dataset.price.replace(',','.'));
-            const quantityInput = card.querySelector('.quantity-value');
-            const quantity = parseInt(quantityInput.value);
-            if (quantity > 0) {
-                total += quantity * price;
-                ticketCount += quantity;
-                card.classList.add('selected');
-                card.classList.remove('border-gray-100');
-            } else {
-                card.classList.remove('selected');
-                card.classList.add('border-gray-100');
-            }
-        });
+    document.addEventListener("DOMContentLoaded", function() {
+        lucide.createIcons();
         
-        if (ticketCount > 0) {
-            buyButton.textContent = `Reservar (R$ ${total.toFixed(2).replace('.', ',')})`;
-            buyButton.disabled = false;
-            buyButton.classList.remove('bg-gray-300', 'cursor-not-allowed');
-            buyButton.classList.add('bg-action-blue', 'hover:bg-action-blue-dark');
-        } else {
-            buyButton.textContent = 'Adicionar à Reserva';
-            buyButton.disabled = true;
-            buyButton.classList.add('bg-gray-300', 'cursor-not-allowed');
-            buyButton.classList.remove('bg-action-blue', 'hover:bg-action-blue-dark');
+        // 1. Instanciar Swipers
+        if (document.querySelector('.hotel-swiper')) {
+            new Swiper('.hotel-swiper', {
+                autoplay: { delay: 4000, disableOnInteraction: false },
+                loop: true,
+                pagination: { el: '.swiper-pagination', clickable: true },
+            });
         }
-    }
-    
-    ticketCards.forEach(card => {
-        const quantityInput = card.querySelector('.quantity-value');
-        const minusBtn = card.querySelector('.quantity-btn-minus');
-        const plusBtn = card.querySelector('.quantity-btn-plus');
         
-        minusBtn.addEventListener('click', () => {
-            let currentValue = parseInt(quantityInput.value);
-            if (currentValue > 0) {
-                quantityInput.value = currentValue - 1;
-                updateCart();
+        // Modal Premium Control
+        let modalTimer;
+        
+        window.closeModal = function() {
+            document.getElementById('aviso-modal').classList.add('hidden');
+            clearTimeout(modalTimer);
+        };
+        
+        function showModal(msg) {
+            const modal = document.getElementById('aviso-modal');
+            document.getElementById('modal-msg').textContent = msg;
+            modal.classList.remove('hidden');
+            
+            // Tempo flexivel (40ms por letra no minimo 3.5s)
+            const tempo = Math.max(3500, msg.length * 50);
+            
+            clearTimeout(modalTimer);
+            modalTimer = setTimeout(() => {
+                closeModal();
+            }, tempo);
+        }
+
+        // Instancia os swipers menores dos quartos e lida com a Abertura do Acordeão
+        document.querySelectorAll('.quarto-card').forEach(card => {
+            const quartoId = card.dataset.quartoId;
+            const body = card.querySelector('.quarto-body');
+            const header = card.querySelector('.accordion-header');
+            const chevron = card.querySelector('.chevron-icon');
+            
+            // Inicia swiper do quarto se existir
+            const swiperEl = card.querySelector('.quarto-swiper-' + quartoId);
+            let swiperInst = null;
+            if (swiperEl) {
+                swiperInst = new Swiper(swiperEl, {
+                    loop: true, 
+                    autoplay: { delay: 3500, disableOnInteraction: false }, 
+                    pagination: { el: '.swiper-pagination', clickable: true }
+                });
+            }
+            
+            // Accordion Logic
+            header.addEventListener('click', () => {
+                const isOpen = !body.classList.contains('hidden');
+                
+                // Fecha todos os outros primeiro (opcional)
+                document.querySelectorAll('.quarto-body').forEach(b => b.classList.add('hidden'));
+                document.querySelectorAll('.chevron-icon').forEach(c => c.classList.remove('rotate-180'));
+                
+                if (!isOpen) {
+                    body.classList.remove('hidden');
+                    chevron.classList.add('rotate-180');
+                    if (swiperInst) swiperInst.update(); // Corrige bug do swiper dentro do display:none
+                }
+            });
+        });
+
+        // 2. Lógica de Datas e Disponibilidade - Calendário Customizado Apple-like
+        const checkinInput = document.getElementById('input-checkin');
+        const checkoutInput = document.getElementById('input-checkout');
+        const hotelId = "{{ hotel.id }}";
+        
+        let currentDate = new Date();
+        let currentMonth = currentDate.getMonth();
+        let currentYear = currentDate.getFullYear();
+        let activeField = null; 
+        let selectedCheckin = null;
+        let selectedCheckout = null;
+        let occupiedDates = []; // Datas ocupadas vindas da API (formato YYYY-MM-DD)
+
+        const mdNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+        const calPopup = document.getElementById('custom-calendar-popup');
+        const btnCheckin = document.getElementById('btn-checkin');
+        const btnCheckout = document.getElementById('btn-checkout');
+
+        function fetchDatasOcupadas() {
+            const mesStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+            fetch(`/api/hotel/${hotelId}/datas_ocupadas/?mes=${mesStr}`)
+                .then(r => r.json())
+                .then(data => {
+                    occupiedDates = data.datas_ocupadas || [];
+                    renderCalendar();
+                })
+                .catch(() => { renderCalendar(); }); // Silencia erros de rede
+        }
+
+        function renderCalendar() {
+            const daysContainer = document.getElementById('cal-days');
+            document.getElementById('cal-month-year').textContent = `${mdNames[currentMonth]} ${currentYear}`;
+            daysContainer.innerHTML = '';
+            
+            let firstDay = new Date(currentYear, currentMonth, 1).getDay();
+            let daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            let today = new Date();
+            today.setHours(0,0,0,0);
+            
+            for(let i=0; i<firstDay; i++) {
+                daysContainer.innerHTML += `<div></div>`;
+            }
+            
+            for(let i=1; i<=daysInMonth; i++) {
+                let dObj = new Date(currentYear, currentMonth, i);
+                let dStr = dObj.getFullYear() + '-' + String(dObj.getMonth() + 1).padStart(2, '0') + '-' + String(dObj.getDate()).padStart(2, '0');
+                let isPast = dObj < today;
+                let isOccupied = occupiedDates.includes(dStr);
+                
+                let btn = document.createElement('div');
+                // Tamanho fixo para garantir proporção quadrada
+                btn.style.cssText = 'display:flex; align-items:center; justify-content:center; font-size:12px; border-radius:50%; width:36px; height:36px; margin:0 auto; transition: all 0.15s ease; font-weight:600; cursor:default;';
+                btn.textContent = i;
+                
+                if (selectedCheckin === dStr || selectedCheckout === dStr) {
+                    // Selecionado
+                    btn.style.background = '#1e40af';
+                    btn.style.color = '#fff';
+                    btn.style.fontWeight = '700';
+                } else if (selectedCheckin && selectedCheckout && dStr > selectedCheckin && dStr < selectedCheckout) {
+                    // Intervalo entre datas
+                    btn.style.background = '#eff6ff';
+                    btn.style.color = '#1e40af';
+                } else if (isPast) {
+                    // Dias passados — cinza claro, sem hover
+                    btn.style.color = '#d1d5db';
+                    btn.style.background = '#f9fafb';
+                } else if (isOccupied) {
+                    // Dias ocupados — vermelho suave
+                    btn.style.color = '#ef4444';
+                    btn.style.background = '#fef2f2';
+                    btn.style.cursor = 'not-allowed';
+                    btn.title = 'Indisponível';
+                } else {
+                    // Dia disponível
+                    btn.style.color = '#374151';
+                    btn.style.cursor = 'pointer';
+                    btn.onmouseenter = () => { btn.style.background = '#f3f4f6'; };
+                    btn.onmouseleave = () => { btn.style.background = ''; };
+                }
+                
+                if (!isPast && !isOccupied) {
+                    btn.onclick = (e) => {
+                        e.stopPropagation();
+                        selectDate(dStr, dObj);
+                    };
+                }
+                daysContainer.appendChild(btn);
+            }
+        }
+
+        const lIn = document.getElementById('label-checkin');
+        const lOut = document.getElementById('label-checkout');
+
+        function parseDateBrStr(str) {
+            if (!str) return null;
+            let parts = str.split('/');
+            if (parts.length !== 3) return null;
+            let d = parseInt(parts[0], 10);
+            let m = parseInt(parts[1], 10) - 1;
+            let y = parseInt(parts[2], 10);
+            if (y < 100) y += 2000;
+            let date = new Date(y, m, d);
+            if (date.getFullYear() === y && date.getMonth() === m && date.getDate() === d) {
+                return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+            }
+            return null;
+        }
+
+        // Permitir digitação
+        function handleTyping(e, type) {
+            let val = e.target.value.replace(/\D/g, '');
+            if (val.length > 2) val = val.substring(0,2) + '/' + val.substring(2);
+            if (val.length > 5) val = val.substring(0,5) + '/' + val.substring(5,9);
+            e.target.value = val;
+            
+            if (val.length === 8 || val.length === 10) { // dd/mm/aa ou dd/mm/aaaa
+                let parsed = parseDateBrStr(val);
+                if (parsed) {
+                    if (type === 'checkin') {
+                        selectedCheckin = parsed;
+                        
+                        // Atualiza checkout automaticamente se for invalido
+                        if (selectedCheckout && selectedCheckout <= selectedCheckin) {
+                            let nextDay = new Date(parsed + 'T12:00:00');
+                            nextDay.setDate(nextDay.getDate() + 1);
+                            selectedCheckout = nextDay.toISOString().split('T')[0];
+                        }
+                    } else {
+                        if (selectedCheckin && parsed <= selectedCheckin) {
+                            showModal('O Check-out digitado não pode ser antes/igual ao Check-in!');
+                            return;
+                        }
+                        selectedCheckout = parsed;
+                    }
+                    
+                    // Renderiza calendario para a nova mes/ano digitado
+                    let dObj = new Date(parsed + 'T12:00:00');
+                    currentMonth = dObj.getMonth();
+                    currentYear = dObj.getFullYear();
+                    renderCalendar();
+                    updateLabels();
+                    
+                    if (selectedCheckin && selectedCheckout) buscarDisponibilidade();
+                }
+            }
+        }
+
+        lIn.addEventListener('input', (e) => handleTyping(e, 'checkin'));
+        lOut.addEventListener('input', (e) => handleTyping(e, 'checkout'));
+
+        function updateLabels() {
+            function fmt(dStr) {
+                if(!dStr) return "";
+                const [y,m,d] = dStr.split('-');
+                return `${d}/${m}/${y}`;
+            }
+            
+            // Só sobrescrevemos o valor do input de texto se for validado por fora (pelo calendário visual clicado)
+            // Se o usuário estiver focado e digitando, evite roubar o foco
+            if (document.activeElement !== lIn) {
+                lIn.value = fmt(selectedCheckin);
+                lIn.classList.toggle('text-action-blue', !!selectedCheckin);
+            }
+            if (document.activeElement !== lOut) {
+                lOut.value = fmt(selectedCheckout);
+                lOut.classList.toggle('text-action-blue', !!selectedCheckout);
+            }
+            
+            checkinInput.value = selectedCheckin || "";
+            checkoutInput.value = selectedCheckout || "";
+            
+            // Highlight ativo suave
+            if (activeField === 'checkin') {
+                btnCheckin.style.border = '1px solid #d1d5db';
+                btnCheckin.style.boxShadow = '0 0 0 3px rgba(209,213,219,0.2)';
+                btnCheckout.style.border = '1px solid #f3f4f6';
+                btnCheckout.style.boxShadow = '0 1px 2px 0 rgba(0,0,0,0.05)';
+            } else if (activeField === 'checkout') {
+                btnCheckout.style.border = '1px solid #d1d5db';
+                btnCheckout.style.boxShadow = '0 0 0 3px rgba(209,213,219,0.2)';
+                btnCheckin.style.border = '1px solid #f3f4f6';
+                btnCheckin.style.boxShadow = '0 1px 2px 0 rgba(0,0,0,0.05)';
+            } else {
+                btnCheckin.style.border = '1px solid #f3f4f6';
+                btnCheckin.style.boxShadow = '0 1px 2px 0 rgba(0,0,0,0.05)';
+                btnCheckout.style.border = '1px solid #f3f4f6';
+                btnCheckout.style.boxShadow = '0 1px 2px 0 rgba(0,0,0,0.05)';
+            }
+        }
+
+        function selectDate(dStr, dObj) {
+            if (activeField === 'checkin') {
+                selectedCheckin = dStr;
+                if (selectedCheckout && selectedCheckout <= selectedCheckin) {
+                    let td = new Date(dObj);
+                    td.setDate(td.getDate() + 1);
+                    selectedCheckout = td.getFullYear() + '-' + String(td.getMonth() + 1).padStart(2, '0') + '-' + String(td.getDate()).padStart(2, '0');
+                }
+                activeField = 'checkout';
+                renderCalendar();
+                updateLabels();
+            } else if (activeField === 'checkout') {
+                if (selectedCheckin && dStr <= selectedCheckin) {
+                    showModal('O Check-out deve ser num dia posterior à data de Check-in.');
+                    return;
+                }
+                selectedCheckout = dStr;
+                activeField = null;
+                calPopup.classList.add('hidden');
+                updateLabels();
+                buscarDisponibilidade();
+            }
+        }
+
+        function posicionarCalendario(anchorEl) {
+            const rect = anchorEl.getBoundingClientRect();
+            const popupWidth = 320;
+            let left = rect.left;
+            // Evita sair da tela pela direita
+            if (left + popupWidth > window.innerWidth - 8) {
+                left = window.innerWidth - popupWidth - 8;
+            }
+            calPopup.style.top = (rect.bottom + 8 + window.scrollY) + 'px';
+            calPopup.style.left = left + 'px';
+            // Sobrepor usando fixed (nao scroll)
+            calPopup.style.top = (rect.bottom + 8) + 'px';
+            calPopup.style.position = 'fixed';
+        }
+
+        function abrirCalendario(field, anchorEl) {
+            activeField = field;
+            posicionarCalendario(anchorEl);
+            calPopup.classList.remove('hidden');
+            fetchDatasOcupadas();
+            updateLabels();
+        }
+
+        lIn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            abrirCalendario('checkin', btnCheckin);
+        });
+
+        btnCheckin.addEventListener('click', (e) => {
+            e.stopPropagation();
+            lIn.focus();
+            abrirCalendario('checkin', btnCheckin);
+        });
+
+        lOut.addEventListener('click', (e) => {
+            e.stopPropagation();
+            abrirCalendario('checkout', btnCheckout);
+        });
+
+        btnCheckout.addEventListener('click', (e) => {
+            e.stopPropagation();
+            lOut.focus();
+            abrirCalendario('checkout', btnCheckout);
+        });
+
+        document.getElementById('cal-prev').addEventListener('click', (e) => {
+            e.stopPropagation();
+            currentMonth--;
+            if(currentMonth < 0) { currentMonth = 11; currentYear--; }
+            fetchDatasOcupadas();
+        });
+
+        document.getElementById('cal-next').addEventListener('click', (e) => {
+            e.stopPropagation();
+            currentMonth++;
+            if(currentMonth > 11) { currentMonth = 0; currentYear++; }
+            fetchDatasOcupadas();
+        });
+
+        // Clique fora recolhe o calendário
+        document.addEventListener('click', (e) => {
+            if(!calPopup.contains(e.target) && !btnCheckin.contains(e.target) && !btnCheckout.contains(e.target)) {
+                calPopup.classList.add('hidden');
+                activeField = null;
+                updateLabels();
+                if(selectedCheckin && selectedCheckout) buscarDisponibilidade();
             }
         });
-        plusBtn.addEventListener('click', () => {
-            let currentValue = parseInt(quantityInput.value);
-            quantityInput.value = currentValue + 1;
-            updateCart();
+
+        function buscarDisponibilidade() {
+            const cin = checkinInput.value;
+            const cout = checkoutInput.value;
+            
+            if(!cin || !cout) return;
+            
+            // Fetch da API
+            fetch(`/api/hotel/${hotelId}/check_disponibilidade/?checkin=${cin}&checkout=${cout}`)
+                .then(res => res.json())
+                .then(data => {
+                    if(data.error) {
+                        console.error(data.error);
+                        return;
+                    }
+                    atualizarInterface(data.resultados);
+                })
+                .catch(err => console.error(err));
+        }
+        
+        function formatMoney(n) { 
+            return new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n); 
+        }
+        
+        let globalNoites = 0;
+        
+        function atualizarInterface(resultados) {
+            if(!resultados || resultados.length === 0) return;
+            
+            globalNoites = resultados[0].noites;
+            const sufixoNoites = globalNoites === 1 ? '1 diária' : `${globalNoites} diárias`;
+            
+            resultados.forEach(res => {
+                const card = document.getElementById('quarto-' + res.quarto_id);
+                if(!card) return;
+                
+                const badge = card.querySelector('.status-badge');
+                const precoLabel = card.querySelector('.preco-label');
+                const minusBtn = card.querySelector('.quantity-btn-minus');
+                const plusBtn = card.querySelector('.quantity-btn-plus');
+                const qtyInput = card.querySelector('.quantity-value');
+                
+                // Reseta Carrinho daquele quarto
+                qtyInput.value = 0;
+                
+                // Atualiza Preço e Texto
+                precoLabel.innerHTML = `R$ ${formatMoney(res.preco_total)} <span class="text-xs text-gray-500 font-normal"> / ${sufixoNoites}</span>`;
+                
+                badge.classList.remove('hidden');
+                
+                if(res.disponivel) {
+                    // Quarto Livre!
+                    card.classList.remove('grayscale', 'opacity-60');
+                    badge.classList.replace('bg-red-100', 'bg-green-100');
+                    badge.classList.replace('text-red-700', 'text-green-700');
+                    badge.textContent = 'Disponível';
+                    
+                    // Habilita Botões
+                    minusBtn.disabled = false;
+                    plusBtn.disabled = false;
+                } else {
+                    // Quarto Ocupado! Grayscale Effect
+                    card.classList.add('grayscale', 'opacity-60');
+                    badge.classList.replace('bg-green-100', 'bg-red-100');
+                    badge.classList.replace('text-green-700', 'text-red-700');
+                    
+                    // Prepara texto de sugestão
+                    let txtData = "Esgotado nas datas escolhidas.";
+                    if(res.sugestao_antes || res.sugestao_depois) {
+                        txtData = "Tem vaga em:";
+                        if(res.sugestao_antes) {
+                            let pts = res.sugestao_antes.split('-');
+                            txtData += ` ${pts[2]}/${pts[1]}`;
+                        }
+                        if(res.sugestao_depois) {
+                            let pts = res.sugestao_depois.split('-');
+                            txtData += ` e ${pts[2]}/${pts[1]}`;
+                        }
+                    }
+                    badge.textContent = txtData;
+                    
+                    // Desabilita Botões
+                    minusBtn.disabled = true;
+                    plusBtn.disabled = true;
+                }
+            });
+            
+            updateCart(); // Reseta botão de comprar
+        }
+
+        // 3. Lógica do Carrinho
+        const buyButton = document.getElementById('buy-button');
+        
+        function updateCart() {
+            let total = 0;
+            let ticketCount = 0;
+            
+            document.querySelectorAll('.quarto-card').forEach(card => {
+                const qtyInput = card.querySelector('.quantity-value');
+                const qty = parseInt(qtyInput.value) || 0;
+                
+                if (qty > 0) {
+                    const precoBaseCard = parseFloat(card.dataset.precoBase);
+                    // Preco total = base * noites * qtd
+                    total += (precoBaseCard * globalNoites * qty);
+                    ticketCount += qty;
+                    card.style.borderColor = '#1e3a8a';
+                    card.style.boxShadow = '0 12px 30px rgba(30,58,138,0.1)';
+                    card.style.transform = 'translateY(-2px)';
+                } else {
+                    card.style.borderColor = 'transparent';
+                    card.style.boxShadow = '0 6px 20px rgba(0,0,0,0.04)';
+                    card.style.transform = 'translateY(0)';
+                }
+            });
+            
+            if (globalNoites === 0) {
+                buyButton.textContent = 'Selecione as Datas Acima';
+                buyButton.disabled = true;
+                return;
+            }
+            
+            if (ticketCount > 0) {
+                buyButton.textContent = `Reservar Agora (R$ ${formatMoney(total)})`;
+                buyButton.disabled = false;
+                buyButton.classList.remove('bg-gray-300', 'cursor-not-allowed', 'text-gray-500');
+                buyButton.classList.add('bg-action-blue', 'hover:bg-action-blue-dark');
+            } else {
+                buyButton.textContent = 'Adicionar à Reserva';
+                buyButton.disabled = true;
+                buyButton.classList.add('bg-gray-300', 'cursor-not-allowed');
+                buyButton.classList.remove('bg-action-blue', 'hover:bg-action-blue-dark');
+            }
+        }
+        
+        // Event Listeners dos Quantifiers
+        document.querySelectorAll('.quarto-card').forEach(card => {
+            const quantityInput = card.querySelector('.quantity-value');
+            const minusBtn = card.querySelector('.quantity-btn-minus');
+            const plusBtn = card.querySelector('.quantity-btn-plus');
+            
+            minusBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Previne abrir o acordeão caso clique espalhe
+                let currentValue = parseInt(quantityInput.value) || 0;
+                if (currentValue > 0) {
+                    quantityInput.value = currentValue - 1;
+                    updateCart();
+                }
+            });
+            plusBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                let currentValue = parseInt(quantityInput.value) || 0;
+                quantityInput.value = currentValue + 1;
+                updateCart();
+            });
         });
+        
+        // Disparar a formatacão inicial dos precos dos cards pelo Javascript na hora zero
+        document.querySelectorAll('.quarto-card').forEach(card => {
+            const precoBase = parseFloat(card.dataset.precoBase);
+            if(precoBase) {
+                const label = card.querySelector('.preco-label');
+                label.innerHTML = `R$ ${formatMoney(precoBase)} <span class="text-xs text-gray-500 font-normal">/noite</span>`;
+            }
+        });
+        
     });
 </script>
 {% endblock %}

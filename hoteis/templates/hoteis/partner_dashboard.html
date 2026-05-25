@@ -1,0 +1,939 @@
+{% extends 'hoteis/base_partner.html' %}
+{% load static %}
+
+{% block title %}Painel Administrativo - {{ hotel.nome }}{% endblock %}
+
+
+{% block header_actions %}
+<div class="flex items-center gap-3">
+    <!-- Nível de Acesso (Ocultado no Mobile) -->
+    <div class="hidden sm:flex items-center gap-2">
+        <span class="role-badge badge-{{ perfil.role }}">{{ perfil.get_role_display }}</span>
+        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse" title="Painel em Tempo Real"></span>
+    </div>
+
+    <!-- Controles das Atividades/Tarefas no Cabeçalho -->
+    <div x-show="activeTab === 'atividades'" class="flex items-center gap-2.5 sm:gap-3" x-transition.opacity>
+        <!-- Alternador Kanban / Calendário (Desktop apenas) -->
+        <div class="hidden md:flex items-center gap-1.5 p-1 bg-slate-100/80 dark:bg-white/5 rounded-2xl border border-slate-200/50 dark:border-white/5 shadow-inner">
+            <button @click="viewMode = 'kanban'; htmx.ajax('GET', '?view=kanban', '#atividades-content')"
+                    :class="viewMode === 'kanban' ? 'bg-white dark:bg-white/10 text-brand shadow-sm font-bold' : 'text-slate-500 dark:text-navie-textsec'" 
+                    class="px-3.5 py-1.5 rounded-xl text-xs transition-all flex items-center gap-1.5">
+                <span class="flex items-center" style="pointer-events:none;"><i data-lucide="kanban-square" class="w-3.5 h-3.5"></i></span> Kanban
+            </button>
+            <button @click="viewMode = 'calendar'; htmx.ajax('GET', '?view=calendario', '#atividades-content')"
+                    :class="viewMode === 'calendar' ? 'bg-white dark:bg-white/10 text-brand shadow-sm font-bold' : 'text-slate-500 dark:text-navie-textsec'" 
+                    class="px-3.5 py-1.5 rounded-xl text-xs transition-all flex items-center gap-1.5">
+                <span class="flex items-center" style="pointer-events:none;"><i data-lucide="calendar" class="w-3.5 h-3.5"></i></span> Calendário
+            </button>
+        </div>
+        
+        <!-- Botão Nova Tarefa (Texto+Maisinho no Desktop, Apenas Maisinho no Mobile) -->
+        <button hx-get="{% url 'hoteis:partner_criar_tarefa' %}" hx-target="#modal-container"
+                class="bg-brand hover:bg-brand/90 text-white p-2 sm:px-4 sm:py-2.5 rounded-full sm:rounded-2xl text-xs font-black transition-all shadow-md shadow-brand/25 flex items-center justify-center gap-1.5 hover:scale-[1.02] active:scale-95">
+            <span class="flex items-center" style="pointer-events:none;"><i data-lucide="plus" class="w-4 h-4"></i></span>
+            <span class="hidden sm:inline">Nova Tarefa</span>
+        </button>
+    </div>
+
+    <!-- Controles das Configurações no Cabeçalho -->
+    <div x-show="activeTab === 'configuracoes'" class="flex items-center gap-2.5 sm:gap-3" x-transition.opacity>
+        <!-- Alternador Site / Assinatura (Desktop apenas) -->
+        <div class="hidden md:flex items-center gap-1.5 p-1 bg-slate-100/80 dark:bg-white/5 rounded-2xl border border-slate-200/50 dark:border-white/5 shadow-inner">
+            <button type="button" @click="configTab = 'site'"
+                    :class="configTab === 'site' ? 'bg-white dark:bg-white/10 text-brand shadow-sm font-bold' : 'text-slate-500 dark:text-navie-textsec'" 
+                    class="px-3.5 py-1.5 rounded-xl text-xs transition-all flex items-center gap-1.5 font-bold">
+                <span class="flex items-center" style="pointer-events:none;"><i data-lucide="monitor" class="w-3.5 h-3.5"></i></span> Vitrine / Site
+            </button>
+            <button type="button" @click="configTab = 'assinatura'"
+                    :class="configTab === 'assinatura' ? 'bg-white dark:bg-white/10 text-brand shadow-sm font-bold' : 'text-slate-500 dark:text-navie-textsec'" 
+                    class="px-3.5 py-1.5 rounded-xl text-xs transition-all flex items-center gap-1.5 font-bold">
+                <span class="flex items-center" style="pointer-events:none;"><i data-lucide="credit-card" class="w-3.5 h-3.5"></i></span> Plano / Assinatura
+            </button>
+        </div>
+        
+        <!-- Botão Salvar Configurações (Apenas na sub-aba 'site') -->
+        <button x-show="configTab === 'site'" type="button" onclick="document.getElementById('form-salvar-config').submit();"
+                class="bg-brand hover:bg-brand/90 text-white p-2 sm:px-4 sm:py-2.5 rounded-full sm:rounded-2xl text-xs font-black transition-all shadow-md shadow-brand/25 flex items-center justify-center gap-1.5 hover:scale-[1.02] active:scale-95">
+            <span class="flex items-center" style="pointer-events:none;"><i data-lucide="check" class="w-4.5 h-4.5"></i></span>
+            <span class="hidden sm:inline">Salvar Alterações</span>
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block sub_header %}
+<!-- Sub-cabeçalho Mobile para as abas de Atividades -->
+<div x-show="activeTab === 'atividades'" class="md:hidden bg-white/40 dark:bg-black/20 backdrop-blur-md border-b border-slate-200/50 dark:border-navie-border px-4 py-2.5 flex justify-center items-center" style="display: none;" x-transition.opacity>
+    <div class="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-white/5 rounded-2xl border border-slate-200/50 dark:border-white/5 shadow-inner w-full max-w-sm justify-between">
+        <button @click="viewMode = 'kanban'; htmx.ajax('GET', '?view=kanban', '#atividades-content')"
+                :class="viewMode === 'kanban' ? 'bg-white dark:bg-white/10 text-brand shadow-sm font-bold w-1/2' : 'text-slate-500 dark:text-navie-textsec w-1/2'" 
+                class="py-2 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5">
+            <span class="flex items-center" style="pointer-events:none;"><i data-lucide="kanban-square" class="w-3.5 h-3.5"></i></span> Kanban
+        </button>
+        <button @click="viewMode = 'calendar'; htmx.ajax('GET', '?view=calendario', '#atividades-content')"
+                :class="viewMode === 'calendar' ? 'bg-white dark:bg-white/10 text-brand shadow-sm font-bold w-1/2' : 'text-slate-500 dark:text-navie-textsec w-1/2'" 
+                class="py-2 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5">
+            <span class="flex items-center" style="pointer-events:none;"><i data-lucide="calendar" class="w-3.5 h-3.5"></i></span> Calendário
+        </button>
+    </div>
+</div>
+
+<!-- Sub-cabeçalho Mobile para as abas de Configurações -->
+<div x-show="activeTab === 'configuracoes'" class="md:hidden bg-white/40 dark:bg-black/20 backdrop-blur-md border-b border-slate-200/50 dark:border-navie-border px-4 py-2.5 flex justify-center items-center" style="display: none;" x-transition.opacity>
+    <div class="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-white/5 rounded-2xl border border-slate-200/50 dark:border-white/5 shadow-inner w-full max-w-sm justify-between">
+        <button @click="configTab = 'site'"
+                :class="configTab === 'site' ? 'bg-white dark:bg-white/10 text-brand shadow-sm font-bold w-1/2' : 'text-slate-500 dark:text-navie-textsec w-1/2'" 
+                class="py-2 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 font-bold">
+            <span class="flex items-center" style="pointer-events:none;"><i data-lucide="monitor" class="w-3.5 h-3.5"></i></span> Vitrine / Site
+        </button>
+        <button @click="configTab = 'assinatura'"
+                :class="configTab === 'assinatura' ? 'bg-white dark:bg-white/10 text-brand shadow-sm font-bold w-1/2' : 'text-slate-500 dark:text-navie-textsec w-1/2'" 
+                class="py-2 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 font-bold">
+            <span class="flex items-center" style="pointer-events:none;"><i data-lucide="credit-card" class="w-3.5 h-3.5"></i></span> Plano / Assinatura
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block painel_content %}
+<div class="animate-in fade-in duration-500">
+
+    <!-- ─────────────────────────────────────────────────────────────
+         SEÇÃO FINANCEIRA (PROPRIETÁRIO / GERENTE)
+         ───────────────────────────────────────────────────────────── -->
+    {% if perfil.role == 'proprietario' or perfil.role == 'gerente' %}
+    <div x-show="activeTab === 'financeiro'" class="space-y-6" x-transition:enter="transition ease-out duration-300">
+        <!-- KPIs Financeiros premium -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white/80 dark:bg-black/30 border border-slate-200/80 dark:border-navie-border rounded-3xl p-6 shadow-sm backdrop-blur-md relative overflow-hidden group hover:scale-[1.01] transition-transform duration-300">
+                <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-green-500/10 rounded-full blur-xl"></div>
+                <div class="flex justify-between items-start mb-4">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Faturamento Mensal</span>
+                    <span class="p-2 rounded-2xl bg-green-500/10 text-green-500"><i data-lucide="trending-up" class="w-5 h-5"></i></span>
+                </div>
+                <h3 class="text-3xl font-black text-green-600 dark:text-green-400">R$ <span class="moeda-br" data-valor="{{ faturamento_total }}">{{ faturamento_total|floatformat:2 }}</span></h3>
+                <p class="text-[10px] text-slate-400 mt-2 font-medium">Entradas consolidadas no caixa</p>
+            </div>
+
+            <div class="bg-white/80 dark:bg-black/30 border border-slate-200/80 dark:border-navie-border rounded-3xl p-6 shadow-sm backdrop-blur-md relative overflow-hidden group hover:scale-[1.01] transition-transform duration-300">
+                <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-red-500/10 rounded-full blur-xl"></div>
+                <div class="flex justify-between items-start mb-4">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Despesas Operacionais</span>
+                    <span class="p-2 rounded-2xl bg-red-500/10 text-red-500"><i data-lucide="trending-down" class="w-5 h-5"></i></span>
+                </div>
+                <h3 class="text-3xl font-black text-red-600 dark:text-red-400">R$ <span class="moeda-br" data-valor="{{ despesas_total }}">{{ despesas_total|floatformat:2 }}</span></h3>
+                <p class="text-[10px] text-slate-400 mt-2 font-medium">Saídas e manutenções do mês</p>
+            </div>
+
+            <div class="bg-white/80 dark:bg-black/30 border border-slate-200/80 dark:border-navie-border rounded-3xl p-6 shadow-sm backdrop-blur-md relative overflow-hidden group hover:scale-[1.01] transition-transform duration-300">
+                <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-brand-500/10 rounded-full blur-xl"></div>
+                <div class="flex justify-between items-start mb-4">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Lucro Líquido</span>
+                    <span class="p-2 rounded-2xl bg-brand-500/10 text-brand-500"><i data-lucide="wallet" class="w-5 h-5"></i></span>
+                </div>
+                <h3 class="text-3xl font-black text-brand-600 dark:text-brand-400">R$ <span class="moeda-br" data-valor="{{ lucro_total }}">{{ lucro_total|floatformat:2 }}</span></h3>
+                <p class="text-[10px] text-slate-400 mt-2 font-medium">Saldo positivo disponível</p>
+            </div>
+        </div>
+
+        <!-- Tabela de Caixa de Lançamentos -->
+        <div class="bg-white/80 dark:bg-black/30 border border-slate-200/80 dark:border-navie-border rounded-3xl p-6 shadow-sm backdrop-blur-md">
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6">
+                <div>
+                    <h4 class="text-lg font-bold text-slate-800 dark:text-white">Lançamentos de Caixa</h4>
+                    <p class="text-xs text-slate-400 mt-0.5">Histórico financeiro em tempo real</p>
+                </div>
+                <button class="bg-brand-600 hover:bg-brand-500 text-white px-4 py-2.5 rounded-2xl text-xs font-bold transition-all shadow-md shadow-brand-600/10 flex items-center justify-center gap-2">
+                    <span class="flex items-center" style="pointer-events:none;"><i data-lucide="plus" class="w-4 h-4"></i></span> Novo Lançamento
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-100 dark:border-navie-border text-xs text-slate-400 uppercase font-bold">
+                            <th class="pb-3 px-4">Descrição</th>
+                            <th class="pb-3">Data</th>
+                            <th class="pb-3">Tipo</th>
+                            <th class="pb-3 text-right px-4">Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm divide-y divide-slate-100 dark:divide-white/5">
+                        {% for l in financeiro %}
+                        <tr class="hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors">
+                            <td class="py-4 px-4 font-semibold text-slate-700 dark:text-slate-200">{{ l.desc }}</td>
+                            <td class="py-4 text-slate-400">{{ l.data }}</td>
+                            <td class="py-4">
+                                <span class="text-[9px] uppercase font-black px-2.5 py-1 rounded-full 
+                                    {% if l.tipo == 'receita' %}bg-green-500/10 text-green-500 border border-green-500/20{% else %}bg-red-500/10 text-red-500 border border-red-500/20{% endif %}">
+                                    {{ l.tipo }}
+                                </span>
+                            </td>
+                            <td class="py-4 text-right font-black px-4 {% if l.tipo == 'receita' %}text-green-500{% else %}text-red-500{% endif %}">
+                                R$ <span class="moeda-br" data-valor="{{ l.valor }}">{{ l.valor|floatformat:2 }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         SEÇÃO QUARTOS (PROPRIETÁRIO / GERENTE)
+         ───────────────────────────────────────────────────────────── -->
+    <div x-show="activeTab === 'quartos'" class="space-y-6" x-transition:enter="transition ease-out duration-300" style="display: none;">
+        <div class="bg-white/80 dark:bg-black/30 border border-slate-200/80 dark:border-navie-border rounded-3xl p-6 shadow-sm backdrop-blur-md">
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6">
+                <div>
+                    <h4 class="text-lg font-bold text-slate-800 dark:text-white">Acomodações & Categorias</h4>
+                    <p class="text-xs text-slate-400 mt-0.5">Gerenciamento de tarifas e quartos</p>
+                </div>
+                <button class="bg-brand-600 hover:bg-brand-500 text-white px-4 py-2.5 rounded-2xl text-xs font-bold transition-all shadow-md shadow-brand-600/10 flex items-center justify-center gap-2">
+                    <span class="flex items-center" style="pointer-events:none;"><i data-lucide="plus" class="w-4 h-4"></i></span> Adicionar Categoria
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% for q in quartos %}
+                <div class="border border-slate-100 dark:border-navie-border rounded-3xl p-6 bg-slate-50/50 dark:bg-black/20 flex flex-col justify-between hover:border-brand-500/40 dark:hover:border-brand-500/40 transition-colors duration-300">
+                    <div>
+                        <div class="flex justify-between items-start mb-3">
+                            <h5 class="font-bold text-slate-800 dark:text-white text-base leading-tight">{{ q.nome }}</h5>
+                            <span class="text-sm font-black text-brand-600 dark:text-brand-400">R$ <span class="moeda-br" data-valor="{{ q.preco }}">{{ q.preco }}</span> / diária</span>
+                        </div>
+                        <p class="text-xs text-slate-400 dark:text-slate-300 leading-relaxed mb-6">{{ q.descricao }}</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <button class="flex-1 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-700 dark:text-white py-2.5 rounded-2xl text-xs font-bold transition-all">Editar Tarifa</button>
+                        <button class="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-500 py-2.5 rounded-2xl text-xs font-bold transition-all">Bloquear Quarto</button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         SEÇÃO RESERVAS (PROPRIETÁRIO / GERENTE)
+         ───────────────────────────────────────────────────────────── -->
+    <div x-show="activeTab === 'reservas'" class="space-y-6" x-transition:enter="transition ease-out duration-300" style="display: none;">
+        <div class="bg-white/80 dark:bg-black/30 border border-slate-200/80 dark:border-navie-border rounded-3xl p-6 shadow-sm backdrop-blur-md">
+            <h4 class="text-lg font-bold text-slate-800 dark:text-white mb-2">Aprovações & Reservas</h4>
+            <p class="text-xs text-slate-400 mb-6">Histórico de reservas ativas dos clientes</p>
+            
+            {% if reservas %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-100 dark:border-navie-border text-xs text-slate-400 uppercase font-bold">
+                            <th class="pb-3 px-4">Localizador</th>
+                            <th class="pb-3">Check-in</th>
+                            <th class="pb-3">Check-out</th>
+                            <th class="pb-3">Quarto Atribuído</th>
+                            <th class="pb-3">Status</th>
+                            <th class="pb-3 text-right px-4">Faturamento</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm divide-y divide-slate-100 dark:divide-white/5">
+                        {% for r in reservas %}
+                        <tr class="hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors">
+                            <td class="py-4 px-4 font-bold text-brand-600 dark:text-brand-400">#{{ r.id|slice:":8"|upper }}</td>
+                            <td class="py-4 text-slate-700 dark:text-slate-200">{{ r.data_checkin }}</td>
+                            <td class="py-4 text-slate-700 dark:text-slate-200">{{ r.data_checkout }}</td>
+                            <td class="py-4 text-slate-400 font-medium">{{ r.unidade.identificador }} ({{ r.unidade.quarto.nome }})</td>
+                            <td class="py-4">
+                                <span class="text-[9px] uppercase font-black px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                                    {{ r.get_status_display }}
+                                </span>
+                            </td>
+                            <td class="py-4 text-right font-black px-4 text-slate-800 dark:text-white">R$ <span class="moeda-br" data-valor="{{ r.valor_total }}">{{ r.valor_total }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-10">
+                <span class="inline-flex p-4 rounded-full bg-slate-100 dark:bg-white/5 text-slate-400 mb-3"><i data-lucide="info" class="w-6 h-6"></i></span>
+                <p class="text-sm text-slate-400">Nenhuma reserva ativa cadastrada no estabelecimento ainda.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         SEÇÃO TAREFAS / ORGANIZAÇÃO (PROPRIETÁRIO / GERENTE)
+         ───────────────────────────────────────────────────────────── -->
+    <div x-show="activeTab === 'atividades'" class="space-y-6" x-transition:enter="transition ease-out duration-300" style="display: none;">
+
+        <!-- Contêiner Reativo para o Kanban / Calendário swaps via HTMX -->
+        <div id="atividades-content" class="w-full">
+            {% include 'hoteis/partials/kanban.html' %}
+        </div>
+    </div>
+
+
+    <!-- ─────────────────────────────────────────────────────────────
+         SEÇÃO EQUIPE (PROPRIETÁRIO / GERENTE)
+         ───────────────────────────────────────────────────────────── -->
+    <div x-show="activeTab === 'equipe'" class="space-y-6" x-transition:enter="transition ease-out duration-300" style="display: none;">
+        <div class="bg-white/80 dark:bg-black/30 border border-slate-200/80 dark:border-navie-border rounded-3xl p-6 shadow-sm backdrop-blur-md">
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6">
+                <div>
+                    <h4 class="text-lg font-bold text-slate-800 dark:text-white">Colaboradores & Acessos</h4>
+                    <p class="text-xs text-slate-400 mt-0.5">Quadro operacional da pousada</p>
+                </div>
+                <button class="bg-brand-600 hover:bg-brand-500 text-white px-4 py-2.5 rounded-2xl text-xs font-bold transition-all shadow-md shadow-brand-600/10 flex items-center justify-center gap-2">
+                    <span class="flex items-center" style="pointer-events:none;"><i data-lucide="plus" class="w-4 h-4"></i></span> Contratar Membro
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for e in equipe %}
+                <div class="border border-slate-100 dark:border-navie-border rounded-3xl p-5 bg-slate-50/50 dark:bg-black/20 flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-brand-100 dark:bg-white/10 text-brand-700 dark:text-white flex items-center justify-center font-bold text-sm shrink-0">
+                            {{ e.user.username|slice:":2"|upper }}
+                        </div>
+                        <div>
+                            <h5 class="text-sm font-bold text-slate-700 dark:text-white leading-tight">{{ e.user.get_full_name|default:e.user.username }}</h5>
+                            <p class="text-xs text-slate-400 mt-1 font-medium">CPF: {{ e.cpf|default:"Não informado" }}</p>
+                        </div>
+                    </div>
+                    <span class="role-badge badge-{{ e.role }}">{{ e.get_role_display }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         SEÇÃO CONFIGURAÇÕES (PROPRIETÁRIO / GERENTE)
+         ───────────────────────────────────────────────────────────── -->
+    <div x-show="activeTab === 'configuracoes'" class="space-y-6" x-transition:enter="transition ease-out duration-300" style="display: none;">
+        <!-- Folha de estilo Leaflet -->
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+        <!-- SUB-ABA 1: VITRINE / SITE -->
+        <div x-show="configTab === 'site'" x-transition:enter="transition ease-out duration-300" class="space-y-6">
+            <form id="form-salvar-config" action="{% url 'hoteis:partner_salvar_configuracoes' %}" method="POST" enctype="multipart/form-data" class="space-y-6">
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Coluna da Esquerda: Configurações Gerais -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <div class="bg-white/80 dark:bg-black/30 border border-slate-200/80 dark:border-navie-border rounded-3xl p-6 shadow-sm backdrop-blur-md space-y-5">
+                            <div class="flex items-center gap-3 mb-2">
+                                <span class="p-2 rounded-2xl bg-brand/10 text-brand"><i data-lucide="sliders" class="w-5 h-5"></i></span>
+                                <div>
+                                    <h4 class="text-base font-bold text-slate-800 dark:text-white">Branding & Contatos</h4>
+                                    <p class="text-xs text-slate-400">Identidade visual e contatos da sua hospedagem</p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[10px] font-black text-slate-400 dark:text-navie-textsec uppercase tracking-widest mb-2">Nome do Estabelecimento</label>
+                                    <input type="text" name="nome" value="{{ hotel.nome }}" class="w-full h-12 px-4 rounded-2xl input-glass text-sm focus:outline-none" required>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-[10px] font-black text-slate-400 dark:text-navie-textsec uppercase tracking-widest mb-2">WhatsApp de Contato</label>
+                                    <input type="text" name="whatsapp" value="{{ hotel.whatsapp|default:'' }}" placeholder="Ex: 5588999999999" class="w-full h-12 px-4 rounded-2xl input-glass text-sm focus:outline-none">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-[10px] font-black text-slate-400 dark:text-navie-textsec uppercase tracking-widest mb-2">Descrição Institucional</label>
+                                <textarea name="descricao" rows="3" class="w-full p-4 rounded-2xl input-glass text-sm focus:outline-none" placeholder="Conte mais sobre o diferencial da sua pousada..." required>{{ hotel.descricao }}</textarea>
+                            </div>
+
+                            <!-- Paleta de Cores e Personalização -->
+                            <div class="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-navie-border space-y-4">
+                                <div>
+                                    <label class="block text-[10px] font-black text-slate-400 dark:text-navie-textsec uppercase tracking-widest mb-2">Cor Padrão do Sistema & Site</label>
+                                    <div class="flex items-center gap-3">
+                                        <input type="color" id="cor_primaria_picker" value="{{ hotel.cor_primaria|default:'#f97316' }}" 
+                                               class="w-12 h-12 rounded-xl border-0 cursor-pointer overflow-hidden bg-transparent"
+                                               oninput="document.getElementById('cor_primaria_hex').value = this.value">
+                                        <input type="text" name="cor_primaria" id="cor_primaria_hex" value="{{ hotel.cor_primaria|default:'#f97316' }}" 
+                                               placeholder="#f97316" maxlength="7"
+                                               class="w-32 h-12 px-4 rounded-2xl input-glass text-sm font-mono focus:outline-none uppercase"
+                                               oninput="if(this.value.startsWith('#') && this.value.length === 7) document.getElementById('cor_primaria_picker').value = this.value">
+                                        <p class="text-xs text-slate-400 leading-tight">Escolha a cor que pintará os botões, links e menus do seu hotel no marketplace e painel.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Novo Bloco: Identidade & Mídias da Marca (Logomarca & Fundo Glassmorphism) -->
+                        <div class="bg-white/80 dark:bg-black/30 border border-slate-200/80 dark:border-navie-border rounded-3xl p-6 shadow-sm backdrop-blur-md space-y-5">
+                            <div class="flex items-center gap-3 mb-2">
+                                <span class="p-2 rounded-2xl bg-brand/10 text-brand"><i data-lucide="palette" class="w-5 h-5"></i></span>
+                                <div>
+                                    <h4 class="text-base font-bold text-slate-800 dark:text-white">Identidade da Marca & Modo Glass</h4>
+                                    <p class="text-xs text-slate-400">Logomarca do cabeçalho e papel de parede do tema Glass</p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- Logomarca Oficial -->
+                                <div class="space-y-3">
+                                    <label class="block text-[10px] font-black text-slate-400 dark:text-navie-textsec uppercase tracking-widest">Logomarca do Cabeçalho</label>
+                                    <div class="relative w-full h-32 border-2 border-dashed border-slate-300 dark:border-navie-border rounded-2xl overflow-hidden flex flex-col items-center justify-center bg-slate-50/50 dark:bg-black/10 transition-colors hover:border-brand/40">
+                                        <input type="file" name="logo" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                                               onchange="
+                                                   const file = this.files[0];
+                                                   if (file) {
+                                                       const reader = new FileReader();
+                                                       reader.onload = (e) => {
+                                                           document.getElementById('logo-preview-img').src = e.target.result;
+                                                           document.getElementById('logo-preview-box').classList.remove('hidden');
+                                                       }
+                                                       reader.readAsDataURL(file);
+                                                   }
+                                               ">
+                                        <span class="flex items-center" style="pointer-events:none;"><i data-lucide="shield" class="w-6 h-6 text-slate-400 dark:text-navie-textsec mb-1"></i></span>
+                                        <span class="text-[10px] text-slate-500 font-bold dark:text-navie-textsec">Subir Logomarca</span>
+                                    </div>
+                                    
+                                    <!-- Preview da Logomarca -->
+                                    <div id="logo-preview-box" class="{% if not hotel.logo %}hidden{% endif %} relative rounded-2xl overflow-hidden border border-slate-200 dark:border-navie-border h-24 bg-slate-100 dark:bg-white/5 flex items-center justify-center p-4">
+                                        <img id="logo-preview-img" src="{% if hotel.logo %}{{ hotel.logo.url }}{% endif %}" alt="Logo" class="max-h-full max-w-full object-contain">
+                                        <div class="absolute top-2 right-2 bg-black/60 px-2 py-0.5 rounded text-[8px] font-black text-white uppercase tracking-wider">Miniatura</div>
+                                    </div>
+                                </div>
+
+                                <!-- Imagem de Fundo (Modo Glass) -->
+                                <div class="space-y-3">
+                                    <label class="block text-[10px] font-black text-slate-400 dark:text-navie-textsec uppercase tracking-widest">Papel de Parede (Glass)</label>
+                                    <div class="relative w-full h-32 border-2 border-dashed border-slate-300 dark:border-navie-border rounded-2xl overflow-hidden flex flex-col items-center justify-center bg-slate-50/50 dark:bg-black/10 transition-colors hover:border-brand/40">
+                                        <input type="file" name="foto_fundo" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                                               onchange="
+                                                   const file = this.files[0];
+                                                   if (file) {
+                                                       const reader = new FileReader();
+                                                       reader.onload = (e) => {
+                                                           document.getElementById('fundo-preview-img').src = e.target.result;
+                                                           document.getElementById('fundo-preview-box').classList.remove('hidden');
+                                                       }
+                                                       reader.readAsDataURL(file);
+                                                   }
+                                               ">
+                                        <span class="flex items-center" style="pointer-events:none;"><i data-lucide="image" class="w-6 h-6 text-slate-400 dark:text-navie-textsec mb-1"></i></span>
+                                        <span class="text-[10px] text-slate-500 font-bold dark:text-navie-textsec">Subir Imagem de Fundo</span>
+                                    </div>
+                                    
+                                    <!-- Preview da Foto de Fundo -->
+                                    <div id="fundo-preview-box" class="{% if not hotel.foto_fundo %}hidden{% endif %} relative rounded-2xl overflow-hidden border border-slate-200 dark:border-navie-border h-24">
+                                        <img id="fundo-preview-img" src="{% if hotel.foto_fundo %}{{ hotel.foto_fundo.url }}{% endif %}" alt="Fundo Glass" class="w-full h-full object-cover">
+                                        <div class="absolute top-2 right-2 bg-black/60 px-2 py-0.5 rounded text-[8px] font-black text-white uppercase tracking-wider">Miniatura</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mídia de Capa Premium (Hero Background) -->
+                        <div class="bg-white/80 dark:bg-black/30 border border-slate-200/80 dark:border-navie-border rounded-3xl p-6 shadow-sm backdrop-blur-md space-y-5"
+                             x-data="{ tipoMidia: '{{ hotel.hero_tipo|default:'imagem' }}' }">
+                            <div class="flex items-center gap-3 mb-2">
+                                <span class="p-2 rounded-2xl bg-brand/10 text-brand"><i data-lucide="image" class="w-5 h-5"></i></span>
+                                <div>
+                                    <h4 class="text-base font-bold text-slate-800 dark:text-white">Mídia de Entrada (Hero Background)</h4>
+                                    <p class="text-xs text-slate-400">Vídeo em loop ou foto estática de entrada no portal do hóspede</p>
+                                </div>
+                            </div>
+
+                            <!-- Chaveador Dinâmico Alpine -->
+                            <div class="flex gap-2">
+                                <label class="cursor-pointer flex-1">
+                                    <input type="radio" name="hero_tipo" value="imagem" class="peer hidden" x-model="tipoMidia">
+                                    <div class="px-4 py-3 rounded-2xl border border-slate-200/80 dark:border-navie-border text-center peer-checked:border-brand peer-checked:bg-brand-50/80 dark:peer-checked:bg-brand/20 transition-all font-bold text-xs text-slate-600 dark:text-navie-textsec peer-checked:text-brand dark:peer-checked:text-white">
+                                        FOTO ESTÁTICA
+                                    </div>
+                                </label>
+                                
+                                <label class="cursor-pointer flex-1">
+                                    <input type="radio" name="hero_tipo" value="video" class="peer hidden" x-model="tipoMidia">
+                                    <div class="px-4 py-3 rounded-2xl border border-slate-200/80 dark:border-navie-border text-center peer-checked:border-brand peer-checked:bg-brand-50/80 dark:peer-checked:bg-brand/20 transition-all font-bold text-xs text-slate-600 dark:text-navie-textsec peer-checked:text-brand dark:peer-checked:text-white">
+                                        VÍDEO EM LOOP (8MB MÁX)
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Campo Upload Imagem -->
+                            <div x-show="tipoMidia === 'imagem'" class="space-y-3">
+                                <div class="relative w-full h-48 border-2 border-dashed border-slate-300 dark:border-navie-border rounded-2xl overflow-hidden flex flex-col items-center justify-center bg-slate-50/50 dark:bg-black/10 transition-colors hover:border-brand/40">
+                                    <input type="file" name="banner" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20">
+                                    <span class="flex items-center" style="pointer-events:none;"><i data-lucide="upload-cloud" class="w-8 h-8 text-slate-400 dark:text-navie-textsec mb-2"></i></span>
+                                    <span class="text-xs text-slate-500 font-bold dark:text-navie-textsec">Clique ou arraste para subir a Imagem Banner</span>
+                                    <span class="text-[10px] text-slate-400 mt-1">Recomendado: PNG ou JPG de alta resolução</span>
+                                </div>
+                                {% if hotel.banner %}
+                                <div class="relative rounded-2xl overflow-hidden border border-slate-200 dark:border-navie-border h-32">
+                                    <img src="{{ hotel.banner.url }}" alt="Banner Atual" class="w-full h-full object-cover">
+                                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                        <span class="text-[10px] font-black text-white bg-black/50 px-3 py-1 rounded-full uppercase tracking-wider">Banner Atual</span>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Campo Upload Vídeo -->
+                            <div x-show="tipoMidia === 'video'" class="space-y-3" style="display:none;">
+                                <div class="relative w-full h-48 border-2 border-dashed border-slate-300 dark:border-navie-border rounded-2xl overflow-hidden flex flex-col items-center justify-center bg-slate-50/50 dark:bg-black/10 transition-colors hover:border-brand/40">
+                                    <input type="file" name="hero_video" accept="video/mp4" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20">
+                                    <span class="flex items-center" style="pointer-events:none;"><i data-lucide="video" class="w-8 h-8 text-slate-400 dark:text-navie-textsec mb-2"></i></span>
+                                    <span class="text-xs text-slate-500 font-bold dark:text-navie-textsec">Clique ou arraste para subir o Vídeo MP4</span>
+                                    <span class="text-[10px] text-slate-400 mt-1">Tamanho máximo: 8MB. Duração: até 15s</span>
+                                </div>
+                                {% if hotel.hero_video %}
+                                <div class="relative rounded-2xl overflow-hidden border border-slate-200 dark:border-navie-border h-32">
+                                    <video src="{{ hotel.hero_video.url }}" class="w-full h-full object-cover" muted autoplay loop></video>
+                                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                        <span class="text-[10px] font-black text-white bg-black/50 px-3 py-1 rounded-full uppercase tracking-wider">Vídeo Atual</span>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Coluna da Direita: Localização -->
+                    <div class="space-y-6">
+                        <!-- Mapa de Geolocalização -->
+                        <div class="bg-white/80 dark:bg-black/30 border border-slate-200/80 dark:border-navie-border rounded-3xl p-6 shadow-sm backdrop-blur-md space-y-4">
+                            <div class="flex items-center gap-3">
+                                <span class="p-2 rounded-2xl bg-brand/10 text-brand"><i data-lucide="map-pin" class="w-5 h-5"></i></span>
+                                <div>
+                                    <h4 class="text-base font-bold text-slate-800 dark:text-white">Geolocalização Física</h4>
+                                    <p class="text-xs text-slate-400">Pinagem exata no mapa</p>
+                                </div>
+                            </div>
+
+                            <!-- Inputs Ocultos de Latitude e Longitude -->
+                            <input type="hidden" name="latitude" id="hotel_lat" value="{% if hotel.latitude %}{{ hotel.latitude|stringformat:"f" }}{% else %}-4.004445{% endif %}">
+                            <input type="hidden" name="longitude" id="hotel_lon" value="{% if hotel.longitude %}{{ hotel.longitude|stringformat:"f" }}{% else %}-40.990278{% endif %}">
+
+                            <div class="p-2 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-navie-border flex flex-col gap-2">
+                                <!-- Botões de Ações do Mapa -->
+                                <div class="flex justify-between gap-2">
+                                    <button type="button" onclick="geolocalizarHotel()" class="flex-1 bg-brand-600 hover:bg-brand-500 text-white py-2 px-3 rounded-xl text-[10px] font-black transition-all flex items-center justify-center gap-1.5 shadow-md shadow-brand-600/10">
+                                        <span class="flex items-center" style="pointer-events:none;"><i data-lucide="compass" class="w-3.5 h-3.5"></i></span> GPS ATUAL
+                                    </button>
+                                    <button type="button" onclick="centralizarCidade()" class="flex-1 bg-slate-200/80 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/20 text-slate-700 dark:text-white py-2 px-3 rounded-xl text-[10px] font-black transition-all flex items-center justify-center gap-1.5">
+                                        <span class="flex items-center" style="pointer-events:none;"><i data-lucide="search" class="w-3.5 h-3.5"></i></span> CENTRO CIDADE
+                                    </button>
+                                </div>
+                                
+                                <!-- Container Físico do Mapa Leaflet -->
+                                <div id="mapaSelector" class="w-full h-48 rounded-xl overflow-hidden border border-slate-200 dark:border-navie-border z-20"></div>
+                            </div>
+                            
+                            <p class="text-[10px] text-slate-400 leading-tight">Arraste o pin vermelho do mapa ou clique em "GPS Atual" se estiver logado no hotel para ajustar as coordenadas físicas exatas.</p>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- SUB-ABA 2: ASSINATURA / PLANO / SAAS -->
+        <div x-show="configTab === 'assinatura'" x-transition:enter="transition ease-out duration-300" class="space-y-6" style="display: none;">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Painel Principal de Faturamento -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Status do Plano Ativo -->
+                    <div class="bg-white/80 dark:bg-black/30 border border-slate-200/80 dark:border-navie-border rounded-3xl p-6 shadow-sm backdrop-blur-md relative overflow-hidden group">
+                        <div class="absolute -right-4 -bottom-4 w-40 h-40 bg-brand-500/10 rounded-full blur-2xl"></div>
+                        
+                        <div class="flex items-center justify-between mb-6">
+                            <div class="flex items-center gap-3">
+                                <span class="p-3 rounded-2xl bg-brand/10 text-brand"><i data-lucide="award" class="w-6 h-6"></i></span>
+                                <div>
+                                    <h4 class="text-lg font-black text-slate-800 dark:text-white leading-tight">Assinatura Ativa</h4>
+                                    <p class="text-xs text-slate-400">Dados do faturamento do seu estabelecimento</p>
+                                </div>
+                            </div>
+                            <span class="px-3.5 py-1.5 bg-green-500/10 text-green-500 rounded-full text-xs font-black border border-green-500/20 uppercase tracking-widest">Regular</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 py-4 border-y border-slate-100 dark:border-navie-border">
+                            <div>
+                                <span class="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Plano Contratado</span>
+                                <span class="text-lg font-black text-slate-700 dark:text-white mt-1 block">Starter Plus</span>
+                            </div>
+                            <div>
+                                <span class="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Mensalidade</span>
+                                <span class="text-lg font-black text-slate-700 dark:text-white mt-1 block">R$ 149,00 <span class="text-xs font-medium text-slate-400">/mês</span></span>
+                            </div>
+                            <div>
+                                <span class="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Próxima Fatura</span>
+                                <span class="text-lg font-black text-slate-700 dark:text-white mt-1 block">15/06/2026</span>
+                            </div>
+                        </div>
+
+                        <div class="pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+                            <p class="text-xs text-slate-400 font-medium">Faturamento integrado à infraestrutura de pagamentos Naviê B2B.</p>
+                            <button type="button" class="bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-700 dark:text-white px-5 py-2.5 rounded-2xl text-xs font-bold transition-all whitespace-nowrap">Ver Histórico de Faturas</button>
+                        </div>
+                    </div>
+
+                    <!-- Grade de Planos SaaS Disponíveis -->
+                    <div class="bg-white/80 dark:bg-black/30 border border-slate-200/80 dark:border-navie-border rounded-3xl p-6 shadow-sm backdrop-blur-md space-y-6">
+                        <div>
+                            <h4 class="text-base font-bold text-slate-800 dark:text-white">Planos de Crescimento</h4>
+                            <p class="text-xs text-slate-400 mt-0.5">Evolua sua operação hoteleira contratando limites expandidos</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Card Plano Pro -->
+                            <div class="border border-slate-200 dark:border-navie-border bg-slate-50/50 dark:bg-black/20 p-5 rounded-3xl flex flex-col justify-between gap-5 relative hover:border-brand-500/40 transition-colors duration-300">
+                                <div class="absolute -right-3 -top-3 w-16 h-16 bg-blue-500/10 rounded-full blur-lg"></div>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-xs font-black text-blue-500 uppercase tracking-wider">PLANO PRO</span>
+                                        <span class="text-[10px] text-slate-400 font-medium">Recomendado</span>
+                                    </div>
+                                    <h5 class="text-3xl font-black text-slate-700 dark:text-white">R$ 299<span class="text-sm font-normal text-slate-400">/mês</span></h5>
+                                    <ul class="space-y-2 text-xs text-slate-500 dark:text-navie-textsec font-semibold pt-2 border-t border-slate-100 dark:border-navie-border">
+                                        <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Até 30 Quartos / Chalés</li>
+                                        <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> 20 GB Armazenamento</li>
+                                        <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Inteligência Artificial Ilimitada</li>
+                                        <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Faturamento B2B Completo</li>
+                                    </ul>
+                                </div>
+                                <button type="button" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-2xl text-xs font-black transition-all shadow-md shadow-blue-600/10">Contratar Plano Pro</button>
+                            </div>
+
+                            <!-- Card Plano Enterprise -->
+                            <div class="border border-slate-200 dark:border-navie-border bg-slate-50/50 dark:bg-black/20 p-5 rounded-3xl flex flex-col justify-between gap-5 relative hover:border-brand-500/40 transition-colors duration-300">
+                                <div class="absolute -right-3 -top-3 w-16 h-16 bg-purple-500/10 rounded-full blur-lg"></div>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-xs font-black text-purple-500 uppercase tracking-wider">ENTERPRISE</span>
+                                        <span class="text-[10px] text-slate-400 font-medium">Sob consulta</span>
+                                    </div>
+                                    <h5 class="text-3xl font-black text-slate-700 dark:text-white">Customizado</h5>
+                                    <ul class="space-y-2 text-xs text-slate-500 dark:text-navie-textsec font-semibold pt-2 border-t border-slate-100 dark:border-navie-border">
+                                        <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span> Quartos Ilimitados</li>
+                                        <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span> Armazenamento sob demanda</li>
+                                        <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span> Suporte 24/7 Dedicado</li>
+                                        <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span> Integração com PMS Externo</li>
+                                    </ul>
+                                </div>
+                                <button type="button" class="w-full bg-purple-600 hover:bg-purple-500 text-white py-3 rounded-2xl text-xs font-black transition-all shadow-md shadow-purple-600/10">Falar com Consultor</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coluna da Direita: Cotas de Uso Atuais -->
+                <div class="space-y-6">
+                    <div class="bg-gradient-to-br from-brand-900/30 to-brand/10 border border-brand-500/20 rounded-3xl p-6 shadow-sm backdrop-blur-md relative overflow-hidden group space-y-5">
+                        <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-brand-500/15 rounded-full blur-xl"></div>
+                        
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="text-base font-bold text-slate-800 dark:text-white">Métricas de Consumo</h4>
+                                <p class="text-[10px] text-brand-600 dark:text-brand-100 font-bold uppercase tracking-widest mt-0.5">Starter Ativo</p>
+                            </div>
+                            <span class="p-2 rounded-2xl bg-brand/10 text-brand"><i data-lucide="zap" class="w-5 h-5"></i></span>
+                        </div>
+                        
+                        <!-- Progresso de Armazenamento Real/Mock -->
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between text-[10px] font-bold text-slate-400 mb-1">
+                                    <span>LIMITE DE ACOMODAÇÕES</span>
+                                    <span class="text-brand">4 / 10 Quartos</span>
+                                </div>
+                                <div class="w-full h-2 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+                                    <div class="h-full bg-brand rounded-full transition-all duration-500" style="width: 40%"></div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <div class="flex justify-between text-[10px] font-bold text-slate-400 mb-1">
+                                    <span>ESPAÇO DE DISCO (Bytes)</span>
+                                    <span class="text-brand">248 MB / 5.0 GB</span>
+                                </div>
+                                <div class="w-full h-2 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+                                    <div class="h-full bg-brand rounded-full transition-all duration-500" style="width: 5%"></div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <div class="flex justify-between text-[10px] font-bold text-slate-400 mb-1">
+                                    <span>MENSAGENS DE IA OPERACIONAIS</span>
+                                    <span class="text-brand">84 / 500 Enviadas</span>
+                                </div>
+                                <div class="w-full h-2 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+                                    <div class="h-full bg-brand rounded-full transition-all duration-500" style="width: 17.8%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- JavaScript do Leaflet Selector -->
+        <script>
+            let leafletMap;
+            let leafletMarker;
+            let camadaSatelite;
+            const redPinIcon = L.icon({
+                iconUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36"><path fill="%23ef4444" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>',
+                iconSize: [36, 36],
+                iconAnchor: [18, 36]
+            });
+
+            function inicializarMapa() {
+                const inputLat = document.getElementById('hotel_lat');
+                const inputLon = document.getElementById('hotel_lon');
+                let lat = parseFloat(inputLat.value) || -4.004445;
+                let lon = parseFloat(inputLon.value) || -40.990278;
+
+                if (!leafletMap) {
+                    camadaSatelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                        attribution: 'Imagens Esri &mdash; OpenStreetMap'
+                    });
+                    
+                    leafletMap = L.map('mapaSelector', {
+                        center: [lat, lon],
+                        zoom: 16,
+                        layers: [camadaSatelite]
+                    });
+
+                    leafletMarker = L.marker([lat, lon], {
+                        draggable: true,
+                        icon: redPinIcon
+                    }).addTo(leafletMap);
+
+                    // Sincroniza a posição ao arrastar o marcador
+                    leafletMarker.on('dragend', function(e) {
+                        const position = leafletMarker.getLatLng();
+                        inputLat.value = position.lat.toFixed(6);
+                        inputLon.value = position.lng.toFixed(6);
+                    });
+
+                    // Sincroniza ao clicar em qualquer lugar do mapa
+                    leafletMap.on('click', function(e) {
+                        leafletMarker.setLatLng(e.latlng);
+                        inputLat.value = e.latlng.lat.toFixed(6);
+                        inputLon.value = e.latlng.lng.toFixed(6);
+                    });
+                } else {
+                    leafletMap.setView([lat, lon], 16);
+                    leafletMarker.setLatLng([lat, lon]);
+                }
+            }
+
+            // Polling simples do Alpine.js para carregar o mapa ao mudar de aba
+            window.addEventListener('load', () => {
+                setInterval(() => {
+                    if (leafletMap) {
+                        leafletMap.invalidateSize();
+                    }
+                }, 1000);
+                
+                // Inicialização imediata
+                setTimeout(inicializarMapa, 800);
+            });
+
+            function geolocalizarHotel() {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition((position) => {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        document.getElementById('hotel_lat').value = lat.toFixed(6);
+                        document.getElementById('hotel_lon').value = lon.toFixed(6);
+                        leafletMap.setView([lat, lon], 16);
+                        leafletMarker.setLatLng([lat, lon]);
+                    }, (error) => {
+                        alert("Não foi possível acessar a localização do seu dispositivo.");
+                    }, { enableHighAccuracy: true });
+                } else {
+                    alert("Seu navegador não suporta geolocalização.");
+                }
+            }
+
+            function centralizarCidade() {
+                // Nominatim API gratuita para buscar a cidade do hotel
+                const cidade = "{{ hotel.local.cidade }}";
+                const estado = "{{ hotel.local.estado }}";
+                if (!cidade) return;
+                
+                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cidade + ', ' + estado + ', Brasil')}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data && data.length > 0) {
+                            const lat = parseFloat(data[0].lat);
+                            const lon = parseFloat(data[0].lon);
+                            document.getElementById('hotel_lat').value = lat.toFixed(6);
+                            document.getElementById('hotel_lon').value = lon.toFixed(6);
+                            leafletMap.setView([lat, lon], 14);
+                            leafletMarker.setLatLng([lat, lon]);
+                        } else {
+                            alert("Não conseguimos localizar a cidade indicada.");
+                        }
+                    })
+                    .catch(err => {
+                        alert("Erro de conexão ao buscar endereço.");
+                    });
+            }
+        </script>
+    </div>
+    {% endif %}
+
+    <!-- ─────────────────────────────────────────────────────────────
+         TELA DE PORTARIA / RECEPÇÃO
+         ───────────────────────────────────────────────────────────── -->
+    {% if perfil.role == 'portaria' %}
+    <div x-show="activeTab === 'checkin'" class="space-y-6" x-transition:enter="transition ease-out duration-300">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- QR Code mock-scanner -->
+            <div class="bg-white/80 dark:bg-black/30 border border-slate-200/80 dark:border-navie-border rounded-3xl p-6 shadow-sm backdrop-blur-md flex flex-col justify-between items-center text-center">
+                <div>
+                    <h4 class="text-lg font-bold text-slate-800 dark:text-white">QR Code Scanner</h4>
+                    <p class="text-xs text-slate-400 mt-1">Validador dinâmico de estadias da plataforma Naviê</p>
+                </div>
+                <div class="relative w-48 h-48 border border-brand-500/20 dark:border-navie-border bg-slate-50 dark:bg-black/40 flex items-center justify-center rounded-3xl my-6 overflow-hidden">
+                    <!-- Scanner Laser Laser effect -->
+                    <div class="absolute top-0 left-0 right-0 h-0.5 bg-brand-500 animate-bounce"></div>
+                    <span class="flex items-center text-brand-600 dark:text-slate-400" style="pointer-events:none;"><i data-lucide="qr-code" class="w-20 h-20"></i></span>
+                </div>
+                <button class="bg-brand-600 hover:bg-brand-500 text-white w-full py-3 rounded-2xl text-xs font-bold transition-all shadow-md shadow-brand-600/10">Ativar Câmera</button>
+            </div>
+
+            <!-- Busca manual -->
+            <div class="bg-white/80 dark:bg-black/30 border border-slate-200/80 dark:border-navie-border rounded-3xl p-6 shadow-sm backdrop-blur-md flex flex-col justify-between">
+                <div>
+                    <h4 class="text-lg font-bold text-slate-800 dark:text-white">Busca de Reserva Manual</h4>
+                    <p class="text-xs text-slate-400 mt-1 mb-6">Localize e faça o check-in do hóspede pelo CPF ou código UUID</p>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">CPF do Hóspede</label>
+                            <input type="text" placeholder="000.000.000-00" class="w-full bg-slate-50 dark:bg-black/25 border border-slate-200 dark:border-navie-border focus:border-brand-500 rounded-2xl px-4 py-3 text-sm focus:outline-none transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Localizador (UUID)</label>
+                            <input type="text" placeholder="Ex: 8 dígitos do código" class="w-full bg-slate-50 dark:bg-black/25 border border-slate-200 dark:border-navie-border focus:border-brand-500 rounded-2xl px-4 py-3 text-sm focus:outline-none transition-all">
+                        </div>
+                    </div>
+                </div>
+                <button class="bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-700 dark:text-white w-full py-3 rounded-2xl text-xs font-bold transition-all mt-6">Buscar e Validar Estadia</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ocupação portaria -->
+    <div x-show="activeTab === 'ocupacao'" class="space-y-6" x-transition:enter="transition ease-out duration-300" style="display: none;">
+        <div class="bg-white/80 dark:bg-black/30 border border-slate-200/80 dark:border-navie-border rounded-3xl p-6 shadow-sm backdrop-blur-md">
+            <h4 class="text-lg font-bold text-slate-800 dark:text-white mb-1">Mapa de Ocupação</h4>
+            <p class="text-xs text-slate-400 mb-6">Quartos ativos do dia</p>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="p-5 border border-green-500/20 bg-green-500/5 rounded-3xl text-center group hover:scale-[1.03] transition-transform">
+                    <span class="text-3xl font-black text-green-500">101</span>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 font-medium">Ocupado<br><span class="text-[9px] text-slate-400">(Check-out Hoje)</span></p>
+                </div>
+                <div class="p-5 border border-blue-500/20 bg-blue-500/5 rounded-3xl text-center group hover:scale-[1.03] transition-transform">
+                    <span class="text-3xl font-black text-blue-500">102</span>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 font-medium">Disponível<br><span class="text-[9px] text-slate-400">(Higienizado)</span></p>
+                </div>
+                <div class="p-5 border border-red-500/20 bg-red-500/5 rounded-3xl text-center group hover:scale-[1.03] transition-transform">
+                    <span class="text-3xl font-black text-red-500">103</span>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 font-medium">Bloqueado<br><span class="text-[9px] text-slate-400">(Manutenção)</span></p>
+                </div>
+                <div class="p-5 border border-amber-500/20 bg-amber-500/5 rounded-3xl text-center group hover:scale-[1.03] transition-transform">
+                    <span class="text-3xl font-black text-amber-500">104</span>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 font-medium">Sujo<br><span class="text-[9px] text-slate-400">(Aguardando Faxina)</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pedidos portaria -->
+    <div x-show="activeTab === 'pedidos'" class="space-y-6" x-transition:enter="transition ease-out duration-300" style="display: none;">
+        <div class="bg-white/80 dark:bg-black/30 border border-slate-200/80 dark:border-navie-border rounded-3xl p-6 shadow-sm backdrop-blur-md">
+            <h4 class="text-lg font-bold text-slate-800 dark:text-white mb-1">Pedidos de Hóspedes</h4>
+            <p class="text-xs text-slate-400 mb-6">Solicitações de serviços de quarto e recepção</p>
+            
+            <div class="space-y-4">
+                <div class="p-5 border border-slate-100 dark:border-navie-border bg-slate-50/50 dark:bg-black/20 rounded-3xl flex flex-col sm:flex-row justify-between sm:items-center gap-4 hover:border-brand-500/20 transition-colors">
+                    <div>
+                        <span class="text-[9px] font-black uppercase text-brand-600 dark:text-brand-400 bg-brand-500/10 px-2.5 py-1 rounded-full border border-brand-500/20">Suíte 101</span>
+                        <h5 class="text-sm font-bold text-slate-700 dark:text-white mt-3">2 Toalhas de banho extras</h5>
+                        <p class="text-[10px] text-slate-400 mt-1 font-medium">Solicitado há 10 min por WhatsApp do Hotel</p>
+                    </div>
+                    <button class="bg-green-600 hover:bg-green-500 text-white px-5 py-2.5 rounded-2xl text-xs font-bold transition-all shadow-md shadow-green-600/10">Marcar como Entregue</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ─────────────────────────────────────────────────────────────
+         SEÇÃO CAMAREIRA / LIMPEZA
+         ───────────────────────────────────────────────────────────── -->
+    {% if perfil.role == 'camareira' %}
+    <div x-show="activeTab === 'limpeza'" class="space-y-6" x-transition:enter="transition ease-out duration-300">
+        <div class="bg-white/80 dark:bg-black/30 border border-slate-200/80 dark:border-navie-border rounded-3xl p-6 shadow-sm backdrop-blur-md">
+            <h4 class="text-lg font-bold text-slate-800 dark:text-white mb-1">Quartos para Higienizar</h4>
+            <p class="text-xs text-slate-400 mb-6">Cronograma de limpeza do dia pós check-out</p>
+            
+            <div class="space-y-4">
+                <div class="border border-slate-100 dark:border-navie-border bg-slate-50/50 dark:bg-black/20 p-6 rounded-3xl flex flex-col md:flex-row justify-between md:items-center gap-4 hover:border-brand-500/20 transition-colors duration-300">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
+                            <span class="flex items-center" style="pointer-events:none;"><i data-lucide="door-open" class="w-6 h-6"></i></span>
+                        </div>
+                        <div>
+                            <h5 class="text-base font-bold text-slate-700 dark:text-white leading-tight">Chalé 02</h5>
+                            <p class="text-xs text-slate-400 mt-1 font-medium">Faxina pesada pós check-out (Troca total de lençóis e toalhas)</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 border-t md:border-0 pt-3 md:pt-0">
+                        <button class="bg-brand-600 hover:bg-brand-500 text-white px-5 py-2.5 rounded-2xl text-xs font-bold transition-all">Iniciar Faxina</button>
+                        <button class="bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-700 dark:text-white px-5 py-2.5 rounded-2xl text-xs font-bold transition-all">Relatar Manutenção</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ─────────────────────────────────────────────────────────────
+         SEÇÃO MANUTENÇÃO / OPERACIONAL
+         ───────────────────────────────────────────────────────────── -->
+    {% if perfil.role == 'manutencao' %}
+    <div x-show="activeTab === 'manutencao'" class="space-y-6" x-transition:enter="transition ease-out duration-300">
+        <div class="bg-white/80 dark:bg-black/30 border border-slate-200/80 dark:border-navie-border rounded-3xl p-6 shadow-sm backdrop-blur-md">
+            <h4 class="text-lg font-bold text-slate-800 dark:text-white mb-1">Ordens de Serviço Ativas</h4>
+            <p class="text-xs text-slate-400 mb-6">Manutenções preventivas e corretivas dos quartos</p>
+            
+            <div class="space-y-4">
+                <div class="border border-slate-100 dark:border-navie-border bg-slate-50/50 dark:bg-black/20 p-6 rounded-3xl flex flex-col md:flex-row justify-between md:items-center gap-4 hover:border-brand-500/20 transition-colors duration-300">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center shrink-0">
+                            <span class="flex items-center" style="pointer-events:none;"><i data-lucide="wrench" class="w-6 h-6"></i></span>
+                        </div>
+                        <div>
+                            <h5 class="text-base font-bold text-slate-700 dark:text-white leading-tight">Suíte 103 — Chuveiro Elétrico Frio</h5>
+                            <p class="text-xs text-slate-400 mt-1 font-medium">Incidente relatado pela camareira. Urgência: <span class="text-red-500 font-bold">CRÍTICA</span></p>
+                        </div>
+                    </div>
+                    <button class="bg-green-600 hover:bg-green-500 text-white px-5 py-2.5 rounded-2xl text-xs font-bold transition-all shadow-md shadow-green-600/10">Concluir Reparo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

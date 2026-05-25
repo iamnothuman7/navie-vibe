@@ -1,0 +1,47 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ doc.titulo }} — Naviê Vibe</title>
+    <link rel="stylesheet" href="{% static 'css/inter.css' %}">
+    <link rel="stylesheet" href="{% static 'css/output.css' %}">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #1e293b; }
+        .doc-content h1, .doc-content h2, .doc-content h3 { font-weight: 700; margin: 1.5rem 0 0.75rem; color: #1e3a8a; }
+        .doc-content h1 { font-size: 1.75rem; }
+        .doc-content h2 { font-size: 1.25rem; }
+        .doc-content p { margin-bottom: 1rem; line-height: 1.8; color: #374151; }
+        .doc-content ul, .doc-content ol { margin: 0.75rem 0 1rem 1.5rem; line-height: 1.8; color: #374151; }
+        .doc-content strong { color: #1e3a8a; }
+        .doc-content a { color: #2563eb; }
+    </style>
+</head>
+<body>
+    <!-- Header mínimo -->
+    <header style="background:#fff; border-bottom:1px solid #e2e8f0; padding:1rem 2rem; display:flex; align-items:center; gap:1rem;">
+        <img src="{% static 'images/logo.png' %}" alt="Naviê Vibe" style="height:32px; width:auto;">
+        <span style="font-family:'Poppins',sans-serif; font-size:1.1rem; font-weight:900;">
+            <span style="color:#1e3a8a;">Naviê</span> <span style="color:#2563eb;">Vibe</span>
+        </span>
+    </header>
+
+    <!-- Conteúdo do documento -->
+    <main style="max-width:800px; margin:3rem auto; padding:0 2rem;">
+        <div style="background:#fff; border-radius:1.5rem; padding:3rem; box-shadow:0 4px 20px rgba(0,0,0,0.06);">
+            <p style="font-size:0.7rem; font-weight:800; letter-spacing:0.12em; text-transform:uppercase; color:#2563eb; margin-bottom:0.5rem;">Naviê Vibe — Área de Parceiros</p>
+            <h1 style="font-size:1.8rem; font-weight:900; color:#1e3a8a; margin:0 0 0.5rem;">{{ doc.titulo }}</h1>
+            <p style="font-size:0.85rem; color:#9ca3af; margin-bottom:2rem;">Última atualização: {{ doc.atualizado_em|date:"d/m/Y" }}</p>
+            <hr style="border:none; border-top:1px solid #e2e8f0; margin-bottom:2rem;">
+            <div class="doc-content">
+                {{ doc.conteudo|safe }}
+            </div>
+        </div>
+
+        <p style="text-align:center; margin-top:2rem; font-size:0.85rem; color:#9ca3af;">
+            Você pode fechar esta aba para voltar ao formulário de cadastro.
+        </p>
+    </main>
+</body>
+</html>

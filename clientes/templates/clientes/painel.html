@@ -1,0 +1,727 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Naviê Vibe - Meu Painel{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* ─────────────────────────────────────────────────────────────────
+       PAINEL DO CLIENTE — DESIGN SYSTEM TOKENS (herda base.html)
+       ───────────────────────────────────────────────────────────────── */
+
+    /* Greeting Section */
+    .painel-greeting {
+        background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 50%, #2563eb 100%);
+        border-radius: var(--navie-radius-lg);
+        padding: 2rem 2rem;
+        color: #fff;
+        position: relative;
+        overflow: hidden;
+    }
+    .painel-greeting::after {
+        content: '';
+        position: absolute;
+        top: -40%;
+        right: -10%;
+        width: 280px;
+        height: 280px;
+        background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+
+    /* Tab Navigation Pills */
+    .tab-pills {
+        display: flex;
+        gap: 8px;
+        background: var(--navie-surface);
+        border: 1px solid var(--navie-border);
+        border-radius: 9999px;
+        padding: 5px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .tab-pills::-webkit-scrollbar { display: none; }
+
+    .tab-pill {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border-radius: 9999px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--navie-text-muted);
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: var(--navie-transition);
+        font-family: inherit;
+    }
+    .tab-pill:hover {
+        background: rgba(37, 99, 235, 0.06);
+        color: var(--navie-primary);
+    }
+    .tab-pill.active {
+        background: var(--navie-primary);
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+    }
+    .tab-pill.active i { color: #fff; }
+
+    /* Dashboard Cards (herda navie-lift da base) */
+    .dash-card {
+        background: var(--navie-surface);
+        border: 1px solid var(--navie-border);
+        border-radius: var(--navie-radius-lg);
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        cursor: pointer;
+        transition: var(--navie-transition);
+        min-height: 160px;
+        box-sizing: border-box;
+    }
+    .dash-card:hover {
+        transform: translateY(-4px) translateZ(0);
+        box-shadow: var(--navie-shadow-lg);
+        border-color: var(--navie-primary);
+    }
+
+    /* Status Badges */
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        padding: 3px 10px;
+        border-radius: 9999px;
+    }
+    .badge-confirmada { background: rgba(34,197,94,0.1); color: #16a34a; border: 1px solid rgba(34,197,94,0.2); }
+    .badge-pendente { background: rgba(245,158,11,0.1); color: #d97706; border: 1px solid rgba(245,158,11,0.2); }
+    .badge-cancelada { background: rgba(239,68,68,0.1); color: #dc2626; border: 1px solid rgba(239,68,68,0.2); }
+    .badge-demo { background: rgba(37,99,235,0.08); color: #2563eb; border: 1px solid rgba(37,99,235,0.15); }
+
+    /* Card Footer Separator */
+    .card-footer {
+        border-top: 1px dashed var(--navie-border);
+        padding-top: 10px;
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+    }
+
+    /* Quick Stats */
+    .stat-bubble {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: var(--navie-surface);
+        border: 1px solid var(--navie-border);
+        border-radius: var(--navie-radius-md);
+        padding: 14px 18px;
+        transition: var(--navie-transition);
+    }
+    .stat-bubble:hover {
+        box-shadow: var(--navie-shadow-md);
+        border-color: rgba(37, 99, 235, 0.2);
+    }
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    /* Card Grid */
+    .card-grid {
+        display: grid;
+        grid-template-columns: repeat(1, 1fr);
+        gap: 16px;
+    }
+    @media (min-width: 640px) {
+        .card-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (min-width: 768px) {
+        .card-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (min-width: 1024px) {
+        .card-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(1, 1fr);
+        gap: 12px;
+    }
+    @media (min-width: 640px) {
+        .stats-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    /* User Pill in header */
+    .user-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 6px 6px 16px;
+        background: rgba(37, 99, 235, 0.06);
+        border: 1px solid rgba(37, 99, 235, 0.15);
+        border-radius: 9999px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--navie-text);
+        transition: var(--navie-transition);
+    }
+    .user-pill:hover {
+        background: rgba(37, 99, 235, 0.1);
+        border-color: rgba(37, 99, 235, 0.3);
+    }
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--navie-primary);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 13px;
+        flex-shrink: 0;
+    }
+
+    /* Logout link */
+    .logout-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--navie-text-muted);
+        text-decoration: none;
+        padding: 8px 16px;
+        border-radius: 9999px;
+        border: 1px solid transparent;
+        transition: var(--navie-transition);
+    }
+    .logout-link:hover {
+        color: #dc2626;
+        background: rgba(239, 68, 68, 0.06);
+        border-color: rgba(239, 68, 68, 0.15);
+    }
+
+    /* Empty State */
+    .empty-state {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 4rem 2rem;
+        background: var(--navie-surface);
+        border: 1px dashed var(--navie-border);
+        border-radius: var(--navie-radius-lg);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="container mx-auto px-4 py-8" style="max-width: 1280px;">
+
+    <!-- ─────────────────────────────────────────────────────────────────
+         BARRA DE CONTROLE DO USUÁRIO
+         ───────────────────────────────────────────────────────────────── -->
+    <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; margin-bottom:2rem;">
+        <div class="user-pill">
+            <span>{{ request.user.get_full_name|default:request.user.username }}</span>
+            <div class="user-avatar">
+                {{ request.user.first_name|default:"U"|slice:":1"|upper }}
+            </div>
+        </div>
+        <a href="{% url 'clientes:logout' %}" class="logout-link">
+            <i data-lucide="log-out" class="w-4 h-4"></i>
+            <span>Sair</span>
+        </a>
+    </div>
+
+    <!-- ─────────────────────────────────────────────────────────────────
+         GREETING BANNER
+         ───────────────────────────────────────────────────────────────── -->
+    <section class="painel-greeting mb-8">
+        <p style="font-size:11px; font-weight:800; letter-spacing:0.12em; text-transform:uppercase; color:#bfdbfe; margin:0 0 6px;">Painel do Cliente</p>
+        <h1 style="font-size:1.75rem; font-weight:900; margin:0 0 4px; color:#fff;">
+            Olá, {{ request.user.first_name|default:request.user.username }}! 👋
+        </h1>
+        <p style="font-size:0.875rem; color:#bfdbfe; margin:0;">
+            Aqui estão todas as suas reservas, ingressos e bilhetes na Serra da Ibiapaba.
+        </p>
+    </section>
+
+    <!-- ─────────────────────────────────────────────────────────────────
+         QUICK STATS
+         ───────────────────────────────────────────────────────────────── -->
+    <section class="stats-grid mb-8">
+        <div class="stat-bubble">
+            <div class="stat-icon" style="background:rgba(37,99,235,0.08);">
+                <i data-lucide="bed-double" class="w-5 h-5" style="color:#2563eb;"></i>
+            </div>
+            <div>
+                <p style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--navie-text-muted); margin:0;">Hospedagens</p>
+                <p style="font-size:1.25rem; font-weight:900; color:var(--navie-text); margin:0;">{{ hospedagens|length }}</p>
+            </div>
+        </div>
+        <div class="stat-bubble">
+            <div class="stat-icon" style="background:rgba(168,85,247,0.08);">
+                <i data-lucide="ticket" class="w-5 h-5" style="color:#a855f7;"></i>
+            </div>
+            <div>
+                <p style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--navie-text-muted); margin:0;">Shows</p>
+                <p style="font-size:1.25rem; font-weight:900; color:var(--navie-text); margin:0;">{{ shows|length }}</p>
+            </div>
+        </div>
+        <div class="stat-bubble">
+            <div class="stat-icon" style="background:rgba(245,158,11,0.08);">
+                <i data-lucide="clapperboard" class="w-5 h-5" style="color:#f59e0b;"></i>
+            </div>
+            <div>
+                <p style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--navie-text-muted); margin:0;">Cinema</p>
+                <p style="font-size:1.25rem; font-weight:900; color:var(--navie-text); margin:0;">{{ cinema|length }}</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─────────────────────────────────────────────────────────────────
+         TAB NAVIGATION PILLS
+         ───────────────────────────────────────────────────────────────── -->
+    <nav class="tab-pills mb-6">
+        <button onclick="switchTab('hospedagens', this)" class="tab-pill active" id="btn-tab-hospedagens">
+            <i data-lucide="bed-double" class="w-4 h-4"></i>
+            <span>Hospedagens</span>
+        </button>
+        <button onclick="switchTab('shows', this)" class="tab-pill" id="btn-tab-shows">
+            <i data-lucide="ticket" class="w-4 h-4"></i>
+            <span>Shows & Eventos</span>
+        </button>
+        <button onclick="switchTab('cinema', this)" class="tab-pill" id="btn-tab-cinema">
+            <i data-lucide="clapperboard" class="w-4 h-4"></i>
+            <span>Cinema</span>
+        </button>
+    </nav>
+
+    <!-- ─────────────────────────────────────────────────────────────────
+         TAB 1: HOSPEDAGENS
+         ───────────────────────────────────────────────────────────────── -->
+    <section id="panel-hospedagens" class="tab-panel">
+        <div class="card-grid">
+            {% for item in hospedagens %}
+            <div class="dash-card"
+                 onclick="openDetailModal(this, 'hospedagem')"
+                 data-id="{{ item.id }}"
+                 data-real="{{ item.real|yesno:'true,false' }}"
+                 data-title="{{ item.estabelecimento }}"
+                 data-location="{{ item.localizacao }}"
+                 data-detail="{{ item.detalhe }}"
+                 data-date="{{ item.periodo }}"
+                 data-price="{{ item.preco_formatado }}"
+                 data-status="{{ item.status }}"
+                 data-status-slug="{{ item.status_slug }}"
+                 data-qr="{{ item.qr_payload }}">
+
+                <div>
+                    <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:8px;">
+                        <span class="badge badge-{{ item.status_slug }}">{{ item.status }}</span>
+                        {% if not item.real %}
+                        <span class="badge badge-demo">Demo</span>
+                        {% endif %}
+                    </div>
+                    <h3 style="font-size:14px; font-weight:700; color:var(--navie-text); margin:0 0 4px; line-height:1.3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ item.estabelecimento }}">
+                        {{ item.estabelecimento }}
+                    </h3>
+                    <p style="font-size:12px; color:var(--navie-text-muted); margin:0; display:flex; align-items:center; gap:4px;">
+                        <i data-lucide="map-pin" class="w-3 h-3" style="flex-shrink:0;"></i>
+                        <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ item.localizacao }}</span>
+                    </p>
+                </div>
+
+                <div class="card-footer">
+                    <div style="min-width:0;">
+                        <span style="display:block; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--navie-text-muted);">Período</span>
+                        <span style="font-size:12px; font-weight:700; color:var(--navie-text); display:flex; align-items:center; gap:4px; margin-top:2px;">
+                            <i data-lucide="calendar" class="w-3.5 h-3.5" style="color:#2563eb; flex-shrink:0;"></i>
+                            <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ item.periodo }}</span>
+                        </span>
+                    </div>
+                    <div style="text-align:right; flex-shrink:0;">
+                        <span style="display:block; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--navie-text-muted);">Valor</span>
+                        <span style="font-size:14px; font-weight:900; color:#2563eb; display:block; margin-top:2px;">{{ item.preco_formatado }}</span>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state">
+                <i data-lucide="bed-double" class="w-12 h-12" style="color:var(--navie-border); margin:0 auto 12px; display:block;"></i>
+                <p style="font-weight:600; color:var(--navie-text-muted); margin:0;">Nenhuma hospedagem encontrada.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- ─────────────────────────────────────────────────────────────────
+         TAB 2: SHOWS & EVENTOS
+         ───────────────────────────────────────────────────────────────── -->
+    <section id="panel-shows" class="tab-panel" style="display:none;">
+        <div class="card-grid">
+            {% for item in shows %}
+            <div class="dash-card"
+                 onclick="openDetailModal(this, 'show')"
+                 data-id="{{ item.id }}"
+                 data-title="{{ item.titulo }}"
+                 data-location="{{ item.local }}"
+                 data-detail="{{ item.produtora }} - {{ item.setor }}"
+                 data-date="{{ item.data }}"
+                 data-price="{{ item.preco_formatado }}"
+                 data-status="{{ item.status }}"
+                 data-status-slug="{{ item.status_slug }}"
+                 data-qr="{{ item.qr_payload }}">
+
+                <div>
+                    <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px;">
+                        <span class="badge badge-{{ item.status_slug }}">{{ item.status }}</span>
+                    </div>
+                    <h3 style="font-size:14px; font-weight:700; color:var(--navie-text); margin:0 0 4px; line-height:1.3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ item.titulo }}">
+                        {{ item.titulo }}
+                    </h3>
+                    <p style="font-size:12px; color:var(--navie-text-muted); margin:0; display:flex; align-items:center; gap:4px;">
+                        <i data-lucide="map-pin" class="w-3 h-3" style="flex-shrink:0;"></i>
+                        <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ item.local }}</span>
+                    </p>
+                </div>
+
+                <div class="card-footer">
+                    <div style="min-width:0;">
+                        <span style="display:block; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--navie-text-muted);">Data</span>
+                        <span style="font-size:12px; font-weight:700; color:var(--navie-text); display:flex; align-items:center; gap:4px; margin-top:2px;">
+                            <i data-lucide="music" class="w-3.5 h-3.5" style="color:#2563eb; flex-shrink:0;"></i>
+                            <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ item.data }}</span>
+                        </span>
+                    </div>
+                    <div style="text-align:right; flex-shrink:0;">
+                        <span style="display:block; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--navie-text-muted);">Setor</span>
+                        <span style="font-size:12px; font-weight:700; color:var(--navie-text); display:block; margin-top:2px; max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ item.setor }}</span>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state">
+                <i data-lucide="ticket" class="w-12 h-12" style="color:var(--navie-border); margin:0 auto 12px; display:block;"></i>
+                <p style="font-weight:600; color:var(--navie-text-muted); margin:0;">Nenhum show ou evento encontrado.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- ─────────────────────────────────────────────────────────────────
+         TAB 3: CINEMA
+         ───────────────────────────────────────────────────────────────── -->
+    <section id="panel-cinema" class="tab-panel" style="display:none;">
+        <div class="card-grid">
+            {% for item in cinema %}
+            <div class="dash-card"
+                 onclick="openDetailModal(this, 'cinema')"
+                 data-id="{{ item.id }}"
+                 data-title="{{ item.filme }}"
+                 data-location="{{ item.cinema }}"
+                 data-detail="{{ item.sala }} - {{ item.formato }} - {{ item.assento }}"
+                 data-date="{{ item.sessao }}"
+                 data-price="{{ item.preco_formatado }}"
+                 data-status="{{ item.status }}"
+                 data-status-slug="{{ item.status_slug }}"
+                 data-qr="{{ item.qr_payload }}">
+
+                <div>
+                    <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px;">
+                        <span class="badge badge-{{ item.status_slug }}">{{ item.status }}</span>
+                    </div>
+                    <h3 style="font-size:14px; font-weight:700; color:var(--navie-text); margin:0 0 4px; line-height:1.3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ item.filme }}">
+                        {{ item.filme }}
+                    </h3>
+                    <p style="font-size:12px; color:var(--navie-text-muted); margin:0; display:flex; align-items:center; gap:4px;">
+                        <i data-lucide="film" class="w-3 h-3" style="flex-shrink:0;"></i>
+                        <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ item.cinema }}</span>
+                    </p>
+                </div>
+
+                <div class="card-footer">
+                    <div style="min-width:0;">
+                        <span style="display:block; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--navie-text-muted);">Sessão</span>
+                        <span style="font-size:12px; font-weight:700; color:var(--navie-text); display:flex; align-items:center; gap:4px; margin-top:2px;">
+                            <i data-lucide="clapperboard" class="w-3.5 h-3.5" style="color:#2563eb; flex-shrink:0;"></i>
+                            <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ item.sessao }}</span>
+                        </span>
+                    </div>
+                    <div style="text-align:right; flex-shrink:0;">
+                        <span style="display:block; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--navie-text-muted);">Assento</span>
+                        <span style="font-size:14px; font-weight:900; color:#2563eb; display:block; margin-top:2px;">{{ item.assento }}</span>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state">
+                <i data-lucide="clapperboard" class="w-12 h-12" style="color:var(--navie-border); margin:0 auto 12px; display:block;"></i>
+                <p style="font-weight:600; color:var(--navie-text-muted); margin:0;">Nenhum bilhete de cinema encontrado.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+</main>
+
+<!-- ─────────────────────────────────────────────────────────────────
+     MODAL: TICKET DETAIL & DYNAMIC QR CODE
+     ───────────────────────────────────────────────────────────────── -->
+<div id="detail-modal" style="display:none; position:fixed; inset:0; z-index:100; overflow-y:auto;">
+    <!-- Backdrop -->
+    <div onclick="closeDetailModal()" style="position:fixed; inset:0; background:rgba(15,23,42,0.55); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);"></div>
+
+    <!-- Content -->
+    <div style="display:flex; align-items:center; justify-content:center; min-height:100vh; padding:1rem;">
+        <div style="position:relative; background:var(--navie-surface); border-radius:var(--navie-radius-lg); box-shadow:var(--navie-shadow-lg); border:1px solid var(--navie-border); max-width:420px; width:100%; padding:2rem; z-index:101;">
+
+            <!-- Close & ID -->
+            <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:1rem; border-bottom:1px solid var(--navie-border); margin-bottom:1.5rem;">
+                <span style="font-size:12px; font-family:var(--font-mono); font-weight:700; color:var(--navie-text-muted);" id="modal-tkt-id">RES-0000</span>
+                <button onclick="closeDetailModal()" style="background:none; border:none; cursor:pointer; color:var(--navie-text-muted); padding:4px; border-radius:8px; transition:var(--navie-transition);" onmouseover="this.style.color='var(--navie-text)'" onmouseout="this.style.color='var(--navie-text-muted)'">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- QR Code -->
+            <div style="background:var(--navie-bg); padding:1rem; border-radius:var(--navie-radius-lg); border:1px solid var(--navie-border); display:flex; align-items:center; justify-content:center; margin-bottom:1.5rem; position:relative; min-height:200px;">
+                <img id="modal-qr-img" src="" alt="QR Code de Validação" style="width:180px; height:180px; object-fit:contain;">
+                <!-- Loading spinner -->
+                <div id="qr-loading" style="position:absolute; inset:0; background:var(--navie-bg); border-radius:var(--navie-radius-lg); display:flex; align-items:center; justify-content:center;">
+                    <i data-lucide="loader" class="w-8 h-8 animate-spin" style="color:#2563eb;"></i>
+                </div>
+            </div>
+
+            <p style="text-align:center; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:var(--navie-text-muted); margin-bottom:1.5rem;">
+                Aponte a câmera para validar a entrada
+            </p>
+
+            <!-- Details -->
+            <div style="background:var(--navie-bg); border:1px solid var(--navie-border); border-radius:var(--navie-radius-md); padding:1.25rem; margin-bottom:1.5rem; display:flex; flex-direction:column; gap:14px;">
+                <div>
+                    <span style="display:block; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--navie-text-muted); margin-bottom:2px;">Estabelecimento / Atração</span>
+                    <span style="font-weight:800; color:var(--navie-text); font-size:1rem;" id="modal-tkt-title">Nome</span>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+                    <div>
+                        <span style="display:block; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--navie-text-muted); margin-bottom:2px;" id="modal-date-label">Período</span>
+                        <span style="font-weight:700; color:var(--navie-text); font-size:13px;" id="modal-tkt-date">01/01/2026</span>
+                    </div>
+                    <div>
+                        <span style="display:block; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--navie-text-muted); margin-bottom:2px;">Localização</span>
+                        <span style="font-weight:700; color:var(--navie-text); font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block;" id="modal-tkt-location">Local</span>
+                    </div>
+                </div>
+                <div>
+                    <span style="display:block; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--navie-text-muted); margin-bottom:2px;">Especificações</span>
+                    <span style="font-weight:700; color:var(--navie-text); font-size:13px;" id="modal-tkt-detail">Detalhe</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding-top:12px; border-top:1px solid var(--navie-border);">
+                    <div>
+                        <span style="display:block; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--navie-text-muted);">Status</span>
+                        <span id="modal-tkt-status" style="font-weight:700; color:#16a34a; font-size:12px;">Confirmada</span>
+                    </div>
+                    <div style="text-align:right;">
+                        <span style="display:block; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--navie-text-muted);">Total Pago</span>
+                        <span id="modal-tkt-price" style="font-weight:900; color:#2563eb; font-size:1.15rem;">R$ 0,00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Print Button -->
+            <button type="button" id="modal-btn-print"
+                    style="width:100%; background:#2563eb; color:#fff; padding:14px; border-radius:var(--navie-radius-md); font-weight:700; font-size:14px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:var(--navie-transition); font-family:inherit;"
+                    onmouseover="this.style.background='#1d4ed8'"
+                    onmouseout="this.style.background='#2563eb'">
+                <i data-lucide="printer" class="w-5 h-5"></i>
+                <span>Baixar Comprovante (Recibo)</span>
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Re-initialize icons for this page's new elements
+    lucide.createIcons();
+
+    // ─── Tab Switching ───────────────────────────────────────────
+    function switchTab(tabId, btnElement) {
+        // Hide all panels
+        document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+        // Deactivate all pills
+        document.querySelectorAll('.tab-pill').forEach(b => b.classList.remove('active'));
+        // Show target panel & activate pill
+        document.getElementById('panel-' + tabId).style.display = 'block';
+        btnElement.classList.add('active');
+        // Re-render lucide icons in newly visible panel
+        lucide.createIcons();
+    }
+
+    // ─── Modal Controller ────────────────────────────────────────
+    let currentActiveTktData = null;
+
+    function openDetailModal(cardElement, type) {
+        const data = {
+            id: cardElement.getAttribute('data-id'),
+            title: cardElement.getAttribute('data-title'),
+            location: cardElement.getAttribute('data-location'),
+            detail: cardElement.getAttribute('data-detail'),
+            date: cardElement.getAttribute('data-date'),
+            price: cardElement.getAttribute('data-price'),
+            status: cardElement.getAttribute('data-status'),
+            statusSlug: cardElement.getAttribute('data-status-slug'),
+            qr: cardElement.getAttribute('data-qr')
+        };
+
+        currentActiveTktData = data;
+        currentActiveTktData.type = type;
+
+        document.getElementById('modal-tkt-id').textContent = data.id;
+        document.getElementById('modal-tkt-title').textContent = data.title;
+        document.getElementById('modal-tkt-location').textContent = data.location;
+        document.getElementById('modal-tkt-detail').textContent = data.detail;
+        document.getElementById('modal-tkt-date').textContent = data.date;
+        document.getElementById('modal-tkt-price').textContent = data.price;
+
+        // Status styling
+        const statusEl = document.getElementById('modal-tkt-status');
+        statusEl.textContent = data.status;
+        if (data.statusSlug === 'confirmada') {
+            statusEl.style.color = '#16a34a';
+        } else if (data.statusSlug === 'pendente') {
+            statusEl.style.color = '#d97706';
+        } else {
+            statusEl.style.color = '#dc2626';
+        }
+
+        // Date label
+        const dateLabel = document.getElementById('modal-date-label');
+        if (type === 'hospedagem') dateLabel.textContent = 'Período';
+        else if (type === 'show') dateLabel.textContent = 'Data do Evento';
+        else dateLabel.textContent = 'Sessão';
+
+        // QR Code dynamic loading
+        const qrLoader = document.getElementById('qr-loading');
+        const qrImage = document.getElementById('modal-qr-img');
+        qrLoader.style.display = 'flex';
+        qrImage.src = '';
+
+        const qrPayload = encodeURIComponent(data.qr);
+        const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=' + qrPayload;
+        qrImage.src = qrUrl;
+        qrImage.onload = function() { qrLoader.style.display = 'none'; };
+
+        // Print handler
+        document.getElementById('modal-btn-print').onclick = function() {
+            printThermalReceipt(data);
+        };
+
+        document.getElementById('detail-modal').style.display = 'block';
+        document.body.style.overflow = 'hidden';
+        lucide.createIcons();
+    }
+
+    function closeDetailModal() {
+        document.getElementById('detail-modal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+        currentActiveTktData = null;
+    }
+
+    // ─── Thermal Receipt Printer ─────────────────────────────────
+    function printThermalReceipt(d) {
+        const printWindow = window.open('', '_blank', 'width=450,height=700,status=no,toolbar=no,menubar=no');
+        const printHtml = `
+        <!DOCTYPE html>
+        <html lang="pt-br">
+        <head>
+            <meta charset="UTF-8">
+            <title>Naviê Vibe - Recibo #${d.id}</title>
+            <style>
+                body {
+                    font-family: 'Courier New', Courier, monospace;
+                    background-color: #ffffff;
+                    color: #000000;
+                    padding: 20px;
+                    width: 320px;
+                    margin: 0 auto;
+                    font-size: 12px;
+                }
+                .ticket-header {
+                    text-align: center;
+                    border-bottom: 2px dashed #000;
+                    padding-bottom: 12px;
+                    margin-bottom: 15px;
+                }
+                .ticket-logo { font-size: 20px; font-weight: bold; letter-spacing: 2px; }
+                .ticket-subtitle { font-size: 9px; margin-top: 4px; color: #555; }
+                .detail-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
+                .detail-label { font-weight: bold; }
+                .detail-value { text-align: right; max-width: 180px; word-wrap: break-word; }
+                .border-dashed { border-top: 1px dashed #000; margin: 12px 0; }
+                .qr-container { text-align: center; margin: 20px 0; }
+                .qr-image { width: 160px; height: 160px; }
+                .footer { text-align: center; font-size: 9px; margin-top: 15px; border-top: 2px dashed #000; padding-top: 12px; }
+                @media print { body { width: 100%; padding: 0; margin: 0; } }
+            </style>
+        </head>
+        <body>
+            <div class="ticket-header">
+                <div class="ticket-logo">NAVIÊ VIBE</div>
+                <div class="ticket-subtitle">O Marketplace de Experiências da Ibiapaba</div>
+                <div style="font-size: 9px; margin-top: 8px;">COMPROVANTE OFICIAL DE RESERVA</div>
+            </div>
+            <div>
+                <div class="detail-row"><span class="detail-label">Recibo ID:</span><span class="detail-value">${d.id}</span></div>
+                <div class="detail-row"><span class="detail-label">Data Emissão:</span><span class="detail-value">${new Date().toLocaleString('pt-BR')}</span></div>
+                <div class="detail-row"><span class="detail-label">Status:</span><span class="detail-value" style="text-transform:uppercase;">${d.status}</span></div>
+            </div>
+            <div class="border-dashed"></div>
+            <div>
+                <div class="detail-row"><span class="detail-label">Atração/Local:</span><span class="detail-value" style="font-weight:bold;">${d.title}</span></div>
+                <div class="detail-row"><span class="detail-label">Cidade:</span><span class="detail-value">${d.location}</span></div>
+                <div class="detail-row"><span class="detail-label">Agenda/Período:</span><span class="detail-value">${d.date}</span></div>
+                <div class="detail-row"><span class="detail-label">Especificação:</span><span class="detail-value">${d.detail}</span></div>
+            </div>
+            <div class="border-dashed"></div>
+            <div class="detail-row" style="font-size:14px; font-weight:bold;"><span>VALOR TOTAL:</span><span>${d.price}</span></div>
+            <div class="border-dashed"></div>
+            <div class="qr-container">
+                <img class="qr-image" src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(d.qr)}" alt="QR Code">
+                <div style="font-size:8px; margin-top:6px; font-family:monospace; word-break:break-all;">HASH: ${d.qr}</div>
+            </div>
+            <div class="footer">
+                <p>Obrigado pela preferência!</p>
+                <p>Naviê Vibe Intermediação de Serviços Ltda.</p>
+                <p>Tianguá, Ceará - Serra da Ibiapaba</p>
+                <p style="font-size:7px; color:#444; margin-top:8px;">Este recibo é gerado por assinatura eletrônica e serve como credencial válida para check-in no estabelecimento.</p>
+            </div>
+            <script>window.onload=function(){window.print();setTimeout(function(){window.close();},500);}<\/script>
+        </body>
+        </html>`;
+        printWindow.document.write(printHtml);
+        printWindow.document.close();
+    }
+</script>
+{% endblock %}

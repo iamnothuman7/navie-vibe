@@ -1,0 +1,115 @@
+<div id="form-container" class="partner-form-wrapper register-mode">
+    <!-- Header -->
+    <div style="text-align: left; margin-bottom: 1.75rem;">
+        <h2 style="font-family: 'Poppins', sans-serif; font-size: 2rem; font-weight: 900; line-height: 1.2; color: #ffffff; margin: 0 0 0.5rem 0;">Seja um Parceiro</h2>
+        <p style="font-size: 13.5px; color: #64748b; font-weight: 500; margin: 0; line-height: 1.5;">Cadastre sua pousada, hotel, chalé ou resort no Naviê Vibe.</p>
+    </div>
+
+    <!-- Error Messages Injected via HTMX -->
+    {% if error_message %}
+    <div class="partner-alert partner-alert-error">
+        <i data-lucide="alert-circle" style="width: 20px; height: 20px; flex-shrink: 0; margin-top: 2px;"></i>
+        <span>{{ error_message }}</span>
+    </div>
+    {% endif %}
+
+    <!-- Register Form -->
+    <form hx-post="{% url 'hoteis:partner_login' %}" hx-target="#form-container" hx-swap="outerHTML" hx-encoding="multipart/form-data" style="display: flex; flex-direction: column; gap: 0.25rem;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="register">
+
+        <!-- Linha 1: Dados do Estabelecimento -->
+        <div class="partner-grid-2">
+            <div class="partner-form-group">
+                <label class="partner-label">Nome Fantasia</label>
+                <input type="text" name="nome_hotel" required placeholder="Ex: Pousada Ramilos Tianguá" 
+                       class="partner-input-noicon">
+            </div>
+            <div class="partner-form-group">
+                <label class="partner-label">Categoria</label>
+                <select name="tipo_hotel" required class="partner-input-noicon">
+                    <option value="pousada">Pousada</option>
+                    <option value="hotel">Hotel</option>
+                    <option value="chale">Chalé</option>
+                    <option value="resort">Resort</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Linha 2: CNPJ e Logo -->
+        <div class="partner-grid-2">
+            <div class="partner-form-group">
+                <label class="partner-label">CNPJ do Estabelecimento</label>
+                <input type="text" name="cnpj" required placeholder="00.000.000/0001-00" 
+                       class="partner-input-noicon">
+            </div>
+            <div class="partner-form-group">
+                <label class="partner-label">Logotipo Corporativo</label>
+                <input type="file" name="logo_hotel" accept="image/*" class="partner-input-noicon py-2" style="font-size: 11px; padding: 0.65rem 1.25rem !important;">
+            </div>
+        </div>
+
+        <!-- Linha 3: Contatos -->
+        <div class="partner-grid-2">
+            <div class="partner-form-group">
+                <label class="partner-label">E-mail Corporativo</label>
+                <input type="email" name="responsavel_email" required placeholder="contato@estabelecimento.com" 
+                       class="partner-input-noicon">
+            </div>
+            <div class="partner-form-group">
+                <label class="partner-label">Telefone / WhatsApp</label>
+                <input type="text" name="responsavel_telefone" required placeholder="(88) 99999-8888" 
+                       class="partner-input-noicon">
+            </div>
+        </div>
+
+        <!-- Linha 4: Responsável -->
+        <div class="partner-grid-2">
+            <div class="partner-form-group">
+                <label class="partner-label">Nome do Proprietário</label>
+                <input type="text" name="responsavel_nome" required placeholder="Ex: Tiago Ismar" 
+                       class="partner-input-noicon">
+            </div>
+            <div class="partner-form-group">
+                <label class="partner-label">CPF do Proprietário</label>
+                <input type="text" name="responsavel_cpf" required placeholder="000.000.000-00" 
+                       class="partner-input-noicon">
+            </div>
+        </div>
+
+        <!-- Linha 5: Conta Administrativa -->
+        <div class="partner-grid-2" style="border-top: 1px solid rgba(255,255,255,0.06); padding-top: 1.25rem; margin-top: 0.5rem;">
+            <div class="partner-form-group">
+                <label class="partner-label">Usuário Desejado (Admin)</label>
+                <input type="text" name="username_solicitado" required placeholder="tiagoismar" 
+                       class="partner-input-noicon">
+            </div>
+            <div class="partner-form-group">
+                <label class="partner-label">Senha Administrativa</label>
+                <input type="password" name="password_solicitado" required placeholder="Crie uma senha forte" 
+                       class="partner-input-noicon">
+            </div>
+        </div>
+
+        <button type="submit" class="partner-btn-primary" style="margin-top: 1.25rem;">
+            <i data-lucide="send" style="width: 18px; height: 18px;"></i>
+            <span>Enviar Solicitação de Parceria</span>
+        </button>
+    </form>
+
+    <!-- Footer Switch Form -->
+    <div class="partner-divider" style="margin-top: 1.25rem;">
+        <span style="color: #64748b; font-weight: 500;">Já faz parte da nossa rede de parceiros?</span>
+        <button hx-get="{% url 'hoteis:partner_login' %}?form=login" hx-target="#form-container" hx-swap="outerHTML" 
+                class="partner-link-btn" style="margin-left: 0.25rem;">
+            Acessar Conta
+        </button>
+    </div>
+
+    <!-- Re-initialize Lucide Icons on Swap -->
+    <script>
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    </script>
+</div>

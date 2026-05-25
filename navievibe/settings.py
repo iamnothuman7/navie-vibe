@@ -37,10 +37,24 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',  # Requisito para allauth
     'rest_framework',
     'core',
     'hoteis',
     'api',
+    'parceiros',
+    'cinema',
+    'eventos',
+    'parques',
+    'clientes',
+    
+    # Login Social / OAuth (django-allauth)
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.apple',
+    'allauth.socialaccount.providers.microsoft',
 ]
 
 MIDDLEWARE = [
@@ -51,6 +65,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',  # Requisito para allauth
 ]
 
 ROOT_URLCONF = 'navievibe.urls'
@@ -80,8 +95,45 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    },
+    'hospedagem': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db_hospedagem.sqlite3',
+    },
+    'cinema': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db_cinema.sqlite3',
+    },
+    'eventos': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db_eventos.sqlite3',
+    },
+    'parques': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db_parques.sqlite3',
+    },
+    'parceiros': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db_parceiros.sqlite3',
+    },
 }
+
+DATABASE_ROUTERS = ['core.routers.NavieVibeRouter']
+
+# Authentication Backends
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+SITE_ID = 1
+
+# django-allauth - Configurações Gerais (Padrão Moderno v65+)
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_SESSION_REMEMBER = True
+ACCOUNT_UNIQUE_EMAIL = True
+LOGIN_REDIRECT_URL = '/clientes/painel/'
+LOGOUT_REDIRECT_URL = '/'
 
 
 # Password validation
@@ -123,3 +175,7 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [
     BASE_DIR / 'static'
 ]
+
+# Google Cloud / Google Maps API Integration
+GOOGLE_API_KEY = "AIzaSyDnaMUm_EFwesiaLTYw823UaN-IbXoLo5k"
+

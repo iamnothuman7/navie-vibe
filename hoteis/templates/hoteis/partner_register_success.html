@@ -1,0 +1,49 @@
+<div id="form-container" class="partner-form-wrapper" style="text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.5rem; py: 1rem;">
+    <!-- Success Icon Big Circle -->
+    <div style="display: inline-flex; align-items: center; justify-content: center; width: 80px; height: 80px; border-radius: 50%; background-color: rgba(16, 185, 129, 0.08); border: 1.5px solid rgba(16, 185, 129, 0.2); color: #34d399; margin-bottom: 0.5rem;">
+        <i data-lucide="check" style="width: 40px; height: 40px;"></i>
+    </div>
+
+    <!-- Message Title -->
+    <div style="margin-bottom: 0.5rem;">
+        <h3 style="font-family: 'Poppins', sans-serif; font-size: 2rem; font-weight: 900; line-height: 1.2; color: #ffffff; margin: 0 0 0.5rem 0;">Solicitação Enviada!</h3>
+        <p style="font-size: 13.5px; color: #64748b; font-weight: 500; margin: 0; line-height: 1.5;">O credenciamento da sua empresa está em andamento.</p>
+    </div>
+    
+    <!-- Description Block -->
+    <div style="font-size: 14.5px; color: #94a3b8; line-height: 1.6; font-weight: 500; max-width: 380px; margin: 0 auto; text-align: center; display: flex; flex-direction: column; gap: 0.85rem;">
+        <p>Olá, <span style="color: #60a5fa; font-weight: 750;">{{ responsavel }}</span>!</p>
+        <p>Recebemos com sucesso o formulário de solicitação de credenciamento para a empresa <span style="color: #ffffff; font-weight: 750;">{{ nome_hotel }}</span>.</p>
+        <p>Nossa equipe analisará os dados fornecidos e o logotipo anexado. Você receberá um e-mail de confirmação em <span style="color: #34d399; font-weight: 750;">{{ email }}</span> em até 24 horas úteis.</p>
+    </div>
+
+    <!-- Checklist Box -->
+    <div style="background-color: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255,255,255,0.05); border-radius: 18px; padding: 1.25rem; text-align: left; display: flex; flex-direction: column; gap: 0.85rem; width: 100%; max-width: 380px; box-sizing: border-box; font-size: 12.5px; color: #64748b; font-weight: 600;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <i data-lucide="shield-check" style="width: 18px; height: 18px; color: #34d399; flex-shrink: 0;"></i>
+            <span style="color: #f8fafc;">Dados cadastrais recebidos em segurança</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <i data-lucide="image" style="width: 18px; height: 18px; color: #60a5fa; flex-shrink: 0;"></i>
+            <span style="color: #f8fafc;">Logotipo corporativo anexado com sucesso</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <i data-lucide="clock" style="width: 18px; height: 18px; color: #f59e0b; flex-shrink: 0;"></i>
+            <span style="color: #f59e0b;">Status: <span style="font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">Aguardando Moderação</span></span>
+        </div>
+    </div>
+
+    <!-- Return to Login Button -->
+    <button hx-get="{% url 'hoteis:partner_login' %}?form=login" hx-target="#form-container" hx-swap="outerHTML" 
+            class="partner-btn-primary" style="margin-top: 1rem; width: 100%; max-width: 380px;">
+        <i data-lucide="arrow-left" style="width: 18px; height: 18px;"></i>
+        <span>Voltar para o Login</span>
+    </button>
+
+    <!-- Re-initialize Lucide Icons on Swap -->
+    <script>
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    </script>
+</div>

@@ -3,7 +3,12 @@ module.exports = {
   content: [
     "./templates/**/*.html",
     "./core/templates/**/*.html",
-    "./hoteis/templates/**/*.html"
+    "./hoteis/templates/**/*.html",
+    "./clientes/templates/**/*.html",
+    "./parceiros/templates/**/*.html",
+    "./cinema/templates/**/*.html",
+    "./eventos/templates/**/*.html",
+    "./parques/templates/**/*.html"
   ],
   theme: {
     extend: {
