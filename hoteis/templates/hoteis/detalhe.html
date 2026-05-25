@@ -63,6 +63,16 @@
             filter: brightness(0) invert(1) !important;
         }
     }
+
+    /* Ajuste de Altura do Hero B2C para evitar colapso e efeito espremido */
+    .hero-banner-b2c {
+        height: 320px !important;
+    }
+    @media (min-width: 768px) {
+        .hero-banner-b2c {
+            height: 480px !important;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -93,7 +103,7 @@
 </div>
 
 <!-- HERO BANNER PREMIUM FULL-WIDTH -->
-<div class="relative w-full h-[380px] md:h-[520px] bg-slate-950 overflow-hidden flex items-end">
+<div class="relative w-full bg-slate-950 overflow-hidden flex items-end hero-banner-b2c">
     <!-- Mídia de Fundo (Vídeo ou Imagem) -->
     <div class="absolute inset-0 w-full h-full z-0 select-none pointer-events-none">
         <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-black/40 z-10"></div>
