@@ -44,6 +44,10 @@
     })();
 </script>
 <style>
+    /* Ocultar barra de rolagem da página inteira */
+    ::-webkit-scrollbar { display: none; }
+    html, body { scrollbar-width: none; }
+
     :root {
         --navie-primary: var(--brand-color, {{ hotel.cor_primaria|default:"#2563eb" }});
     }
@@ -140,6 +144,24 @@
         color: var(--brand-color-burned) !important;
         margin-top: 6px !important;
     }
+    
+    /* Smart Hover styles para o botão "Ver mais" */
+    .btn-ver-mais {
+        background-color: var(--brand-color-alpha);
+        color: var(--brand-color-burned);
+        border: 1px solid transparent;
+        transition: all 0.3s ease;
+    }
+    .quarto-card-home-style:hover .btn-ver-mais,
+    .btn-ver-mais:hover {
+        background-color: var(--brand-color) !important;
+        color: var(--brand-text-color) !important;
+        box-shadow: 0 4px 12px var(--brand-color-alpha-focus) !important;
+        transform: translateY(-2px);
+    }
+    .hover\:border-brand:hover {
+        border-color: var(--brand-color) !important;
+    }
     .accordion-header {
         padding: 20px 24px !important;
         display: flex !important;
@@ -231,12 +253,27 @@
 
     /* Ajuste de Altura do Hero B2C para evitar colapso e efeito espremido */
     .hero-banner-b2c {
-        height: 320px !important;
+        height: 400px !important;
     }
     @media (min-width: 768px) {
         .hero-banner-b2c {
-            height: 480px !important;
+            height: 550px !important;
         }
+    }
+
+    /* Ajustes Grid Cards */
+    .quarto-card-home-style {
+        border-radius: 24px;
+        background-color: #ffffff;
+        border: 1px solid #f1f5f9;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+    }
+    .quarto-card-home-style:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
+        border-color: var(--brand-color-alpha-focus);
     }
 </style>
 {% endblock %}
@@ -268,10 +305,10 @@
 </div>
 
 <!-- HERO BANNER PREMIUM FULL-WIDTH -->
-<div class="relative w-full bg-slate-950 overflow-hidden flex items-end hero-banner-b2c">
+<div class="relative w-full bg-slate-950 overflow-hidden flex items-center justify-center hero-banner-b2c">
     <!-- Mídia de Fundo (Vídeo ou Imagem) -->
     <div class="absolute inset-0 w-full h-full z-0 select-none pointer-events-none">
-        <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-black/40 z-10"></div>
+        <div class="absolute inset-0 bg-black/50 z-10"></div>
         {% if hotel.hero_tipo == 'video' and hotel.hero_video %}
             <video src="{{ hotel.hero_video.url }}" class="w-full h-full object-cover opacity-80" autoplay loop muted playsinline></video>
         {% elif hotel.banner %}
@@ -281,240 +318,54 @@
         {% endif %}
     </div>
 
-    <!-- Informações do Hotel sobre o Hero -->
-    <div class="container mx-auto px-4 md:px-8 xl:px-16 pb-12 md:pb-16 relative z-20 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-        <div class="flex items-center gap-4 md:gap-6">
-            {% if hotel.logo %}
-            <div class="w-16 h-16 md:w-24 md:h-24 rounded-2xl md:rounded-3xl bg-white p-2 md:p-3 shadow-2xl flex items-center justify-center shrink-0 border border-white/20 select-none">
-                <img src="{{ hotel.logo.url }}" alt="{{ hotel.nome }}" class="max-h-full max-w-full object-contain">
-            </div>
+    <!-- Informações do Hotel sobre o Hero (Centralizado) -->
+    <div class="container mx-auto px-4 relative z-20 flex flex-col items-center justify-center text-center pb-8 h-full">
+        {% if hotel.logo %}
+        <div class="w-24 h-24 md:w-32 md:h-32 rounded-full bg-white p-3 shadow-2xl flex items-center justify-center shrink-0 border-4 border-white/20 select-none mb-6">
+            <img src="{{ hotel.logo.url }}" alt="{{ hotel.nome }}" class="max-h-full max-w-full object-contain rounded-full">
+        </div>
+        {% endif %}
+        
+        <h1 class="text-4xl md:text-6xl lg:text-7xl font-black text-white tracking-tight leading-tight drop-shadow-xl mb-4">{{ hotel.nome }}</h1>
+        <div class="flex flex-wrap items-center justify-center gap-3 md:gap-4 text-white/90">
+            {% if hotel.horario_inicio %}
+            <span class="hero-badge">
+                <span class="flex items-center" style="pointer-events:none;"><i data-lucide="clock" class="w-4 h-4"></i></span> Check-in {{ hotel.horario_inicio|time:"H:i" }}
+            </span>
             {% endif %}
             
-            <div class="space-y-2 md:space-y-3">
-                <h1 class="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight drop-shadow-md">{{ hotel.nome }}</h1>
-                <div class="flex flex-wrap items-center gap-3 text-white/90">
-                    {% if hotel.horario_inicio %}
-                    <span class="hero-badge">
-                        <span class="flex items-center" style="pointer-events:none;"><i data-lucide="clock" class="w-3.5 h-3.5"></i></span> Check-in {{ hotel.horario_inicio|time:"H:i" }}
-                    </span>
-                    {% endif %}
-                    
-                    <span class="hero-badge">
-                        <span class="flex items-center" style="pointer-events:none;"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i></span> {{ hotel.local.cidade }}
-                    </span>
-                </div>
-            </div>
+            <span class="hero-badge">
+                <span class="flex items-center" style="pointer-events:none;"><i data-lucide="map-pin" class="w-4 h-4"></i></span> {{ hotel.local.cidade }} / {{ hotel.local.estado }}
+            </span>
         </div>
     </div>
 </div>
 
-<!-- FORMULÁRIO DE COMPRA INTEGRADO -->
-<form id="cart-form" action="#" method="POST" class="w-full">
-    {% csrf_token %}
-    
-    <main class="container mx-auto px-4 md:px-8 xl:px-16 py-10 relative">
-        <div class="lg:grid lg:grid-cols-3 lg:gap-12 lg:items-start">
-            
-            <!-- Coluna Esquerda: Abas Reativas -->
-            <div class="lg:col-span-2" x-data="{ currentTab: 'quartos' }">
-                
-                <!-- Abas Chaveadoras -->
-                <div class="flex gap-1 border-b border-gray-150 mb-8 select-none">
-                    <button type="button" @click="currentTab = 'quartos'" 
-                            :class="currentTab === 'quartos' ? 'border-action-blue text-action-blue font-black' : 'border-transparent text-gray-400 hover:text-gray-600 hover:border-gray-200'"
-                            class="py-4 px-6 border-b-2 text-sm uppercase tracking-wider font-bold transition-all flex items-center gap-2">
-                        <span class="flex items-center" style="pointer-events:none;"><i data-lucide="bed-double" class="w-4 h-4"></i></span> Quartos Disponíveis
-                    </button>
-                    <button type="button" @click="currentTab = 'sobre'" 
-                            :class="currentTab === 'sobre' ? 'border-action-blue text-action-blue font-black' : 'border-transparent text-gray-400 hover:text-gray-600 hover:border-gray-200'"
-                            class="py-4 px-6 border-b-2 text-sm uppercase tracking-wider font-bold transition-all flex items-center gap-2">
-                        <span class="flex items-center" style="pointer-events:none;"><i data-lucide="info" class="w-4 h-4"></i></span> Conhecer a {{ hotel.nome }}
-                    </button>
-                </div>
-
-                <!-- CONTEÚDO DA ABA 1: QUARTOS DISPONÍVEIS -->
-                <div x-show="currentTab === 'quartos'" class="space-y-6" x-transition.opacity>
-                    <div class="flex items-center gap-3 mb-4">
-                        <span class="icon-badge-brand"><i data-lucide="sparkles" class="w-5 h-5"></i></span>
-                        <div>
-                            <h3 class="text-xl font-black text-gray-900 leading-tight">Escolha suas Acomodações</h3>
-                            <p class="text-xs text-gray-500 mt-0.5">Selecione a quantidade de acomodações ideais para sua estadia</p>
-                        </div>
-                    </div>
-                    
-                    <div class="space-y-4" id="lista-quartos">
-                        {% for quarto in quartos %}
-                        <div class="quarto-card bg-white rounded-3xl transition-all duration-300 overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-gray-100 hover:shadow-md" id="quarto-{{ quarto.id }}" data-quarto-id="{{ quarto.id }}" data-preco-base="{{ quarto.preco|stringformat:'f' }}">
-                            
-                            <!-- Header do Acordeão (Sempre Visível) -->
-                            <div class="p-5 cursor-pointer hover:bg-slate-50/50 flex justify-between items-center accordion-header select-none">
-                                <div class="flex-1">
-                                    <h4 class="font-extrabold text-lg text-gray-900 leading-tight">{{ quarto.nome }}</h4>
-                                    <p class="font-black text-action-blue mt-1.5 preco-label text-xl">R$ {{ quarto.preco }} <span class="text-xs text-gray-400 font-normal">/noite</span></p>
-                                    
-                                    <!-- Badges de Status (Invisível por padrão até carregar datas) -->
-                                    <div class="status-badge hidden mt-2 text-xs font-bold px-3 py-1 rounded-full bg-red-50 text-red-600 border border-red-100 inline-block">Indisponível</div>
-                                </div>
-                                <span class="p-2 rounded-full bg-slate-100 text-gray-400 chevron-icon transition-transform"><i data-lucide="chevron-down" class="w-5 h-5"></i></span>
-                            </div>
-                            
-                            <!-- Corpo do Acordeão -->
-                            <div class="quarto-body hidden border-t border-gray-50 bg-slate-50/30">
-                                <div class="p-5 space-y-4">
-                                    <p class="text-sm text-gray-600 leading-relaxed">{{ quarto.descricao }}</p>
-                                    
-                                    <!-- Mini Swiper do Quarto -->
-                                    {% if quarto.imagens.all or quarto.video_arquivo or quarto.video_url %}
-                                    <div class="swiper quarto-swiper-{{ quarto.id }} quarto-swiper-container z-0">
-                                        <div class="swiper-wrapper">
-                                            {% if quarto.video_arquivo %}
-                                            <div class="swiper-slide relative">
-                                                <video src="{{ quarto.video_arquivo.url }}" class="w-full h-full object-cover" autoplay loop muted playsinline></video>
-                                                <div class="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md text-[9px] font-bold text-white px-2 py-0.5 rounded flex items-center gap-1">
-                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Vídeo Tour
-                                                </div>
-                                            </div>
-                                            {% elif quarto.video_url %}
-                                            <div class="swiper-slide relative">
-                                                <video src="{{ quarto.video_url }}" class="w-full h-full object-cover" autoplay loop muted playsinline></video>
-                                                <div class="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md text-[9px] font-bold text-white px-2 py-0.5 rounded flex items-center gap-1">
-                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Vídeo Tour
-                                                </div>
-                                            </div>
-                                            {% endif %}
-                                            
-                                            {% for img in quarto.imagens.all %}
-                                            <div class="swiper-slide">
-                                                <img src="{{ img.url_imagem.url }}" class="w-full h-full object-cover">
-                                            </div>
-                                            {% endfor %}
-                                        </div>
-                                        <div class="swiper-pagination"></div>
-                                    </div>
-                                    {% endif %}
-                                    
-                                    <!-- Controls de Quantidade -->
-                                    <div class="flex justify-between items-center action-area pt-2">
-                                        <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Selecionar Unidades</span>
-                                        <div class="flex items-center gap-3">
-                                            <button type="button" class="quantity-btn-minus h-9 w-9 flex justify-center items-center rounded-full bg-slate-200/80 text-gray-700 hover:bg-action-blue hover:text-white transition-colors" disabled>-</button>
-                                            <input type="text" name="tickets[{{ quarto.id }}][quantity]" value="0" readonly class="quantity-value w-8 text-center font-extrabold bg-transparent text-gray-800 focus:outline-none">
-                                            <button type="button" class="quantity-btn-plus h-9 w-9 flex justify-center items-center rounded-full bg-slate-200/80 text-gray-700 hover:bg-action-blue hover:text-white transition-colors" disabled>+</button>
-                                            <input type="hidden" class="preco-input" name="tickets[{{ quarto.id }}][price]" value="{{ quarto.preco|stringformat:'f' }}">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {% empty %}
-                        <p class="text-gray-500 text-sm">Sem acomodações cadastradas.</p>
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <!-- CONTEÚDO DA ABA 2: CONHEÇA O HOTEL -->
-                <div x-show="currentTab === 'sobre'" class="space-y-8" x-transition.opacity style="display: none;">
-                    
-                    <!-- Descrição Institucional -->
-                    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.02)] space-y-4">
-                        <div class="flex items-center gap-3 mb-2">
-                            <span class="icon-badge-brand"><i data-lucide="info" class="w-5 h-5"></i></span>
-                            <h3 class="text-lg font-black text-gray-900">Sobre a Hospedagem</h3>
-                        </div>
-                        <p class="text-gray-600 leading-relaxed text-base">{{ hotel.descricao|linebreaksbr }}</p>
-                    </div>
-
-                    <!-- Galeria de Imagens Carrossel -->
-                    {% if imagens %}
-                    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.02)] space-y-4">
-                        <div class="flex items-center gap-3 mb-2">
-                            <span class="icon-badge-brand"><i data-lucide="images" class="w-5 h-5"></i></span>
-                            <h3 class="text-lg font-black text-gray-900">Galeria de Fotos</h3>
-                        </div>
-                        <div class="swiper hotel-swiper h-64 md:h-80 w-full rounded-2xl overflow-hidden bg-gray-100 z-0">
-                            <div class="swiper-wrapper">
-                                {% for img in imagens %}
-                                <div class="swiper-slide">
-                                    <img src="{{ img.url_imagem.url }}" class="w-full h-full object-cover" />
-                                </div>
-                                {% endfor %}
-                            </div>
-                            <div class="swiper-pagination"></div>
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    <!-- Localização e Endereço -->
-                    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.02)] space-y-4">
-                        <div class="flex items-center gap-3 mb-2">
-                            <span class="icon-badge-brand"><i data-lucide="map" class="w-5 h-5"></i></span>
-                            <h3 class="text-lg font-black text-gray-900">Como Chegar</h3>
-                        </div>
-                        <p class="text-gray-600 leading-relaxed text-sm">{{ hotel.local.endereco }}, {{ hotel.local.cidade }} - {{ hotel.local.estado }}</p>
-                        
-                        <!-- Leaflet Map para visualização rápida no B2C -->
-                        <div id="mapaB2C" class="w-full h-64 rounded-2xl overflow-hidden border border-gray-200/85 z-20 mt-4"></div>
-                    </div>
-                </div>
-
-            </div>
-            
-            <!-- Coluna Direita: Reserva (Sticky) -->
-            <div class="lg:col-start-3 lg:row-start-1 lg:sticky lg:top-28 mt-8 lg:mt-0">
-                <div class="bg-white p-6 rounded-3xl shadow-[0_10px_35px_rgba(0,0,0,0.04)] border border-gray-100 flex flex-col">
-                    <h2 class="text-xl font-black mb-6 text-gray-900 flex items-center gap-2"><i data-lucide="calendar-check" class="text-action-blue w-6 h-6"></i> Planeje sua Viagem</h2>
-                    
-                    <!-- Buscador de Datas -->
-                    <div class="mb-6 relative z-30">
-                        <div class="grid grid-cols-2 gap-4">
-                            <!-- Check-in -->
-                            <div id="btn-checkin" class="bg-white p-4 rounded-2xl text-left hover:shadow-md transition-all flex flex-col cursor-pointer border border-gray-100">
-                                <span class="block text-[9px] uppercase tracking-widest font-black text-gray-400 mb-1.5">Check-in</span>
-                                <div class="flex justify-between items-center w-full">
-                                    <input type="text" id="label-checkin" placeholder="dd/mm/aaaa" class="font-bold text-gray-800 text-xs w-full bg-transparent border-none outline-none focus:ring-0 p-0" maxlength="10" autocomplete="off">
-                                    <i data-lucide="calendar" class="w-4 h-4 text-action-blue shrink-0"></i>
-                                </div>
-                            </div>
-                            
-                            <!-- Check-out -->
-                            <div id="btn-checkout" class="bg-white p-4 rounded-2xl text-left hover:shadow-md transition-all flex flex-col cursor-pointer border border-gray-100">
-                                <span class="block text-[9px] uppercase tracking-widest font-black text-gray-400 mb-1.5">Check-out</span>
-                                <div class="flex justify-between items-center w-full">
-                                    <input type="text" id="label-checkout" placeholder="dd/mm/aaaa" class="font-bold text-gray-800 text-xs w-full bg-transparent border-none outline-none focus:ring-0 p-0" maxlength="10" autocomplete="off">
-                                    <i data-lucide="calendar" class="w-4 h-4 text-action-blue shrink-0"></i>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <input type="hidden" id="input-checkin" name="checkin" value="">
-                        <input type="hidden" id="input-checkout" name="checkout" value="">
-                    </div>
-                    
-                    <!-- Resumo da Compra e Totalizador -->
-                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 mb-6 space-y-3">
-                        <div class="flex justify-between items-center text-xs text-gray-500 font-medium">
-                            <span>Quantidade:</span>
-                            <span id="selected-units-count">0 acomodações</span>
-                        </div>
-                        <div class="flex justify-between items-center text-xs text-gray-500 font-medium">
-                            <span>Duração:</span>
-                            <span id="selected-nights-count">0 diárias</span>
-                        </div>
-                        <div class="border-t border-slate-200/60 my-2 pt-2 flex justify-between items-end">
-                            <span class="text-sm font-bold text-gray-800">Valor Total:</span>
-                            <span class="text-2xl font-black text-action-blue" id="cart-total-value">R$ 0,00</span>
-                        </div>
-                    </div>
-                    
-                    <button id="buy-button" type="button" class="w-full bg-gray-300 cursor-not-allowed text-white py-4 rounded-2xl font-black text-base transition-all hover:scale-[1.01] active:scale-95 shadow-lg shadow-gray-200/50" disabled>
-                        Selecione as Datas Acima
-                    </button>
-                </div>
-            </div>
-            
+<!-- ÁREA PRINCIPAL COM SOBREPOSIÇÃO BRANCA ARREDONDADA -->
+<main class="container mx-auto px-4 md:px-6 xl:px-12 pb-20 relative z-30 -mt-12 md:-mt-16 bg-white rounded-t-[2.5rem] pt-12 shadow-[0_-15px_40px_rgba(0,0,0,0.1)]">
+    <div class="max-w-[90rem] mx-auto" x-data="{ currentTab: 'quartos' }">
+        
+        <!-- Abas Chaveadoras (Estilo Pílula Minimalista / Airbnb) -->
+        <div class="flex flex-wrap gap-2 mb-10 select-none justify-center md:justify-start">
+            <button type="button" @click="currentTab = 'quartos'" 
+                    :class="currentTab === 'quartos' ? 'bg-gray-900 text-white font-bold' : 'bg-transparent text-gray-500 hover:bg-gray-100 font-semibold'"
+                    class="py-3 px-6 rounded-full text-sm md:text-base transition-all duration-300 flex items-center gap-2">
+                <span class="flex items-center" style="pointer-events:none;"><i data-lucide="bed-double" class="w-4 h-4 md:w-5 md:h-5"></i></span> Acomodações
+            </button>
+            <button type="button" @click="currentTab = 'sobre'" 
+                    :class="currentTab === 'sobre' ? 'bg-gray-900 text-white font-bold' : 'bg-transparent text-gray-500 hover:bg-gray-100 font-semibold'"
+                    class="py-3 px-6 rounded-full text-sm md:text-base transition-all duration-300 flex items-center gap-2">
+                <span class="flex items-center" style="pointer-events:none;"><i data-lucide="info" class="w-4 h-4 md:w-5 md:h-5"></i></span> Sobre a {{ hotel.nome }}
+            </button>
         </div>
-    </main>
-</form>
+
+        <!-- CONTEÚDO DA ABA 1: QUARTOS DISPONÍVEIS (GRID CARDS) -->
+        {% include 'hoteis/partials/tab_acomodacoes.html' %}
+
+        <!-- CONTEÚDO DA ABA 2: CONHEÇA O HOTEL -->
+        {% include 'hoteis/partials/tab_sobre.html' %}
+    </div>
+</main>
 
 <!-- POPUP GLOBAL DO CALENDÁRIO -->
 <div id="custom-calendar-popup" class="hidden bg-white rounded-2xl p-4" style="position: fixed; z-index: 9999; width: 320px; box-shadow: 0 10px 40px rgba(0,0,0,0.12); border: 1px solid rgba(0,0,0,0.06);">
@@ -622,486 +473,15 @@
             }, tempo);
         }
 
-        // Instancia os swipers menores dos quartos e lida com a Abertura do Acordeão
-        document.querySelectorAll('.quarto-card').forEach(card => {
-            const quartoId = card.dataset.quartoId;
-            const body = card.querySelector('.quarto-body');
-            const header = card.querySelector('.accordion-header');
-            const chevron = card.querySelector('.chevron-icon');
-            
-            // Inicia swiper do quarto se existir
-            const swiperEl = card.querySelector('.quarto-swiper-' + quartoId);
-            let swiperInst = null;
+        // Instancia os swipers das galerias dos quartos
+        document.querySelectorAll('.quarto-card-home-style').forEach(card => {
+            const swiperEl = card.querySelector('.swiper');
             if (swiperEl) {
-                swiperInst = new Swiper(swiperEl, {
+                new Swiper(swiperEl, {
                     loop: true, 
                     autoplay: { delay: 3500, disableOnInteraction: false }, 
                     pagination: { el: '.swiper-pagination', clickable: true }
                 });
-            }
-            
-            // Accordion Logic
-            header.addEventListener('click', () => {
-                const isOpen = !body.classList.contains('hidden');
-                
-                // Fecha todos os outros primeiro (opcional)
-                document.querySelectorAll('.quarto-body').forEach(b => b.classList.add('hidden'));
-                document.querySelectorAll('.chevron-icon').forEach(c => c.classList.remove('rotate-180'));
-                
-                if (!isOpen) {
-                    body.classList.remove('hidden');
-                    chevron.classList.add('rotate-180');
-                    if (swiperInst) swiperInst.update(); // Corrige bug do swiper dentro do display:none
-                }
-            });
-        });
-
-        // 2. Lógica de Datas e Disponibilidade - Calendário Customizado Apple-like
-        const checkinInput = document.getElementById('input-checkin');
-        const checkoutInput = document.getElementById('input-checkout');
-        const hotelId = "{{ hotel.id }}";
-        
-        let currentDate = new Date();
-        let currentMonth = currentDate.getMonth();
-        let currentYear = currentDate.getFullYear();
-        let activeField = null; 
-        let selectedCheckin = null;
-        let selectedCheckout = null;
-        let occupiedDates = []; // Datas ocupadas vindas da API (formato YYYY-MM-DD)
-
-        const mdNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-        const calPopup = document.getElementById('custom-calendar-popup');
-        const btnCheckin = document.getElementById('btn-checkin');
-        const btnCheckout = document.getElementById('btn-checkout');
-
-        function fetchDatasOcupadas() {
-            const mesStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
-            fetch(`/api/hotel/${hotelId}/datas_ocupadas/?mes=${mesStr}`)
-                .then(r => r.json())
-                .then(data => {
-                    occupiedDates = data.datas_ocupadas || [];
-                    renderCalendar();
-                })
-                .catch(() => { renderCalendar(); }); // Silencia erros de rede
-        }
-
-        function renderCalendar() {
-            const daysContainer = document.getElementById('cal-days');
-            document.getElementById('cal-month-year').textContent = `${mdNames[currentMonth]} ${currentYear}`;
-            daysContainer.innerHTML = '';
-            
-            let firstDay = new Date(currentYear, currentMonth, 1).getDay();
-            let daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-            let today = new Date();
-            today.setHours(0,0,0,0);
-            
-            for(let i=0; i<firstDay; i++) {
-                daysContainer.innerHTML += `<div></div>`;
-            }
-            
-            for(let i=1; i<=daysInMonth; i++) {
-                let dObj = new Date(currentYear, currentMonth, i);
-                let dStr = dObj.getFullYear() + '-' + String(dObj.getMonth() + 1).padStart(2, '0') + '-' + String(dObj.getDate()).padStart(2, '0');
-                let isPast = dObj < today;
-                let isOccupied = occupiedDates.includes(dStr);
-                
-                let btn = document.createElement('div');
-                // Tamanho fixo para garantir proporção quadrada
-                btn.style.cssText = 'display:flex; align-items:center; justify-content:center; font-size:12px; border-radius:50%; width:36px; height:36px; margin:0 auto; transition: all 0.15s ease; font-weight:600; cursor:default;';
-                btn.textContent = i;
-                
-                if (selectedCheckin === dStr || selectedCheckout === dStr) {
-                    // Selecionado
-                    btn.style.background = '#1e40af';
-                    btn.style.color = '#fff';
-                    btn.style.fontWeight = '700';
-                } else if (selectedCheckin && selectedCheckout && dStr > selectedCheckin && dStr < selectedCheckout) {
-                    // Intervalo entre datas
-                    btn.style.background = '#eff6ff';
-                    btn.style.color = '#1e40af';
-                } else if (isPast) {
-                    // Dias passados — cinza claro, sem hover
-                    btn.style.color = '#d1d5db';
-                    btn.style.background = '#f9fafb';
-                } else if (isOccupied) {
-                    // Dias ocupados — vermelho suave
-                    btn.style.color = '#ef4444';
-                    btn.style.background = '#fef2f2';
-                    btn.style.cursor = 'not-allowed';
-                    btn.title = 'Indisponível';
-                } else {
-                    // Dia disponível
-                    btn.style.color = '#374151';
-                    btn.style.cursor = 'pointer';
-                    btn.onmouseenter = () => { btn.style.background = '#f3f4f6'; };
-                    btn.onmouseleave = () => { btn.style.background = ''; };
-                }
-                
-                if (!isPast && !isOccupied) {
-                    btn.onclick = (e) => {
-                        e.stopPropagation();
-                        selectDate(dStr, dObj);
-                    };
-                }
-                daysContainer.appendChild(btn);
-            }
-        }
-
-        const lIn = document.getElementById('label-checkin');
-        const lOut = document.getElementById('label-checkout');
-
-        function parseDateBrStr(str) {
-            if (!str) return null;
-            let parts = str.split('/');
-            if (parts.length !== 3) return null;
-            let d = parseInt(parts[0], 10);
-            let m = parseInt(parts[1], 10) - 1;
-            let y = parseInt(parts[2], 10);
-            if (y < 100) y += 2000;
-            let date = new Date(y, m, d);
-            if (date.getFullYear() === y && date.getMonth() === m && date.getDate() === d) {
-                return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
-            }
-            return null;
-        }
-
-        // Permitir digitação
-        function handleTyping(e, type) {
-            let val = e.target.value.replace(/\D/g, '');
-            if (val.length > 2) val = val.substring(0,2) + '/' + val.substring(2);
-            if (val.length > 5) val = val.substring(0,5) + '/' + val.substring(5,9);
-            e.target.value = val;
-            
-            if (val.length === 8 || val.length === 10) { // dd/mm/aa ou dd/mm/aaaa
-                let parsed = parseDateBrStr(val);
-                if (parsed) {
-                    if (type === 'checkin') {
-                        selectedCheckin = parsed;
-                        
-                        // Atualiza checkout automaticamente se for invalido
-                        if (selectedCheckout && selectedCheckout <= selectedCheckin) {
-                            let nextDay = new Date(parsed + 'T12:00:00');
-                            nextDay.setDate(nextDay.getDate() + 1);
-                            selectedCheckout = nextDay.toISOString().split('T')[0];
-                        }
-                    } else {
-                        if (selectedCheckin && parsed <= selectedCheckin) {
-                            showModal('O Check-out digitado não pode ser antes/igual ao Check-in!');
-                            return;
-                        }
-                        selectedCheckout = parsed;
-                    }
-                    
-                    // Renderiza calendario para a nova mes/ano digitado
-                    let dObj = new Date(parsed + 'T12:00:00');
-                    currentMonth = dObj.getMonth();
-                    currentYear = dObj.getFullYear();
-                    renderCalendar();
-                    updateLabels();
-                    
-                    if (selectedCheckin && selectedCheckout) buscarDisponibilidade();
-                }
-            }
-        }
-
-        lIn.addEventListener('input', (e) => handleTyping(e, 'checkin'));
-        lOut.addEventListener('input', (e) => handleTyping(e, 'checkout'));
-
-        function updateLabels() {
-            function fmt(dStr) {
-                if(!dStr) return "";
-                const [y,m,d] = dStr.split('-');
-                return `${d}/${m}/${y}`;
-            }
-            
-            // Só sobrescrevemos o valor do input de texto se for validado por fora (pelo calendário visual clicado)
-            // Se o usuário estiver focado e digitando, evite roubar o foco
-            if (document.activeElement !== lIn) {
-                lIn.value = fmt(selectedCheckin);
-                lIn.classList.toggle('text-action-blue', !!selectedCheckin);
-            }
-            if (document.activeElement !== lOut) {
-                lOut.value = fmt(selectedCheckout);
-                lOut.classList.toggle('text-action-blue', !!selectedCheckout);
-            }
-            
-            checkinInput.value = selectedCheckin || "";
-            checkoutInput.value = selectedCheckout || "";
-            
-            // Highlight ativo suave
-            if (activeField === 'checkin') {
-                btnCheckin.style.border = '1px solid #d1d5db';
-                btnCheckin.style.boxShadow = '0 0 0 3px rgba(209,213,219,0.2)';
-                btnCheckout.style.border = '1px solid #f3f4f6';
-                btnCheckout.style.boxShadow = '0 1px 2px 0 rgba(0,0,0,0.05)';
-            } else if (activeField === 'checkout') {
-                btnCheckout.style.border = '1px solid #d1d5db';
-                btnCheckout.style.boxShadow = '0 0 0 3px rgba(209,213,219,0.2)';
-                btnCheckin.style.border = '1px solid #f3f4f6';
-                btnCheckin.style.boxShadow = '0 1px 2px 0 rgba(0,0,0,0.05)';
-            } else {
-                btnCheckin.style.border = '1px solid #f3f4f6';
-                btnCheckin.style.boxShadow = '0 1px 2px 0 rgba(0,0,0,0.05)';
-                btnCheckout.style.border = '1px solid #f3f4f6';
-                btnCheckout.style.boxShadow = '0 1px 2px 0 rgba(0,0,0,0.05)';
-            }
-        }
-
-        function selectDate(dStr, dObj) {
-            if (activeField === 'checkin') {
-                selectedCheckin = dStr;
-                if (selectedCheckout && selectedCheckout <= selectedCheckin) {
-                    let td = new Date(dObj);
-                    td.setDate(td.getDate() + 1);
-                    selectedCheckout = td.getFullYear() + '-' + String(td.getMonth() + 1).padStart(2, '0') + '-' + String(td.getDate()).padStart(2, '0');
-                }
-                activeField = 'checkout';
-                renderCalendar();
-                updateLabels();
-            } else if (activeField === 'checkout') {
-                if (selectedCheckin && dStr <= selectedCheckin) {
-                    showModal('O Check-out deve ser num dia posterior à data de Check-in.');
-                    return;
-                }
-                selectedCheckout = dStr;
-                activeField = null;
-                calPopup.classList.add('hidden');
-                updateLabels();
-                buscarDisponibilidade();
-            }
-        }
-
-        function posicionarCalendario(anchorEl) {
-            const rect = anchorEl.getBoundingClientRect();
-            const popupWidth = 320;
-            let left = rect.left;
-            // Evita sair da tela pela direita
-            if (left + popupWidth > window.innerWidth - 8) {
-                left = window.innerWidth - popupWidth - 8;
-            }
-            calPopup.style.top = (rect.bottom + 8 + window.scrollY) + 'px';
-            calPopup.style.left = left + 'px';
-            // Sobrepor usando fixed (nao scroll)
-            calPopup.style.top = (rect.bottom + 8) + 'px';
-            calPopup.style.position = 'fixed';
-        }
-
-        function abrirCalendario(field, anchorEl) {
-            activeField = field;
-            posicionarCalendario(anchorEl);
-            calPopup.classList.remove('hidden');
-            fetchDatasOcupadas();
-            updateLabels();
-        }
-
-        lIn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            abrirCalendario('checkin', btnCheckin);
-        });
-
-        btnCheckin.addEventListener('click', (e) => {
-            e.stopPropagation();
-            lIn.focus();
-            abrirCalendario('checkin', btnCheckin);
-        });
-
-        lOut.addEventListener('click', (e) => {
-            e.stopPropagation();
-            abrirCalendario('checkout', btnCheckout);
-        });
-
-        btnCheckout.addEventListener('click', (e) => {
-            e.stopPropagation();
-            lOut.focus();
-            abrirCalendario('checkout', btnCheckout);
-        });
-
-        document.getElementById('cal-prev').addEventListener('click', (e) => {
-            e.stopPropagation();
-            currentMonth--;
-            if(currentMonth < 0) { currentMonth = 11; currentYear--; }
-            fetchDatasOcupadas();
-        });
-
-        document.getElementById('cal-next').addEventListener('click', (e) => {
-            e.stopPropagation();
-            currentMonth++;
-            if(currentMonth > 11) { currentMonth = 0; currentYear++; }
-            fetchDatasOcupadas();
-        });
-
-        // Clique fora recolhe o calendário
-        document.addEventListener('click', (e) => {
-            if(!calPopup.contains(e.target) && !btnCheckin.contains(e.target) && !btnCheckout.contains(e.target)) {
-                calPopup.classList.add('hidden');
-                activeField = null;
-                updateLabels();
-                if(selectedCheckin && selectedCheckout) buscarDisponibilidade();
-            }
-        });
-
-        function buscarDisponibilidade() {
-            const cin = checkinInput.value;
-            const cout = checkoutInput.value;
-            
-            if(!cin || !cout) return;
-            
-            // Fetch da API
-            fetch(`/api/hotel/${hotelId}/check_disponibilidade/?checkin=${cin}&checkout=${cout}`)
-                .then(res => res.json())
-                .then(data => {
-                    if(data.error) {
-                        console.error(data.error);
-                        return;
-                    }
-                    atualizarInterface(data.resultados);
-                })
-                .catch(err => console.error(err));
-        }
-        
-        function formatMoney(n) { 
-            return new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n); 
-        }
-        
-        let globalNoites = 0;
-        
-        function atualizarInterface(resultados) {
-            if(!resultados || resultados.length === 0) return;
-            
-            globalNoites = resultados[0].noites;
-            const sufixoNoites = globalNoites === 1 ? '1 diária' : `${globalNoites} diárias`;
-            
-            resultados.forEach(res => {
-                const card = document.getElementById('quarto-' + res.quarto_id);
-                if(!card) return;
-                
-                const badge = card.querySelector('.status-badge');
-                const precoLabel = card.querySelector('.preco-label');
-                const minusBtn = card.querySelector('.quantity-btn-minus');
-                const plusBtn = card.querySelector('.quantity-btn-plus');
-                const qtyInput = card.querySelector('.quantity-value');
-                
-                // Reseta Carrinho daquele quarto
-                qtyInput.value = 0;
-                
-                // Atualiza Preço e Texto
-                precoLabel.innerHTML = `R$ ${formatMoney(res.preco_total)} <span class="text-xs text-gray-500 font-normal"> / ${sufixoNoites}</span>`;
-                
-                badge.classList.remove('hidden');
-                
-                if(res.disponivel) {
-                    // Quarto Livre!
-                    card.classList.remove('grayscale', 'opacity-60');
-                    badge.classList.replace('bg-red-100', 'bg-green-100');
-                    badge.classList.replace('text-red-700', 'text-green-700');
-                    badge.textContent = 'Disponível';
-                    
-                    // Habilita Botões
-                    minusBtn.disabled = false;
-                    plusBtn.disabled = false;
-                } else {
-                    // Quarto Ocupado! Grayscale Effect
-                    card.classList.add('grayscale', 'opacity-60');
-                    badge.classList.replace('bg-green-100', 'bg-red-100');
-                    badge.classList.replace('text-green-700', 'text-red-700');
-                    
-                    // Prepara texto de sugestão
-                    let txtData = "Esgotado nas datas escolhidas.";
-                    if(res.sugestao_antes || res.sugestao_depois) {
-                        txtData = "Tem vaga em:";
-                        if(res.sugestao_antes) {
-                            let pts = res.sugestao_antes.split('-');
-                            txtData += ` ${pts[2]}/${pts[1]}`;
-                        }
-                        if(res.sugestao_depois) {
-                            let pts = res.sugestao_depois.split('-');
-                            txtData += ` e ${pts[2]}/${pts[1]}`;
-                        }
-                    }
-                    badge.textContent = txtData;
-                    
-                    // Desabilita Botões
-                    minusBtn.disabled = true;
-                    plusBtn.disabled = true;
-                }
-            });
-            
-            updateCart(); // Reseta botão de comprar
-        }
-
-        // 3. Lógica do Carrinho
-        const buyButton = document.getElementById('buy-button');
-        
-        function updateCart() {
-            let total = 0;
-            let ticketCount = 0;
-            
-            document.querySelectorAll('.quarto-card').forEach(card => {
-                const qtyInput = card.querySelector('.quantity-value');
-                const qty = parseInt(qtyInput.value) || 0;
-                
-                if (qty > 0) {
-                    const precoBaseCard = parseFloat(card.dataset.precoBase);
-                    // Preco total = base * noites * qtd
-                    total += (precoBaseCard * globalNoites * qty);
-                    ticketCount += qty;
-                    card.style.borderColor = '#1e3a8a';
-                    card.style.boxShadow = '0 12px 30px rgba(30,58,138,0.1)';
-                    card.style.transform = 'translateY(-2px)';
-                } else {
-                    card.style.borderColor = 'transparent';
-                    card.style.boxShadow = '0 6px 20px rgba(0,0,0,0.04)';
-                    card.style.transform = 'translateY(0)';
-                }
-            });
-            
-            if (globalNoites === 0) {
-                buyButton.textContent = 'Selecione as Datas Acima';
-                buyButton.disabled = true;
-                return;
-            }
-            
-            if (ticketCount > 0) {
-                buyButton.textContent = `Reservar Agora (R$ ${formatMoney(total)})`;
-                buyButton.disabled = false;
-                buyButton.classList.remove('bg-gray-300', 'cursor-not-allowed', 'text-gray-500');
-                buyButton.classList.add('bg-action-blue', 'hover:bg-action-blue-dark');
-            } else {
-                buyButton.textContent = 'Adicionar à Reserva';
-                buyButton.disabled = true;
-                buyButton.classList.add('bg-gray-300', 'cursor-not-allowed');
-                buyButton.classList.remove('bg-action-blue', 'hover:bg-action-blue-dark');
-            }
-        }
-        
-        // Event Listeners dos Quantifiers
-        document.querySelectorAll('.quarto-card').forEach(card => {
-            const quantityInput = card.querySelector('.quantity-value');
-            const minusBtn = card.querySelector('.quantity-btn-minus');
-            const plusBtn = card.querySelector('.quantity-btn-plus');
-            
-            minusBtn.addEventListener('click', (e) => {
-                e.stopPropagation(); // Previne abrir o acordeão caso clique espalhe
-                let currentValue = parseInt(quantityInput.value) || 0;
-                if (currentValue > 0) {
-                    quantityInput.value = currentValue - 1;
-                    updateCart();
-                }
-            });
-            plusBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                let currentValue = parseInt(quantityInput.value) || 0;
-                quantityInput.value = currentValue + 1;
-                updateCart();
-            });
-        });
-        
-        // Disparar a formatacão inicial dos precos dos cards pelo Javascript na hora zero
-        document.querySelectorAll('.quarto-card').forEach(card => {
-            const precoBase = parseFloat(card.dataset.precoBase);
-            if(precoBase) {
-                const label = card.querySelector('.preco-label');
-                label.innerHTML = `R$ ${formatMoney(precoBase)} <span class="text-xs text-gray-500 font-normal">/noite</span>`;
             }
         });
         

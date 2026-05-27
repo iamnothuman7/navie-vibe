@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'eventos',
     'parques',
     'clientes',
+    'sas',
     
     # Login Social / OAuth (django-allauth)
     'allauth',
@@ -80,6 +81,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'hoteis.context_processors.carrinho',
             ],
         },
     },

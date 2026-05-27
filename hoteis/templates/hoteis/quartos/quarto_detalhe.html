@@ -1,0 +1,708 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ quarto.nome }} | {{ hotel.nome }}{% endblock %}
+
+{% block extra_head %}
+<!-- Injeção Dinâmica de Cores de Branding do Hotel -->
+<script>
+    (function() {
+        const rawColor = "{{ hotel.cor_primaria|default:'#2563eb' }}";
+        let hex = rawColor.replace('#', '');
+        if (hex.length === 3) { hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2]; }
+        const r = parseInt(hex.substring(0, 2), 16) || 37;
+        const g = parseInt(hex.substring(2, 4), 16) || 99;
+        const b = parseInt(hex.substring(4, 6), 16) || 235;
+        const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+        let brandColor = "#" + hex;
+        let brandTextColor = "#ffffff";
+        let brandColorBurned = brandColor;
+        if (yiq >= 170) {
+            const f = 0.45;
+            brandColorBurned = "#" + ((1 << 24) + (Math.round(r*f) << 16) + (Math.round(g*f) << 8) + Math.round(b*f)).toString(16).slice(1);
+            brandTextColor = brandColorBurned;
+        }
+        document.documentElement.style.setProperty('--brand-color', brandColor);
+        document.documentElement.style.setProperty('--brand-text-color', brandTextColor);
+        document.documentElement.style.setProperty('--brand-color-burned', brandColorBurned);
+        document.documentElement.style.setProperty('--brand-color-alpha', `rgba(${r},${g},${b},0.12)`);
+    })();
+</script>
+
+<style>
+    /* Esconder a barra de rolagem principal da página */
+    html, body {
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+    }
+    html::-webkit-scrollbar, body::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    :root { --navie-primary: var(--brand-color, #2563eb); }
+
+    .text-action-blue  { color: var(--brand-color-burned) !important; }
+    .bg-action-blue    { background-color: var(--brand-color) !important; color: var(--brand-text-color) !important; }
+    .border-action-blue{ border-color: var(--brand-color-burned) !important; }
+
+    /* ── Galeria carrossel (Swiper Premium) ── */
+    .room-swiper {
+        width: 100%;
+        height: 380px; /* Altura fixa no mobile para travar o layout do Swiper */
+        overflow: visible !important;
+    }
+    @media (min-width: 768px) {
+        .room-swiper {
+            height: 540px; /* Altura fixa no desktop */
+        }
+    }
+    .room-swiper .swiper-slide {
+        opacity: 0.55;
+        transform: scale(0.96);
+        transition: opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1), transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: flex-start; /* Alinha todos os cards no topo */
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .room-swiper .swiper-slide-active {
+        opacity: 1 !important;
+        transform: scale(1) !important;
+    }
+
+    /* ── Video card ── */
+    .video-card-carousel {
+        position: relative;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    /* ── Lightbox ── */
+    #lightboxModal {
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+    }
+    #lightboxModal img {
+        border-radius: 1.25rem;
+        box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+    }
+
+    /* ── Hero badge ── */
+    .room-badge {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 5px 13px; border-radius: 9999px;
+        background: rgba(255,255,255,0.15);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255,255,255,0.25);
+        font-size: 10px; font-weight: 800;
+        text-transform: uppercase; letter-spacing: 0.06em;
+        color: #fff;
+    }
+
+    /* ── Amenity icon badge ── */
+    .amenity-icon {
+        padding: 9px; border-radius: 12px;
+        background-color: var(--brand-color-alpha);
+        color: var(--brand-color-burned);
+        display: inline-flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
+
+    /* ── Sticky sidebar scroll ── */
+    .sticky-sidebar {
+        position: sticky;
+        top: 6rem;
+    }
+
+    /* ── Tag pill ── */
+    .tag-pill-display {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 4px 12px; border-radius: 9999px;
+        background-color: var(--brand-color-alpha);
+        color: var(--brand-color-burned);
+        font-size: 10px; font-weight: 800;
+        text-transform: uppercase; letter-spacing: 0.05em;
+        border: 1px solid var(--brand-color-burned, rgba(37,99,235,0.3));
+    }
+
+    /* ── Comodidades grid icon map ── */
+    .com-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
+    @media(min-width: 640px) { .com-grid { grid-template-columns: repeat(3, 1fr); } }
+
+    /* ── Progress bar anim ── */
+    @keyframes shimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(400%)} }
+    .progress-bar { animation: shimmer 2.4s ease-in-out infinite; width: 22%; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bg-white min-h-screen" x-data="{}">
+
+    <!-- ══════════════════════════════════════════════════════════════
+         HERO: Galeria Cinemática Interativa com Video 2º Card
+    ══════════════════════════════════════════════════════════════ -->
+    <div class="w-full bg-white relative group overflow-hidden -mt-4 md:-mt-8">
+
+        <!-- Swiper Container -->
+        <div class="swiper room-swiper pb-8 md:pb-10 pt-0">
+            <div class="swiper-wrapper" id="room-gallery">
+
+                <!-- 1º CARD: Foto Principal -->
+                {% if primeira_imagem %}
+                <div class="swiper-slide gallery-card cursor-zoom-in group/photo relative w-auto max-w-[85vw] md:max-w-[60vw]" onclick="openLightbox(0)">
+                    <img src="{{ primeira_imagem.url_imagem.url }}"
+                         alt="{{ quarto.nome }}"
+                         class="h-[340px] md:h-[500px] w-auto max-w-[85vw] md:max-w-[60vw] object-cover rounded-[2rem] shadow-2xl
+                                transition-all duration-500 group-hover/photo:scale-[1.015] group-hover/photo:shadow-[0_30px_60px_rgba(0,0,0,0.4)]
+                                border border-white/10">
+                    <!-- Badge Capa -->
+                    <div class="absolute bottom-4 left-4 flex items-center gap-2 z-10">
+                        <span class="room-badge"><i data-lucide="crown" class="w-3 h-3"></i> Foto Principal</span>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- 2º CARD: Vídeo Tour (Elemento Mestre) -->
+                {% if quarto.video_arquivo or quarto.video_url %}
+                <div class="swiper-slide video-card-carousel rounded-[2rem] h-[340px] md:h-[500px] w-[425px] max-w-[85vw] md:w-[625px] md:max-w-[60vw] shadow-2xl border border-white/10 group/video">
+                    <video id="room-tour-video"
+                           autoplay muted loop playsinline
+                           class="w-full h-full object-cover">
+                        {% if quarto.video_arquivo %}
+                        <source src="{{ quarto.video_arquivo.url }}" type="video/mp4">
+                        {% elif quarto.video_url %}
+                        <source src="{{ quarto.video_url }}" type="video/mp4">
+                        {% endif %}
+                    </video>
+
+                    <!-- Overlay gradiente -->
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/20 pointer-events-none rounded-[2rem]"></div>
+
+
+
+                    <!-- Botão Mute/Unmute -->
+                    <button id="audio-toggle-btn"
+                            onclick="toggleAudio(event)"
+                            title="Ativar Som"
+                            class="absolute bottom-5 right-5 z-20 w-11 h-11 rounded-full bg-black/55 hover:bg-black
+                                   text-white backdrop-blur-md flex items-center justify-center
+                                   transition-all active:scale-90 border border-white/15 shadow-lg">
+                        <i id="audio-icon" data-lucide="volume-x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                {% endif %}
+
+                <!-- 3º+ CARDS: Demais Fotos da Galeria -->
+                {% for img in outras_imagens %}
+                <div class="swiper-slide gallery-card cursor-zoom-in group/photo relative w-auto max-w-[85vw] md:max-w-[60vw]" onclick="openLightbox({{ forloop.counter }})">
+                    <img src="{{ img.url_imagem.url }}"
+                         alt="{{ quarto.nome }} - Foto {{ forloop.counter|add:1 }}"
+                         class="h-[340px] md:h-[500px] w-auto max-w-[85vw] md:max-w-[60vw] object-cover rounded-[2rem] shadow-2xl
+                                transition-all duration-500 group-hover/photo:scale-[1.015] group-hover/photo:shadow-[0_30px_60px_rgba(0,0,0,0.4)]
+                                border border-white/10">
+                    <!-- Badge número da foto -->
+                    <div class="absolute bottom-4 left-4 z-10">
+                        <span class="room-badge">Foto {{ forloop.counter|add:1 }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+
+            </div>
+        </div>
+
+        <!-- Setas de Navegação do Carrossel -->
+        <button onclick="scrollGallery(-1)"
+                class="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 p-3 md:p-4 rounded-full
+                       bg-white/90 text-gray-900 shadow-xl backdrop-blur-md
+                       opacity-0 group-hover:opacity-100 transition-all z-30
+                       hover:bg-white hover:scale-110 border border-gray-100">
+            <i data-lucide="chevron-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+        </button>
+        <button onclick="scrollGallery(1)"
+                class="absolute right-3 md:right-6 top-1/2 -translate-y-1/2 p-3 md:p-4 rounded-full
+                       bg-white/90 text-gray-900 shadow-xl backdrop-blur-md
+                       opacity-0 group-hover:opacity-100 transition-all z-30
+                       hover:bg-white hover:scale-110 border border-gray-100">
+            <i data-lucide="chevron-right" class="w-5 h-5 md:w-6 md:h-6"></i>
+        </button>
+
+        <!-- Barra de progresso do carrossel (decorativa) -->
+        <div class="relative h-[2px] w-full bg-gray-100 overflow-hidden">
+            <div class="progress-bar h-full bg-gradient-to-r from-transparent via-action-blue to-transparent absolute top-0 left-0"></div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         CONTEÚDO PRINCIPAL (SOBREPOSIÇÃO)
+    ══════════════════════════════════════════════════════════════ -->
+    <main class="relative z-30 bg-white rounded-t-[2.5rem] -mt-32 md:-mt-16 pt-6 md:pt-8 shadow-[0_-15px_40px_rgba(0,0,0,0.05)]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 md:pb-14">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+            <!-- ── COLUNA ESQUERDA: Detalhes ── -->
+            <div class="lg:col-span-8 space-y-6">
+
+                <!-- Card: Nome, Preço e Atributos Rápidos -->
+                <div class="bg-white rounded-3xl p-6 md:p-10 shadow-xl shadow-gray-100/80 border border-gray-100
+                            animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+                    <!-- Tags / Categorias -->
+                    {% if tags %}
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        {% for tag in tags %}
+                        <span class="tag-pill-display">
+                            <i data-lucide="tag" class="w-2.5 h-2.5"></i>{{ tag }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <h1 class="text-3xl md:text-4xl font-black text-gray-900 tracking-tight leading-none">
+                        {{ quarto.nome }}
+                    </h1>
+
+                    <!-- Preço destacado -->
+                    <div class="mt-4 flex items-baseline gap-1.5">
+                        <span class="text-2xl md:text-3xl font-black text-action-blue">R$ {{ quarto.preco }}</span>
+                        <span class="text-sm font-bold text-gray-400">/ noite</span>
+                        {% if quarto.tem_desconto_multidias %}
+                        <span class="ml-2 text-[10px] font-black px-2.5 py-1 rounded-full bg-green-50 text-green-700 border border-green-100 uppercase tracking-wider">
+                            {{ quarto.percentual_desconto|floatformat:0 }}% desconto a partir de {{ quarto.dias_minimos_desconto }} noites
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Atributos rápidos -->
+                    <div class="flex flex-wrap gap-x-6 gap-y-3 mt-6 pt-6 border-t border-gray-100">
+                        <div class="flex items-center gap-2 text-sm font-bold text-gray-600">
+                            <i data-lucide="users" class="w-4 h-4 text-slate-400"></i>
+                            Até {{ quarto.capacidade_pessoas }} hóspede{% if quarto.capacidade_pessoas != 1 %}s{% endif %}
+                        </div>
+                        {% if quarto.video_arquivo or quarto.video_url %}
+                        <div class="w-px h-4 bg-gray-200 my-auto hidden sm:block"></div>
+                        <div class="flex items-center gap-2 text-sm font-bold text-gray-600">
+                            <i data-lucide="video" class="w-4 h-4 text-slate-400"></i>
+                            Vídeo Tour Disponível
+                        </div>
+                        {% endif %}
+                        <div class="w-px h-4 bg-gray-200 my-auto hidden sm:block"></div>
+                        <div class="flex items-center gap-2 text-sm font-bold text-gray-600">
+                            <i data-lucide="images" class="w-4 h-4 text-slate-400"></i>
+                            {{ imagens_todas|length }} foto{% if imagens_todas|length != 1 %}s{% endif %} na galeria
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card: Comodidades -->
+                {% if comodidades %}
+                <div class="bg-white rounded-3xl p-6 md:p-10 shadow-sm border border-gray-100
+                            animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
+                    <h2 class="text-xs font-black text-gray-900 mb-7 uppercase tracking-[0.2em] flex items-center gap-3">
+                        <div class="w-1.5 h-5 bg-action-blue rounded-full"></div>
+                        Comodidades Inclusas
+                    </h2>
+                    <div class="com-grid">
+                        {% for com in comodidades %}
+                        <div class="flex items-center gap-3 text-sm font-semibold text-gray-600">
+                            <span class="amenity-icon">
+                                {% if "Wi" in com or "wifi" in com or "internet" in com %}
+                                    <i data-lucide="wifi" class="w-4 h-4"></i>
+                                {% elif "Ar" in com or "Clima" in com %}
+                                    <i data-lucide="wind" class="w-4 h-4"></i>
+                                {% elif "Café" in com or "café" in com %}
+                                    <i data-lucide="coffee" class="w-4 h-4"></i>
+                                {% elif "TV" in com or "tv" in com or "Smart" in com %}
+                                    <i data-lucide="tv" class="w-4 h-4"></i>
+                                {% elif "Frigobar" in com or "Mini" in com %}
+                                    <i data-lucide="thermometer" class="w-4 h-4"></i>
+                                {% elif "Hidro" in com or "Banheira" in com %}
+                                    <i data-lucide="droplets" class="w-4 h-4"></i>
+                                {% elif "Piscina" in com %}
+                                    <i data-lucide="waves" class="w-4 h-4"></i>
+                                {% elif "Copa" in com or "Cozinha" in com %}
+                                    <i data-lucide="utensils" class="w-4 h-4"></i>
+                                {% elif "Pet" in com %}
+                                    <i data-lucide="paw-print" class="w-4 h-4"></i>
+                                {% else %}
+                                    <i data-lucide="check-circle" class="w-4 h-4"></i>
+                                {% endif %}
+                            </span>
+                            {{ com }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Card: Descrição -->
+                {% if quarto.descricao %}
+                <div class="bg-white rounded-3xl p-6 md:p-10 shadow-sm border border-gray-100
+                            animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150">
+                    <h2 class="text-xs font-black text-gray-900 mb-6 uppercase tracking-[0.2em] flex items-center gap-3">
+                        <div class="w-1.5 h-5 bg-action-blue rounded-full"></div>
+                        Sobre esta Acomodação
+                    </h2>
+                    <div class="text-sm text-gray-600 font-medium leading-relaxed prose prose-sm max-w-none">
+                        {{ quarto.descricao|safe }}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Card: Política de desconto progressivo -->
+                {% if quarto.tem_desconto_multidias %}
+                <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-3xl p-6 md:p-8
+                            border border-green-100 shadow-sm animate-in fade-in duration-500 delay-200">
+                    <div class="flex items-start gap-4">
+                        <div class="p-3 rounded-2xl bg-green-100 text-green-600 shrink-0">
+                            <i data-lucide="trending-down" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-black text-gray-800 text-sm uppercase tracking-wider">Desconto Progressivo Multidiárias</h3>
+                            <p class="text-xs text-gray-600 mt-1.5 leading-relaxed">
+                                Reserve a partir de <strong>{{ quarto.dias_minimos_desconto }} noites</strong> e ganhe
+                                <strong class="text-green-700">{{ quarto.percentual_desconto|floatformat:0 }}% de desconto</strong>
+                                automaticamente aplicado no valor total da estadia.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+
+            </div>
+
+            <!-- ── COLUNA DIREITA: Sidebar de Reserva (Sticky) ── -->
+            <div class="lg:col-span-4">
+                <div class="sticky-sidebar">
+                    <div class="bg-white rounded-3xl p-7 shadow-2xl shadow-gray-200/80 border border-gray-100">
+
+                        <!-- Preço -->
+                        <div class="mb-6">
+                            <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1">
+                                Valor por Noite
+                            </span>
+                            <div class="flex items-baseline gap-1">
+                                <span class="text-4xl font-black text-gray-900 tracking-tighter">
+                                    R$ {{ quarto.preco }}
+                                </span>
+                                <span class="text-xs font-bold text-gray-400">/ diária</span>
+                            </div>
+                            {% if quarto.tem_desconto_multidias %}
+                            <p class="text-[10px] font-bold text-green-600 mt-1.5 flex items-center gap-1">
+                                <i data-lucide="tag" class="w-3 h-3"></i>
+                                {{ quarto.percentual_desconto|floatformat:0 }}% off a partir de {{ quarto.dias_minimos_desconto }} noites
+                            </p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Capacidade visual -->
+                        <div class="flex items-center gap-2 py-3 px-4 bg-slate-50 rounded-2xl mb-6 border border-slate-100">
+                            <i data-lucide="users" class="w-4 h-4 text-slate-400 shrink-0"></i>
+                            <span class="text-xs font-bold text-gray-700">
+                                Acomoda até <span class="text-action-blue">{{ quarto.capacidade_pessoas }} hóspede{% if quarto.capacidade_pessoas != 1 %}s{% endif %}</span>
+                            </span>
+                        </div>
+
+                        <!-- Espaço para Injeção das Datas Selecionadas -->
+                        <div id="sidebar-summary-dates"></div>
+
+                        <!-- CTA Principal de Disponibilidade -->
+                        {% if carrinho and carrinho.quarto.id == quarto.id %}
+                        <button id="main-cta-button"
+                                disabled
+                                class="w-full bg-action-blue text-white font-black py-5 px-6 mt-3
+                                       rounded-2xl shadow-lg opacity-80 cursor-not-allowed
+                                       flex items-center justify-center gap-3">
+                            <i id="main-cta-icon" data-lucide="shopping-cart" class="w-5 h-5"></i>
+                            <span id="main-cta-text" class="text-base">No Carrinho</span>
+                        </button>
+                        {% else %}
+                        <button id="main-cta-button"
+                                onclick="openAvailabilityModal()"
+                                class="w-full bg-action-blue text-white font-black py-5 px-6 mt-3
+                                       rounded-2xl shadow-lg shadow-action-blue/20 transition-all cursor-pointer
+                                       hover:-translate-y-0.5 hover:shadow-xl hover:shadow-action-blue/30
+                                       flex items-center justify-center gap-3 active:scale-95">
+                            <i id="main-cta-icon" data-lucide="calendar-check" class="w-5 h-5"></i>
+                            <span id="main-cta-text" class="text-base">Ver Disponibilidade</span>
+                        </button>
+                        {% endif %}
+
+                        <!-- Badges de confiança -->
+                        <div class="mt-7 pt-6 border-t border-gray-100 space-y-3.5">
+                            <div class="flex items-center gap-3 text-[10px] text-gray-500 font-black uppercase tracking-wider">
+                                <i data-lucide="shield-check" class="w-3.5 h-3.5 text-blue-500 shrink-0"></i>
+                                Reserva 100% segura
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card mini do hotel -->
+                    <a href="/hotel/{{ hotel.id }}/"
+                       class="mt-4 flex items-center gap-3 p-4 bg-white rounded-2xl border border-gray-100
+                              shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all group/hotel-card">
+                        {% if hotel.logo %}
+                        <div class="w-10 h-10 rounded-xl bg-slate-50 border border-gray-100 p-1.5 flex items-center justify-center shrink-0">
+                            <img src="{{ hotel.logo.url }}" alt="{{ hotel.nome }}" class="max-h-full max-w-full object-contain">
+                        </div>
+                        {% else %}
+                        <div class="w-10 h-10 rounded-xl bg-action-blue/10 flex items-center justify-center shrink-0">
+                            <i data-lucide="hotel" class="w-5 h-5 text-action-blue"></i>
+                        </div>
+                        {% endif %}
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs font-black text-gray-900 truncate">{{ hotel.nome }}</p>
+                            <p class="text-[10px] text-gray-400 font-bold">Ver todas as acomodações →</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     LIGHTBOX MODAL
+══════════════════════════════════════════════════════════════ -->
+<div id="lightboxModal"
+     class="fixed inset-0 bg-black/88 z-[200] hidden flex-col items-center justify-center"
+     onclick="closeLightboxOnBgClick(event)">
+
+    <!-- Botão fechar -->
+    <button onclick="closeLightbox()"
+            class="absolute top-5 right-5 text-white/50 hover:text-white transition-colors z-10">
+        <i data-lucide="x" class="w-9 h-9"></i>
+    </button>
+
+    <!-- Setas lightbox -->
+    <button onclick="navLightbox(-1)"
+            class="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all z-10">
+        <i data-lucide="chevron-left" class="w-6 h-6"></i>
+    </button>
+    <button onclick="navLightbox(1)"
+            class="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all z-10">
+        <i data-lucide="chevron-right" class="w-6 h-6"></i>
+    </button>
+
+    <!-- Imagem -->
+    <div class="relative w-full h-full flex items-center justify-center p-6">
+        <img id="lightboxImage" src="" alt=""
+             class="max-w-full max-h-[88vh] object-contain animate-in zoom-in-95 duration-200">
+    </div>
+
+    <!-- Contador -->
+    <div class="absolute bottom-5 left-1/2 -translate-x-1/2 text-white/60 text-xs font-bold" id="lightbox-counter"></div>
+</div>
+
+<!-- WhatsApp Flutuante -->
+{% if hotel.whatsapp %}
+<a href="https://wa.me/{{ hotel.whatsapp }}" target="_blank"
+   class="fixed bottom-6 right-6 z-[999] bg-[#25d366] hover:bg-[#20ba5a] text-white p-4
+          rounded-full shadow-2xl transition-all hover:scale-110 active:scale-95
+          flex items-center justify-center group"
+   title="Falar no WhatsApp">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" class="w-6 h-6 fill-current">
+        <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/>
+    </svg>
+    <span class="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300 whitespace-nowrap text-xs font-bold ml-0 group-hover:ml-2">WhatsApp</span>
+</a>
+{% endif %}
+
+{% include 'hoteis/quartos/modal_disponibilidade.html' %}
+{% include 'partials/modal_sucesso.html' %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    lucide.createIcons();
+
+    // ── Array de imagens para lightbox ──────────────────────────────
+    const galleryImages = [
+        {% if primeira_imagem %}"{{ primeira_imagem.url_imagem.url }}",{% endif %}
+        {% for img in outras_imagens %}"{{ img.url_imagem.url }}",{% endfor %}
+    ].filter(Boolean);
+
+    // ── Swiper Carrossel Infinito (Dinâmico e Inteligente) ───────────
+    const originalSlidesCount = document.querySelectorAll('.room-swiper .swiper-slide').length;
+    const shouldLoop = originalSlidesCount > 1;
+
+    const roomSwiper = new Swiper('.room-swiper', {
+        loop: shouldLoop,
+        centeredSlides: true,
+        slidesPerView: 'auto',
+        spaceBetween: 16,
+        slideToClickedSlide: true,
+        loopedSlides: shouldLoop ? originalSlidesCount : undefined,
+        breakpoints: {
+            768: {
+                spaceBetween: 24,
+            }
+        }
+    });
+
+    if (shouldLoop) {
+        // Força o foco inicial no primeiro slide real (Foto Principal) de forma instantânea no carregamento
+        roomSwiper.slideToLoop(0, 0, false);
+    }
+
+    window.scrollGallery = function(dir) {
+        if (!roomSwiper) return;
+        if (dir === -1) {
+            roomSwiper.slidePrev();
+        } else {
+            roomSwiper.slideNext();
+        }
+    };
+
+    // ── Áudio do vídeo (Suporta Clones do Swiper) ─────────────────────
+    window.toggleAudio = function(event) {
+        event.stopPropagation();
+        const videos = document.querySelectorAll('video');
+        if (videos.length === 0) return;
+        
+        const isMuted = videos[0].muted;
+        videos.forEach(v => {
+            v.muted = !isMuted;
+        });
+
+        const audioIcons = document.querySelectorAll('#audio-icon');
+        const audioBtns = document.querySelectorAll('#audio-toggle-btn');
+
+        audioIcons.forEach(icon => {
+            icon.setAttribute('data-lucide', !isMuted ? 'volume-2' : 'volume-x');
+        });
+
+        audioBtns.forEach(btn => {
+            if (!isMuted) {
+                btn.classList.add('bg-action-blue', '!bg-opacity-80');
+            } else {
+                btn.classList.remove('bg-action-blue', '!bg-opacity-80');
+            }
+        });
+
+        lucide.createIcons();
+    };
+
+    // ── Lightbox ─────────────────────────────────────────────────────
+    let activeIndex = 0;
+    const modal = document.getElementById('lightboxModal');
+    const lbImg = document.getElementById('lightboxImage');
+    const lbCounter = document.getElementById('lightbox-counter');
+
+    function updateLightbox() {
+        if (galleryImages.length === 0) return;
+        lbImg.src = galleryImages[activeIndex];
+        lbImg.alt = "{{ quarto.nome }} - Foto " + (activeIndex + 1);
+        lbCounter.textContent = (activeIndex + 1) + " / " + galleryImages.length;
+    }
+
+    window.openLightbox = function(index) {
+        if (galleryImages.length === 0) return;
+        activeIndex = index % galleryImages.length;
+        updateLightbox();
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+    };
+
+    window.closeLightbox = function() {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.style.overflow = '';
+    };
+
+    window.closeLightboxOnBgClick = function(e) {
+        if (e.target === modal) closeLightbox();
+    };
+
+    window.navLightbox = function(dir) {
+        if (galleryImages.length === 0) return;
+        activeIndex = (activeIndex + dir + galleryImages.length) % galleryImages.length;
+        lbImg.classList.remove('animate-in', 'zoom-in-95', 'duration-200');
+        void lbImg.offsetWidth;
+        lbImg.classList.add('animate-in', 'zoom-in-95', 'duration-200');
+        updateLightbox();
+    };
+
+    // Teclado
+    document.addEventListener('keydown', function(e) {
+        if (modal.classList.contains('hidden')) return;
+        if (e.key === 'Escape') closeLightbox();
+        if (e.key === 'ArrowLeft') navLightbox(-1);
+        if (e.key === 'ArrowRight') navLightbox(1);
+    });
+
+    // ── WhatsApp ──────────────────────────────────────────────────────
+    window.consultarWhatsApp = function() {
+        const nome = "{{ quarto.nome }}";
+        const hotel = "{{ hotel.nome }}";
+        const tel = "{{ hotel.whatsapp }}";
+        const msg = `Olá! Tenho interesse na *${nome}* da *${hotel}*. Poderia me informar a disponibilidade e condições de reserva?`;
+        window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`, '_blank');
+    };
+
+    // ── Adicionar ao Carrinho Workflow ────────────────────────────────
+    window.addToCartWorkflow = function() {
+        if (!selectedCheckIn || !selectedCheckOut) return;
+        
+        const formatISODate = (date) => {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        };
+        
+        const checkinStr = formatISODate(selectedCheckIn);
+        const checkoutStr = formatISODate(selectedCheckOut);
+        
+        fetch("{% url 'hoteis:carrinho_adicionar' quarto.id %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: `checkin=${checkinStr}&checkout=${checkoutStr}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Incrementar o contador de itens no carrinho no cabeçalho
+                const cartBadge = document.querySelector('header span.bg-red-500') || document.querySelector('.relative span.bg-red-500');
+                if (cartBadge) {
+                    cartBadge.textContent = "1";
+                    cartBadge.classList.add('animate-bounce');
+                    setTimeout(() => cartBadge.classList.remove('animate-bounce'), 1000);
+                }
+
+                // Mostrar o novo Modal de Sucesso com o Checkmark (V) animado
+                showSuccessModal();
+
+                // Modificar o botão principal para "No Carrinho"
+                const mainCtaText = document.getElementById('main-cta-text');
+                const mainCtaButton = document.getElementById('main-cta-button');
+                if (mainCtaButton && mainCtaText) {
+                    mainCtaText.textContent = "No Carrinho";
+                    mainCtaButton.disabled = true;
+                    mainCtaButton.classList.add('opacity-80', 'cursor-not-allowed');
+                    mainCtaButton.removeAttribute('onclick');
+                }
+                
+                // Recarrega a página após 2 segundos
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            } else {
+                alert(data.error || 'Erro ao adicionar ao carrinho.');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Erro ao processar requisição.');
+        });
+    };
+});
+</script>
+{% endblock %}

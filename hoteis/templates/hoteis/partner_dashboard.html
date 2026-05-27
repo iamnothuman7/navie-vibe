@@ -75,6 +75,67 @@
             <span>Adicionar Quarto</span>
         </button>
     </div>
+
+    <!-- Controles das Reservas no Cabeçalho -->
+    <div x-show="activeTab === 'reservas'" class="flex items-center gap-2 sm:gap-2.5" x-transition.opacity
+         x-data="{
+            quartoOpen: false,
+            quartoLabel: '{{ selected_quarto.nome|default:"Selecionar" }}',
+            selectQuarto(id, label) {
+                this.quartoLabel = label;
+                this.quartoOpen = false;
+                document.getElementById('hidden-quarto-id').value = id;
+                htmx.ajax('GET', '{% url 'hoteis:partner_dashboard' %}?view=reservas_grid&quarto_id=' + id + '&data_inicio=' + document.getElementById('filtro-data-inicio').value + '&data_fim=' + document.getElementById('filtro-data-fim').value, '#reservas-grid-container');
+            }
+         }">
+
+        <!-- Seletor Modelo de Quarto (Custom Dropdown Estilizado) -->
+        <div class="relative">
+            <button @click="quartoOpen = !quartoOpen" @click.away="quartoOpen = false" type="button"
+                    class="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white text-xs font-black rounded-2xl pl-3.5 pr-8 py-2 sm:py-2.5 shadow-sm outline-none cursor-pointer hover:border-brand/50 focus:border-brand transition-all flex items-center gap-2 max-w-[140px] sm:max-w-[180px]">
+                <i data-lucide="bed-double" class="w-3.5 h-3.5 text-brand shrink-0"></i>
+                <span class="truncate" x-text="quartoLabel"></span>
+                <i data-lucide="chevron-down" class="w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 transition-transform" :class="quartoOpen && 'rotate-180'"></i>
+            </button>
+
+            <!-- Dropdown List Estilizado -->
+            <div x-show="quartoOpen" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+                 class="absolute top-full left-0 mt-1.5 z-50 min-w-[200px] bg-white dark:bg-[#1a1a1a] border border-slate-200/80 dark:border-white/10 rounded-2xl shadow-xl shadow-black/10 dark:shadow-black/40 overflow-hidden py-1.5" style="display: none;">
+                {% for q in quartos %}
+                <button @click="selectQuarto('{{ q.id }}', '{{ q.nome }}')" type="button"
+                        class="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center gap-2.5 {% if q == selected_quarto %}bg-slate-50 dark:bg-white/5 text-slate-900 dark:text-white{% endif %}">
+                    <span class="w-1.5 h-1.5 rounded-full {% if q == selected_quarto %}bg-slate-800 dark:bg-white{% else %}bg-slate-300 dark:bg-white/20{% endif %} shrink-0"></span>
+                    {{ q.nome }}
+                </button>
+                {% endfor %}
+            </div>
+            <input type="hidden" id="hidden-quarto-id" name="quarto_id" value="{{ selected_quarto.id }}">
+        </div>
+
+        <!-- Separador visual -->
+        <div class="w-px h-6 bg-slate-200 dark:bg-white/10 hidden sm:block"></div>
+
+        <!-- Filtro de Período — Dois Botões Separados (Início / Fim) -->
+        <div class="flex items-center gap-1.5">
+            <div class="relative">
+                <input type="text" id="filtro-data-inicio" name="data_inicio"
+                       value="{{ data_inicio|date:'Y-m-d' }}"
+                       readonly
+                       class="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white text-[11px] font-black rounded-2xl pl-8 pr-3 py-2 sm:py-2.5 shadow-sm outline-none cursor-pointer w-[115px] sm:w-[125px] hover:border-brand/50 focus:border-brand transition-all">
+                <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-brand pointer-events-none flex items-center"><i data-lucide="calendar" class="w-3.5 h-3.5"></i></span>
+            </div>
+
+            <span class="text-slate-300 dark:text-white/20 text-xs font-black select-none">→</span>
+
+            <div class="relative">
+                <input type="text" id="filtro-data-fim" name="data_fim"
+                       value="{{ data_fim|date:'Y-m-d' }}"
+                       readonly
+                       class="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white text-[11px] font-black rounded-2xl pl-8 pr-3 py-2 sm:py-2.5 shadow-sm outline-none cursor-pointer w-[115px] sm:w-[125px] hover:border-brand/50 focus:border-brand transition-all">
+                <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-brand pointer-events-none flex items-center"><i data-lucide="calendar" class="w-3.5 h-3.5"></i></span>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
@@ -215,55 +276,16 @@
          ───────────────────────────────────────────────────────────── -->
     <div x-show="activeTab === 'quartos'" class="space-y-6 animate-in fade-in duration-300" x-transition:enter="transition ease-out duration-300" style="display: none;">
         <div id="quartos-container">
-            {% include 'hoteis/partials/quarto_grid.html' %}
+            {% include 'hoteis/quartos/partials/quarto_grid.html' %}
         </div>
     </div>
 
     <!-- ─────────────────────────────────────────────────────────────
          SEÇÃO RESERVAS (PROPRIETÁRIO / GERENTE)
          ───────────────────────────────────────────────────────────── -->
-    <div x-show="activeTab === 'reservas'" class="space-y-6" x-transition:enter="transition ease-out duration-300" style="display: none;">
-        <div class="bg-white/80 dark:bg-black/30 border border-slate-200/80 dark:border-navie-border rounded-3xl p-6 shadow-sm backdrop-blur-md">
-            <h4 class="text-lg font-bold text-slate-800 dark:text-white mb-2">Aprovações & Reservas</h4>
-            <p class="text-xs text-slate-400 mb-6">Histórico de reservas ativas dos clientes</p>
-            
-            {% if reservas %}
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="border-b border-slate-100 dark:border-navie-border text-xs text-slate-400 uppercase font-bold">
-                            <th class="pb-3 px-4">Localizador</th>
-                            <th class="pb-3">Check-in</th>
-                            <th class="pb-3">Check-out</th>
-                            <th class="pb-3">Quarto Atribuído</th>
-                            <th class="pb-3">Status</th>
-                            <th class="pb-3 text-right px-4">Faturamento</th>
-                        </tr>
-                    </thead>
-                    <tbody class="text-sm divide-y divide-slate-100 dark:divide-white/5">
-                        {% for r in reservas %}
-                        <tr class="hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors">
-                            <td class="py-4 px-4 font-bold text-brand-600 dark:text-brand-400">#{{ r.id|slice:":8"|upper }}</td>
-                            <td class="py-4 text-slate-700 dark:text-slate-200">{{ r.data_checkin }}</td>
-                            <td class="py-4 text-slate-700 dark:text-slate-200">{{ r.data_checkout }}</td>
-                            <td class="py-4 text-slate-400 font-medium">{{ r.unidade.identificador }} ({{ r.unidade.quarto.nome }})</td>
-                            <td class="py-4">
-                                <span class="text-[9px] uppercase font-black px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20">
-                                    {{ r.get_status_display }}
-                                </span>
-                            </td>
-                            <td class="py-4 text-right font-black px-4 text-slate-800 dark:text-white">R$ <span class="moeda-br" data-valor="{{ r.valor_total }}">{{ r.valor_total }}</span></td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% else %}
-            <div class="text-center py-10">
-                <span class="inline-flex p-4 rounded-full bg-slate-100 dark:bg-white/5 text-slate-400 mb-3"><i data-lucide="info" class="w-6 h-6"></i></span>
-                <p class="text-sm text-slate-400">Nenhuma reserva ativa cadastrada no estabelecimento ainda.</p>
-            </div>
-            {% endif %}
+    <div x-show="activeTab === 'reservas'" class="space-y-6 animate-in fade-in duration-300" x-transition:enter="transition ease-out duration-300" style="display: none;">
+        <div id="reservas-grid-container" class="w-full">
+            {% include 'hoteis/partials/reservas_grid.html' %}
         </div>
     </div>
 
@@ -274,7 +296,7 @@
 
         <!-- Contêiner Reativo para o Kanban / Calendário swaps via HTMX -->
         <div id="atividades-content" class="w-full">
-            {% include 'hoteis/partials/kanban.html' %}
+            {% include 'hoteis/atividades/partials/kanban.html' %}
         </div>
     </div>
 
@@ -812,8 +834,7 @@
                 }
             }
 
-            // Polling simples do Alpine.js para carregar o mapa ao mudar de aba
-            window.addEventListener('load', () => {
+            function initMapSetup() {
                 setInterval(() => {
                     if (leafletMap) {
                         leafletMap.invalidateSize();
@@ -822,7 +843,13 @@
                 
                 // Inicialização imediata
                 setTimeout(inicializarMapa, 800);
-            });
+            }
+
+            if (document.readyState === 'complete') {
+                initMapSetup();
+            } else {
+                window.addEventListener('load', initMapSetup);
+            }
 
             function geolocalizarHotel() {
                 if (navigator.geolocation) {
@@ -914,7 +941,7 @@
             }
 
             function syncIframeTexts(doc) {
-                if (!doc) return;
+                if (!doc || !doc.documentElement) return;
                 
                 // 1. Sync Hotel Name
                 const nameInput = document.querySelector('input[name="nome"]');
@@ -1000,8 +1027,7 @@
                 document.getElementById('hero-video-filename-display').textContent = "MP4, MOV ou WebM de até 30MB";
             }
 
-            // Bind change triggers and iframe load dynamically
-            window.addEventListener('DOMContentLoaded', () => {
+            function setupDashboardListeners() {
                 const nameInput = document.querySelector('input[name="nome"]');
                 const colorInput = document.getElementById('cor_primaria_hex');
                 const slugInput = document.querySelector('input[name="slug"]');
@@ -1030,14 +1056,26 @@
                 
                 if (desktopIframe) {
                     desktopIframe.addEventListener('load', () => hydrateHeroIframeVideo('hero-preview-iframe-desktop'));
+                    if (desktopIframe.contentDocument && desktopIframe.contentDocument.readyState === 'complete') {
+                        hydrateHeroIframeVideo('hero-preview-iframe-desktop');
+                    }
                 }
                 if (mobileIframe) {
                     mobileIframe.addEventListener('load', () => hydrateHeroIframeVideo('hero-preview-iframe-mobile'));
+                    if (mobileIframe.contentDocument && mobileIframe.contentDocument.readyState === 'complete') {
+                        hydrateHeroIframeVideo('hero-preview-iframe-mobile');
+                    }
                 }
                 
                 // Trigger initial text/color sync with a small timeout
                 setTimeout(updateAllIframes, 1000);
-            });
+            }
+
+            if (document.readyState !== 'loading') {
+                setupDashboardListeners();
+            } else {
+                window.addEventListener('DOMContentLoaded', setupDashboardListeners);
+            }
         </script>
     </div>
     {% endif %}
@@ -1189,4 +1227,65 @@
     {% endif %}
 
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        function triggerReservasRefresh() {
+            const quartoId = document.getElementById('hidden-quarto-id')?.value || '';
+            const inicio = document.getElementById('filtro-data-inicio')?.value || '';
+            const fim = document.getElementById('filtro-data-fim')?.value || '';
+            if (quartoId && inicio && fim) {
+                htmx.ajax('GET', '{% url "hoteis:partner_dashboard" %}?view=reservas_grid&quarto_id=' + quartoId + '&data_inicio=' + inicio + '&data_fim=' + fim, '#reservas-grid-container');
+            }
+        }
+
+        function initDashboardFiltro() {
+            if (typeof flatpickr === 'undefined') return;
+
+            const elInicio = document.getElementById('filtro-data-inicio');
+            const elFim = document.getElementById('filtro-data-fim');
+
+            if (elInicio) {
+                flatpickr(elInicio, {
+                    locale: "pt",
+                    dateFormat: "Y-m-d",
+                    altInput: true,
+                    altFormat: "d/m/Y",
+                    defaultDate: "{{ data_inicio|date:'Y-m-d' }}",
+                    disableMobile: true,
+                    onChange: function(selectedDates, dateStr) {
+                        elInicio.value = dateStr;
+                        triggerReservasRefresh();
+                    }
+                });
+            }
+
+            if (elFim) {
+                flatpickr(elFim, {
+                    locale: "pt",
+                    dateFormat: "Y-m-d",
+                    altInput: true,
+                    altFormat: "d/m/Y",
+                    defaultDate: "{{ data_fim|date:'Y-m-d' }}",
+                    disableMobile: true,
+                    onChange: function(selectedDates, dateStr) {
+                        elFim.value = dateStr;
+                        triggerReservasRefresh();
+                    }
+                });
+            }
+        }
+        initDashboardFiltro();
+        
+        // Se o HTMX redefinir os elementos, reinicializamos se necessário
+        document.body.addEventListener('htmx:afterOnLoad', () => {
+            // Se o Lucide estiver disponível, reconstrói ícones
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+    });
+</script>
 {% endblock %}

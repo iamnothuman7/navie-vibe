@@ -6,6 +6,7 @@ app_name = 'hoteis'
 urlpatterns = [
     path('', views.home, name='home'),
     path('hotel/<int:hotel_id>/', views.detalhe, name='detalhe'),
+    path('hotel/<int:hotel_id>/acomodacao/<slug:quarto_slug>/', views.quarto_detalhe, name='quarto_detalhe'),
     path('api/hotel/<int:hotel_id>/check_disponibilidade/', views.api_check_disponibilidade, name='check_disponibilidade'),
     path('api/hotel/<int:hotel_id>/datas_ocupadas/', views.api_datas_ocupadas, name='datas_ocupadas'),
     path('hotelaria/', views.hotelaria, name='hotelaria'),
@@ -13,7 +14,7 @@ urlpatterns = [
     # Gestão Hoteleira (Naviê Hospedagens)
     path('hospedagens/auth/', views.partner_auth, name='partner_login'),
     path('hospedagens/logout/', views.partner_logout, name='partner_logout'),
-    path('hospedagens/painel/', views.partner_dashboard, name='partner_dashboard'),
+    path('hospedagens/sistema/', views.partner_dashboard, name='partner_dashboard'),
     path('hospedagens/ia_chat/', views.ia_enviar_chat, name='ia_enviar_chat'),
     path('hospedagens/atividades/criar/', views.partner_criar_tarefa, name='partner_criar_tarefa'),
     path('hospedagens/atividades/editar/<int:tarefa_id>/', views.partner_editar_tarefa, name='partner_editar_tarefa'),
@@ -28,6 +29,21 @@ urlpatterns = [
     path('hospedagens/quartos/salvar/', views.partner_quarto_salvar, name='partner_quarto_salvar'),
     path('hospedagens/quartos/deletar/<int:quarto_id>/', views.partner_quarto_deletar, name='partner_quarto_deletar'),
     path('hospedagens/quartos/imagem/deletar/<int:imagem_id>/', views.partner_quarto_deletar_imagem, name='partner_quarto_deletar_imagem'),
+    
+    # Carrinho e Checkout (B2C)
+    path('carrinho/adicionar/<int:quarto_id>/', views.carrinho_adicionar, name='carrinho_adicionar'),
+    path('carrinho/remover/', views.carrinho_remover, name='carrinho_remover'),
+    path('carrinho/salvar-fnrh/', views.carrinho_salvar_fnrh, name='carrinho_salvar_fnrh'),
+    path('carrinho/hospedes/definir/', views.carrinho_definir_hospedes, name='carrinho_definir_hospedes'),
+    path('carrinho/veiculo/salvar/', views.carrinho_salvar_veiculo, name='carrinho_salvar_veiculo'),
+    path('carrinho/checkout/', views.checkout_processar, name='checkout_processar'),
+    path('carrinho/sucesso/<uuid:reserva_id>/', views.checkout_sucesso, name='checkout_sucesso'),
+    
+    # Operações de Portaria & Reservas B2B
+    path('hospedagens/reservas/<uuid:reserva_id>/', views.partner_reserva_detalhe, name='partner_reserva_detalhe'),
+    path('hospedagens/reservas/<uuid:reserva_id>/checkin/', views.partner_reserva_checkin, name='partner_reserva_checkin'),
+    path('hospedagens/reservas/<uuid:reserva_id>/checkout/', views.partner_reserva_checkout, name='partner_reserva_checkout'),
+    path('hospedagens/reservas/<uuid:reserva_id>/cancelar/', views.partner_reserva_cancelar, name='partner_reserva_cancelar'),
     
     path('<slug:slug>/', views.vanity_url, name='vanity_url'),
 ]

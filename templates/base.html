@@ -6,9 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Naviê Vibe - Descubra os Melhores Destinos{% endblock %}</title>
     
-    <!-- CSS Compilado do Tailwind, Inter e Poppins -->
-    <link rel="stylesheet" href="{% static 'css/inter.css' %}">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;900&display=swap" rel="stylesheet">
+    <!-- Favicon do Naviê Vibe (Barquinho) -->
+    <link rel="icon" type="image/png" href="{% static 'images/logo.png' %}">
+    <link rel="apple-touch-icon" href="{% static 'images/logo.png' %}">
+    <!-- Google Fonts: Poppins (Sans) e Quicksand (Display) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/output.css' %}">
     
     <!-- Swiper CSS Local -->
@@ -254,25 +258,26 @@
             </nav>
             
             <div class="flex items-center gap-4">
-                <a href="#" class="relative p-2 text-gray-600 hover:text-action-blue transition-colors">
+                <a href="javascript:void(0)" onclick="toggleNavieCart()" class="relative p-2 text-gray-600 hover:text-action-blue transition-colors">
                     <i data-lucide="shopping-cart" class="w-6 h-6"></i>
-                    <span class="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center">0</span>
+                    <span class="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center">1</span>
                 </a>
                 {% if request.user.is_authenticated %}
                     {% if request.user.perfil_parceiro %}
-                    <a href="{% url 'hoteis:partner_dashboard' %}" class="header-profile-btn bg-blue-50 text-action-blue border border-blue-200 px-4 py-2 rounded-full font-bold text-sm hover:bg-action-blue hover:text-white transition-colors flex items-center gap-1.5">
-                        <i data-lucide="user" class="w-4 h-4"></i>
-                        <span>Painel Empresa</span>
+                    <a href="{% url 'hoteis:partner_dashboard' %}" class="header-profile-btn bg-blue-50 text-action-blue border border-blue-200 w-10 h-10 md:w-auto md:h-auto rounded-full font-bold text-sm hover:bg-action-blue hover:text-white transition-colors flex items-center justify-center md:px-4 md:py-2 md:gap-1.5 shrink-0">
+                        <i data-lucide="user" class="w-5 h-5 md:w-4 md:h-4"></i>
+                        <span class="hidden md:inline">Painel Empresa</span>
                     </a>
                     {% else %}
-                    <a href="{% url 'clientes:painel' %}" class="header-profile-btn bg-blue-50 text-action-blue border border-blue-200 px-4 py-2 rounded-full font-bold text-sm hover:bg-action-blue hover:text-white transition-colors flex items-center gap-1.5">
-                        <i data-lucide="user" class="w-4 h-4"></i>
-                        <span>Painel</span>
+                    <a href="{% url 'clientes:painel' %}" class="header-profile-btn bg-blue-50 text-action-blue border border-blue-200 w-10 h-10 md:w-auto md:h-auto rounded-full font-bold text-sm hover:bg-action-blue hover:text-white transition-colors flex items-center justify-center md:px-4 md:py-2 md:gap-1.5 shrink-0">
+                        <i data-lucide="user" class="w-5 h-5 md:w-4 md:h-4"></i>
+                        <span class="hidden md:inline">Painel</span>
                     </a>
                     {% endif %}
                 {% else %}
-                <a href="{% url 'clientes:login_cadastro' %}" class="header-profile-btn bg-gray-100 px-4 py-2 rounded-full font-semibold text-sm hover:bg-gray-200 transition-colors">
-                    Entrar
+                <a href="{% url 'clientes:login_cadastro' %}" class="header-profile-btn bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors w-10 h-10 md:w-auto md:h-auto rounded-full font-semibold text-sm flex items-center justify-center md:px-4 md:py-2 shrink-0">
+                    <i data-lucide="user" class="w-5 h-5 md:w-4 md:h-4"></i>
+                    <span class="hidden md:inline ml-1.5">Entrar</span>
                 </a>
                 {% endif %}
             </div>
@@ -284,8 +289,10 @@
     {% endblock %}
 
     {% include 'parceiros/modal_cadastro.html' %}
+    {% include 'partials/carrinho_overlay.html' %}
+    {% include 'partials/modal_dados_hospede.html' %}
 
-    <footer style="background:#030712; color:#fff; margin-top:4rem; border-top:1px solid rgba(255,255,255,0.05);">
+    <footer style="background:#030712; color:#fff; border-top:1px solid rgba(255,255,255,0.05);">
 
         <!-- Banner Área de Parceiros -->
         <div style="background:linear-gradient(135deg,#1e3a8a 0%,#1d4ed8 50%,#2563eb 100%); padding:1.5rem 0;">

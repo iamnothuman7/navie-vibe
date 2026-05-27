@@ -73,6 +73,7 @@ class PlataformaConfig(models.Model):
     taxa_cinema = models.DecimalField('Taxa Cinema (%)', max_digits=5, decimal_places=2, default=5.00)
     taxa_eventos = models.DecimalField('Taxa Eventos (%)', max_digits=5, decimal_places=2, default=12.00)
     taxa_parques = models.DecimalField('Taxa Parques (%)', max_digits=5, decimal_places=2, default=8.00)
+    taxa_gateway_percentual = models.DecimalField('Taxa de Cobrança do Gateway (%)', max_digits=4, decimal_places=2, default=3.00, help_text='Percentual cobrado pelo gateway de pagamento (ex: 3.00 para 3%).')
 
     def save(self, *args, **kwargs):
         if not self.pk and PlataformaConfig.objects.exists():

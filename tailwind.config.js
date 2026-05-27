@@ -17,7 +17,8 @@ module.exports = {
         'action-blue-dark': '#1d4ed8'
       },
       fontFamily: {
-        'sans': ['Inter', 'sans-serif'],
+        'sans': ['Poppins', 'sans-serif'],
+        'display': ['Quicksand', 'sans-serif'],
       }
     },
   },

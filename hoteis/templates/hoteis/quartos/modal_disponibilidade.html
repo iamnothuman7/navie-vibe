@@ -1,0 +1,440 @@
+<!-- ══════════════════════════════════════════════════════════════
+     MODAL DE DISPONIBILIDADE COM CALENDÁRIO INTERATIVO (RESPONSIVO)
+══════════════════════════════════════════════════════════════ -->
+<div id="availabilityModal" 
+     class="fixed inset-0 z-[300] hidden items-center justify-center bg-black/55 backdrop-blur-md transition-all duration-300"
+     onclick="closeAvailabilityModalOnBgClick(event)">
+    
+    <!-- Modal Card (Grid Responsivo no Desktop) -->
+    <div class="bg-white rounded-[2.5rem] w-full max-w-md mx-4 shadow-[0_30px_60px_rgba(0,0,0,0.3)] flex flex-col relative overflow-hidden animate-in fade-in zoom-in-95 duration-200 modal-card-grid">
+        
+        <!-- Botão Fechar Redondo com Cor Base Dinâmica (Amarelo na Pousada Armilos) -->
+        <button onclick="closeAvailabilityModal()"
+                title="Fechar"
+                class="absolute top-4 right-4 w-9 h-9 rounded-full border flex items-center justify-center transition-all z-50 cursor-pointer shadow-sm bg-white hover:scale-105 active:scale-95 close-btn-brand">
+            <i data-lucide="x" class="w-4 h-4 font-black"></i>
+        </button>
+
+        <!-- ── CABEÇALHO PEQUENO (Área Superior / Lateral) ── -->
+        <div class="px-6 pt-7 pb-4 border-b border-gray-100 bg-white modal-header-area">
+            <span id="calendar-instruction-badge" class="tag-pill-display inline-flex mb-2">
+                Check-in
+            </span>
+            <h3 id="calendar-title-instruction" class="text-xl font-black text-gray-900 leading-tight tracking-tight">
+                Dia da entrada (check-in)
+            </h3>
+            <p id="calendar-subtitle-instruction" class="text-xs text-gray-400 font-bold mt-1">
+                Selecione o dia do seu check-in no calendário
+            </p>
+        </div>
+
+        <!-- ── CONTEÚDO CENTRAL: CALENDÁRIO (Área Esquerda no Desktop) ── -->
+        <div class="p-6 flex-1 flex flex-col bg-white modal-calendar-area">
+            
+            <!-- Controle de Navegação do Mês -->
+            <div class="flex items-center justify-between mb-4">
+                <button onclick="changeMonth(-1)" 
+                        class="p-2 rounded-xl hover:bg-gray-100 text-gray-600 transition-colors cursor-pointer">
+                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                </button>
+                <h4 id="calendar-current-month" class="font-black text-sm text-gray-800 uppercase tracking-wider">
+                    Maio 2026
+                </h4>
+                <button onclick="changeMonth(1)" 
+                        class="p-2 rounded-xl hover:bg-gray-100 text-gray-600 transition-colors cursor-pointer">
+                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- Dias da Semana -->
+            <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-black text-gray-400 uppercase tracking-wider mb-2">
+                <div>Dom</div>
+                <div>Seg</div>
+                <div>Ter</div>
+                <div>Qua</div>
+                <div>Qui</div>
+                <div>Sex</div>
+                <div>Sáb</div>
+            </div>
+
+            <!-- Grid de Dias do Calendário -->
+            <div id="calendar-days-grid" class="grid grid-cols-7 gap-1.5 text-center text-xs">
+                <!-- Inserido dinamicamente via Javascript -->
+            </div>
+        </div>
+
+        <!-- ── RODAPÉ PEQUENO (Área Inferior / Lateral) ── -->
+        <div class="px-6 py-5 bg-slate-50 border-t border-gray-100 flex flex-col gap-4 modal-footer-area">
+            
+            <!-- Resumo das Datas Escolhidas -->
+            <div class="grid grid-cols-11 items-center bg-white rounded-2xl p-3.5 border border-slate-100 shadow-sm">
+                <div class="col-span-5 flex flex-col">
+                    <span class="text-[8px] font-black uppercase tracking-wider text-gray-400">Entrada (Check-in)</span>
+                    <span id="summary-checkin" class="text-xs font-black text-gray-800 mt-0.5">-</span>
+                </div>
+                <div class="col-span-1 flex justify-center">
+                    <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-slate-300"></i>
+                </div>
+                <div class="col-span-5 flex flex-col text-right">
+                    <span class="text-[8px] font-black uppercase tracking-wider text-gray-400">Saída (Checkout)</span>
+                    <span id="summary-checkout" class="text-xs font-black text-gray-800 mt-0.5">-</span>
+                </div>
+            </div>
+
+            <!-- Botão de Confirmação -->
+            <button id="btn-confirm-dates" 
+                    disabled
+                    onclick="confirmAvailabilityPeriod()"
+                    class="w-full text-white font-black py-4 px-6 rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 text-sm cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none confirm-btn-brand">
+                <i data-lucide="calendar-check" class="w-4 h-4"></i>
+                Confirmar Período
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<!-- Estilos Específicos do Calendário e Responsividade Desktop -->
+<style>
+    /* ── Responsividade Desktop (Layout Paisagem Achatado) ── */
+    @media (min-width: 768px) {
+        .modal-card-grid {
+            display: grid !important;
+            grid-template-areas: 
+                "calendar header"
+                "calendar footer";
+            grid-template-columns: 1.25fr 1fr;
+            grid-template-rows: auto 1fr;
+            max-width: 760px !important; /* Mais achatado e largo */
+        }
+        
+        .modal-calendar-area {
+            grid-area: calendar;
+            border-right: 1px solid #f1f5f9;
+        }
+        
+        .modal-header-area {
+            grid-area: header;
+            border-bottom: none !important;
+        }
+        
+        .modal-footer-area {
+            grid-area: footer;
+            border-top: none !important;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end; /* Empurra o botão e resumo para a base */
+            background-color: #ffffff !important; /* Mantém fundo branco contínuo */
+        }
+    }
+
+    /* ── Dinamização das Cores da Marca do Hotel (Amarelo / etc) ── */
+    .close-btn-brand {
+        border-color: var(--brand-color-burned, #2563eb) !important;
+        color: var(--brand-color-burned, #2563eb) !important;
+    }
+    .close-btn-brand:hover {
+        background-color: var(--brand-color, #2563eb) !important;
+        color: var(--brand-text-color, #ffffff) !important;
+    }
+
+    .confirm-btn-brand {
+        background-color: var(--brand-color, #2563eb) !important;
+        color: var(--brand-text-color, #ffffff) !important;
+        box-shadow: 0 10px 15px -3px var(--brand-color-alpha, rgba(37,99,235,0.15)) !important;
+    }
+    .confirm-btn-brand:hover:not(:disabled) {
+        background-color: var(--brand-color-burned, #1d4ed8) !important;
+    }
+
+    /* ── Estilos dos dias ── */
+    .cal-day {
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        font-weight: 700;
+        transition: all 0.2s ease;
+        position: relative;
+        cursor: pointer;
+    }
+
+    /* Dias Disponíveis: cinza normal */
+    .cal-day-available {
+        color: #334155;
+        background-color: transparent;
+    }
+    .cal-day-available:hover {
+        background-color: #f1f5f9;
+        transform: scale(1.05);
+    }
+
+    /* Dias Indisponíveis: cinza bem fraco, tachado e bloqueado */
+    .cal-day-unavailable {
+        color: #cbd5e1 !important;
+        background-color: #f8fafc;
+        text-decoration: line-through;
+        cursor: not-allowed !important;
+        pointer-events: none;
+    }
+
+    /* Dias Selecionados: Check-in / Checkout */
+    .cal-day-selected {
+        background-color: var(--brand-color, #2563eb) !important;
+        color: var(--brand-text-color, #ffffff) !important;
+        font-weight: 900 !important;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+
+    /* Range de dias selecionados */
+    .cal-day-in-range {
+        background-color: var(--brand-color-alpha, rgba(37,99,235,0.12)) !important;
+        color: var(--brand-color-burned, #1d4ed8) !important;
+        border-radius: 6px !important;
+        font-weight: 800 !important;
+    }
+
+    /* Padding vazio para dias do mês anterior */
+    .cal-day-empty {
+        pointer-events: none;
+        background-color: transparent;
+    }
+</style>
+
+<!-- Lógica do Calendário Interativo -->
+<script>
+    let currentDate = new Date();
+    // Forçar início em Maio de 2026 para corresponder à localTime do sistema (Maio 2026)
+    let calendarYear = 2026;
+    let calendarMonth = 4; // Maio (0-indexed: 4)
+
+    let selectedCheckIn = null;
+    let selectedCheckOut = null;
+
+    // Lista de dias ocupados fictícios para o quarto (simulando ocupação real)
+    // Usaremos chaves no formato "YYYY-MM-DD"
+    const occupiedDates = new Set([
+        "2026-05-02", "2026-05-03", "2026-05-04",
+        "2026-05-12", "2026-05-13", "2026-05-14",
+        "2026-05-15", "2026-05-22", "2026-05-23",
+        "2026-06-08", "2026-06-09", "2026-06-10",
+        "2026-06-20", "2026-06-21"
+    ]);
+
+    const monthNames = [
+        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+    ];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializa o calendário
+        renderCalendar();
+    });
+
+    window.openAvailabilityModal = function() {
+        const modal = document.getElementById('availabilityModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+        
+        // Resetar seleções ao abrir
+        resetCalendarSelections();
+        renderCalendar();
+        lucide.createIcons();
+    };
+
+    window.closeAvailabilityModal = function() {
+        const modal = document.getElementById('availabilityModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.style.overflow = '';
+    };
+
+    window.closeAvailabilityModalOnBgClick = function(e) {
+        const modal = document.getElementById('availabilityModal');
+        if (e.target === modal) {
+            closeAvailabilityModal();
+        }
+    };
+
+    function resetCalendarSelections() {
+        selectedCheckIn = null;
+        selectedCheckOut = null;
+        
+        // Reset Cabeçalho
+        document.getElementById('calendar-instruction-badge').textContent = "Check-in";
+        document.getElementById('calendar-title-instruction').textContent = "Dia da entrada (check-in)";
+        document.getElementById('calendar-subtitle-instruction').textContent = "Selecione o dia do seu check-in no calendário";
+        
+        // Reset Rodapé
+        document.getElementById('summary-checkin').textContent = "-";
+        document.getElementById('summary-checkout').textContent = "-";
+        document.getElementById('btn-confirm-dates').disabled = true;
+    }
+
+    function changeMonth(direction) {
+        calendarMonth += direction;
+        if (calendarMonth < 0) {
+            calendarMonth = 11;
+            calendarYear -= 1;
+        } else if (calendarMonth > 11) {
+            calendarMonth = 0;
+            calendarYear += 1;
+        }
+        renderCalendar();
+    }
+
+    function renderCalendar() {
+        const monthTitle = document.getElementById('calendar-current-month');
+        monthTitle.textContent = `${monthNames[calendarMonth]} ${calendarYear}`;
+
+        const grid = document.getElementById('calendar-days-grid');
+        grid.innerHTML = '';
+
+        // Primeiro dia do mês e total de dias no mês
+        const firstDayIndex = new Date(calendarYear, calendarMonth, 1).getDay();
+        const totalDays = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+
+        // Inserir células vazias para dias do mês anterior
+        for (let i = 0; i < firstDayIndex; i++) {
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'cal-day-empty';
+            grid.appendChild(emptyCell);
+        }
+
+        // Data atual para não permitir escolher datas passadas
+        const today = new Date();
+        today.setHours(0,0,0,0);
+
+        // Preencher dias do mês
+        for (let day = 1; day <= totalDays; day++) {
+            const dayCell = document.createElement('div');
+            dayCell.textContent = day;
+            
+            const cellDate = new Date(calendarYear, calendarMonth, day);
+            cellDate.setHours(0,0,0,0);
+            
+            const dateString = `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+            // Verificar se o dia é ocupado ou se é uma data no passado
+            const isPast = cellDate < today;
+            const isOccupied = occupiedDates.has(dateString);
+
+            if (isPast || isOccupied) {
+                dayCell.className = 'cal-day cal-day-unavailable';
+            } else {
+                dayCell.className = 'cal-day cal-day-available';
+
+                // Verificar seleção e range
+                if (selectedCheckIn && cellDate.getTime() === selectedCheckIn.getTime()) {
+                    dayCell.classList.add('cal-day-selected');
+                } else if (selectedCheckOut && cellDate.getTime() === selectedCheckOut.getTime()) {
+                    dayCell.classList.add('cal-day-selected');
+                } else if (selectedCheckIn && selectedCheckOut && cellDate > selectedCheckIn && cellDate < selectedCheckOut) {
+                    dayCell.classList.add('cal-day-in-range');
+                }
+
+                // Evento de clique
+                dayCell.onclick = () => handleDayClick(cellDate);
+            }
+
+            grid.appendChild(dayCell);
+        }
+    }
+
+    function handleDayClick(date) {
+        if (!selectedCheckIn || (selectedCheckIn && selectedCheckOut)) {
+            // Primeiro clique: seleciona Check-in
+            selectedCheckIn = date;
+            selectedCheckOut = null;
+
+            // Mudar cabeçalho para Checkout
+            document.getElementById('calendar-instruction-badge').textContent = "Checkout";
+            document.getElementById('calendar-title-instruction').textContent = "Dia da saída (checkout)";
+            document.getElementById('calendar-subtitle-instruction').textContent = "Agora, selecione o dia da sua saída";
+            
+            // Atualizar resumo
+            document.getElementById('summary-checkin').textContent = formatDate(selectedCheckIn);
+            document.getElementById('summary-checkout').textContent = "-";
+            document.getElementById('btn-confirm-dates').disabled = true;
+        } else {
+            // Segundo clique: seleciona Checkout
+            if (date <= selectedCheckIn) {
+                // Se escolheu uma data anterior ou igual à de entrada, reseta e coloca como Check-in
+                selectedCheckIn = date;
+                document.getElementById('summary-checkin').textContent = formatDate(selectedCheckIn);
+            } else {
+                // Seleção de Checkout concluída
+                selectedCheckOut = date;
+                document.getElementById('summary-checkout').textContent = formatDate(selectedCheckOut);
+                
+                // Mudar cabeçalho para sucesso
+                document.getElementById('calendar-instruction-badge').textContent = "Concluído";
+                document.getElementById('calendar-title-instruction').textContent = "Período selecionado!";
+                document.getElementById('calendar-subtitle-instruction').textContent = "Clique em confirmar para prosseguir";
+                
+                // Habilitar botão
+                document.getElementById('btn-confirm-dates').disabled = false;
+            }
+        }
+        renderCalendar();
+    }
+
+    function formatDate(date) {
+        if (!date) return "-";
+        const d = String(date.getDate()).padStart(2, '0');
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const y = date.getFullYear();
+        return `${d}/${m}/${y}`;
+    }
+
+    window.confirmAvailabilityPeriod = function() {
+        if (!selectedCheckIn || !selectedCheckOut) return;
+
+        const checkinStr = formatDate(selectedCheckIn);
+        const checkoutStr = formatDate(selectedCheckOut);
+
+        // FECHAR O MODAL IMEDIATAMENTE (Sem alertas ou popups nativos)
+        closeAvailabilityModal();
+
+        // Injetar resumo de datas selecionadas na barra lateral
+        const checkinSummaryElement = document.getElementById('sidebar-summary-dates');
+        if (checkinSummaryElement) {
+            checkinSummaryElement.innerHTML = `
+                <div class="mt-3 py-3 px-4 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-700 font-bold flex flex-col gap-1 shadow-sm">
+                    <div class="flex justify-between items-center">
+                        <span class="uppercase text-[9px] tracking-wider text-amber-500">Período Escolhido</span>
+                        <i data-lucide="calendar" class="w-3.5 h-3.5 text-amber-500"></i>
+                    </div>
+                    <div class="flex justify-between mt-1">
+                        <span>Check-in:</span>
+                        <span class="font-black text-gray-800">${checkinStr}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Checkout:</span>
+                        <span class="font-black text-gray-800">${checkoutStr}</span>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        // Alterar o botão principal para "Adicionar ao Carrinho"
+        const mainCtaText = document.getElementById('main-cta-text');
+        const mainCtaIcon = document.getElementById('main-cta-icon');
+        const mainCtaButton = document.getElementById('main-cta-button');
+
+        if (mainCtaButton && mainCtaText) {
+            mainCtaText.textContent = "Adicionar ao Carrinho";
+            
+            if (mainCtaIcon) {
+                mainCtaIcon.setAttribute('data-lucide', 'shopping-cart');
+                lucide.createIcons();
+            }
+
+            // Alterar a cor do botão principal para verde ou cor da marca ativa e vincular a ação de adicionar
+            mainCtaButton.setAttribute('onclick', 'addToCartWorkflow()');
+        }
+    };
+</script>

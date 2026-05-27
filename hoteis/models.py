@@ -1,6 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils.text import slugify
 import uuid
+import unicodedata
+import re
 
 class Produtor(models.Model):
     nome_publico = models.CharField(max_length=255)
@@ -36,7 +39,7 @@ class Hotel(models.Model): # Representa a operação de Hospedagem de uma Empres
     local = models.ForeignKey(Local, on_delete=models.CASCADE, related_name='hoteis')
     produtor = models.ForeignKey(Produtor, on_delete=models.SET_NULL, null=True, blank=True)
     
-    status = models.CharField(max_length=50, default='ativo', choices=[('ativo', 'Ativo'), ('inativo', 'Inativo')])
+    status = models.CharField(max_length=50, default='ativo', choices=[('ativo', 'Ativo'), ('inativo', 'Inativo')], db_index=True)
     destaque = models.BooleanField(default=False)
     
     data_inicio = models.DateField(null=True, blank=True) # Prazo de estadia/evento se houver
@@ -74,6 +77,7 @@ class HotelImagem(models.Model):
 class Quarto(models.Model): # Antigo 'Tipos de Ingresso'
     hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE, related_name='quartos')
     nome = models.CharField(max_length=150) # Ex: Suite Master
+    slug = models.SlugField(max_length=180, blank=True, help_text="URL amigável gerada automaticamente pelo nome")
     descricao = models.TextField(blank=True)
     preco = models.DecimalField(max_digits=10, decimal_places=2)
     
@@ -93,6 +97,37 @@ class Quarto(models.Model): # Antigo 'Tipos de Ingresso'
     seo_titulo = models.CharField(max_length=150, blank=True, null=True, help_text="Título customizado para buscadores/IA")
     seo_descricao = models.TextField(blank=True, null=True, help_text="Descrição customizada para buscadores/IA")
     
+    class Meta:
+        # Garante que o slug é único dentro de cada hotel (não globalmente)
+        unique_together = [('hotel', 'slug')]
+    
+    @staticmethod
+    def _normalizar_slug(texto):
+        """Converte caracteres acentuados para ASCII antes de slugify."""
+        nfkd = unicodedata.normalize('NFKD', texto)
+        ascii_str = nfkd.encode('ascii', 'ignore').decode('ascii')
+        return slugify(ascii_str)
+    
+    def _gerar_slug_unico(self):
+        """Gera slug único por hotel, adicionando sufixo numérico se necessário."""
+        base_slug = self._normalizar_slug(self.nome) or f'acomodacao-{self.id or 0}'
+        candidato = base_slug
+        num = 2
+        while True:
+            conflito = Quarto.objects.filter(hotel=self.hotel, slug=candidato)
+            if self.pk:
+                conflito = conflito.exclude(pk=self.pk)
+            if not conflito.exists():
+                return candidato
+            candidato = f'{base_slug}-{num}'
+            num += 1
+    
+    def save(self, *args, **kwargs):
+        # Regera slug sempre que o nome mudar ou slug estiver vazio
+        if not self.slug or (self.pk and Quarto.objects.filter(pk=self.pk).values_list('nome', flat=True).first() != self.nome):
+            self.slug = self._gerar_slug_unico()
+        super().save(*args, **kwargs)
+    
     def __str__(self):
         return f"{self.nome} - R$ {self.preco}"
 
@@ -111,7 +146,7 @@ class UnidadeQuarto(models.Model):
     """Representa a sala física real de uma categoria de quarto, ex: Quarto 101, Chale 2"""
     quarto = models.ForeignKey(Quarto, on_delete=models.CASCADE, related_name='unidades')
     identificador = models.CharField(max_length=50, help_text="Ex: 101, Chale 01, Deck Master")
-    ativa = models.BooleanField(default=True)
+    ativa = models.BooleanField(default=True, db_index=True)
     
     def __str__(self):
         return f"{self.identificador} ({self.quarto.nome})"
@@ -120,27 +155,61 @@ class Reserva(models.Model):
     STATUS_CHOICES = [
         ('pendente', 'Pendente'),
         ('confirmada', 'Confirmada'),
+        ('hospedado', 'Hospedado'),
+        ('concluido', 'Concluído'),
         ('cancelada', 'Cancelada'),
     ]
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     usuario = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='reservas', db_constraint=False)
     unidade = models.ForeignKey(UnidadeQuarto, on_delete=models.PROTECT, related_name='reservas')
-    data_checkin = models.DateField()
-    data_checkout = models.DateField()
+    data_checkin = models.DateField(db_index=True)
+    data_checkout = models.DateField(db_index=True)
+    
+    # Valores financeiros
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    taxas = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     valor_total = models.DecimalField(max_digits=10, decimal_places=2)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente')
+    
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente', db_index=True)
+    canal_venda = models.CharField(max_length=50, default='marketplace', help_text="marketplace ou walk-in")
+    
+    # Datas de execução reais de portaria
+    checkin_realizado_em = models.DateTimeField(null=True, blank=True)
+    checkout_realizado_em = models.DateTimeField(null=True, blank=True)
+    
+    # Ficha de Registro Nacional de Hóspedes (FNRH) histórica da reserva
+    hospede_nome = models.CharField(max_length=255, blank=True, null=True)
+    hospede_cpf = models.CharField(max_length=20, blank=True, null=True)
+    hospede_email = models.EmailField(blank=True, null=True)
+    hospede_telefone = models.CharField(max_length=20, blank=True, null=True)
+    hospede_rg = models.CharField(max_length=50, blank=True, null=True)
+    hospede_nacionalidade = models.CharField(max_length=100, blank=True, null=True)
+    hospede_profissao = models.CharField(max_length=100, blank=True, null=True)
+    hospede_endereco = models.TextField(blank=True, null=True)
+    quantidade_hospedes = models.PositiveIntegerField(default=1)
+    taxa_servico_plataforma = models.DecimalField('Taxa de Serviço Naviê', max_digits=10, decimal_places=2, default=0.00)
+    taxa_gateway = models.DecimalField('Taxa Gateway Absorvida', max_digits=10, decimal_places=2, default=0.00)
+    repasse_parceiro = models.DecimalField('Repasse Líquido ao Parceiro', max_digits=10, decimal_places=2, default=0.00)
+    ganho_liquido_plataforma = models.DecimalField('Ganho Líquido Naviê', max_digits=10, decimal_places=2, default=0.00)
+    
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)
     
+    @property
+    def noites(self):
+        if self.data_checkin and self.data_checkout:
+            return (self.data_checkout - self.data_checkin).days
+        return 1
+        
     def __str__(self):
-        return f"Reserva #{self.id} - {self.unidade.identificador}"
+        return f"Reserva #{str(self.id)[:8].upper()} - {self.unidade.identificador}"
 
 class BloqueioQuarto(models.Model):
     """Permite ao hotel bloquear datas por manutenção ou indisponibilidade"""
     unidade = models.ForeignKey(UnidadeQuarto, on_delete=models.CASCADE, related_name='bloqueios')
-    data_inicio = models.DateField()
-    data_fim = models.DateField()
+    data_inicio = models.DateField(db_index=True)
+    data_fim = models.DateField(db_index=True)
     motivo = models.CharField(max_length=255, blank=True)
     criado_em = models.DateTimeField(auto_now_add=True)
     
@@ -182,8 +251,8 @@ class Tarefa(models.Model):
     titulo = models.CharField(max_length=255)
     descricao = models.TextField(blank=True, null=True)
     prioridade = models.CharField(max_length=10, choices=PRIORIDADE_CHOICES, default='normal')
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='todo')
-    data_vencimento = models.DateField(blank=True, null=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='todo', db_index=True)
+    data_vencimento = models.DateField(blank=True, null=True, db_index=True)
     
     # Mapeamentos para Hospedagem:
     responsavel = models.ForeignKey(ParceiroUsuario, on_delete=models.SET_NULL, blank=True, null=True, related_name='tarefas_atribuidas')
@@ -202,4 +271,36 @@ class Tarefa(models.Model):
         if self.data_vencimento and self.data_vencimento < date.today() and self.status != 'done':
             return True
         return False
+
+
+class HospedeReserva(models.Model):
+    """FNRH individual de cada hóspede da reserva."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    reserva = models.ForeignKey(Reserva, on_delete=models.CASCADE, related_name='hospedes')
+    ordem = models.PositiveSmallIntegerField(default=1)  # 1 = titular, 2+ = acompanhantes
+    
+    # Dados pessoais (FNRH)
+    nome = models.CharField(max_length=255)
+    cpf = models.CharField(max_length=20, blank=True)
+    email = models.EmailField(blank=True)
+    telefone = models.CharField(max_length=20, blank=True)
+    rg = models.CharField(max_length=50, blank=True)
+    nacionalidade = models.CharField(max_length=100, default='Brasileira')
+    profissao = models.CharField(max_length=100, blank=True)
+    endereco = models.TextField(blank=True)
+    
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['ordem']
+        unique_together = ['reserva', 'ordem']
+
+
+class VeiculoReserva(models.Model):
+    """Veículo registrado para a reserva (controle de estacionamento)."""
+    reserva = models.OneToOneField(Reserva, on_delete=models.CASCADE, related_name='veiculo')
+    placa = models.CharField(max_length=10)
+    modelo = models.CharField(max_length=100, blank=True)
+    cor = models.CharField(max_length=50, blank=True)
+
 

@@ -1,5 +1,3 @@
-<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
 
 <style>
     /* Quill Rich Text Editor Dark Mode Overrides in Modal */
@@ -60,19 +58,12 @@
 
 <div x-data="{ editorOpen: false }" class="bg-white/80 dark:bg-black/30 border border-slate-200/80 dark:border-navie-border rounded-3xl p-5 sm:p-6 shadow-sm backdrop-blur-md animate-in fade-in zoom-in-95 duration-300 relative">
     <!-- Form Header and Back triggers -->
-    <div class="flex items-center justify-between gap-4 border-b border-slate-100 dark:border-white/5 pb-4 mb-8">
-        <div>
-            <h4 class="text-base sm:text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                <i data-lucide="bed" class="w-5 h-5 text-brand"></i>
-                {% if quarto %}Editar Acomodação: <span class="text-brand">{{ quarto.nome }}</span>{% else %}Nova Acomodação{% endif %}
-            </h4>
-            <p class="text-xs text-slate-400 mt-0.5">Gerenciamento completo e otimização para IA da categoria de quarto</p>
-        </div>
-        <button type="button" hx-get="{% url 'hoteis:partner_quarto_lista' %}" hx-target="#quartos-container" hx-swap="innerHTML"
-                class="bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-200 px-3.5 py-2 rounded-2xl text-xs font-black transition-all flex items-center gap-1.5 hover:scale-[1.02] active:scale-95 border border-slate-200/50 dark:border-white/5 shadow-sm">
-            <span class="flex items-center" style="pointer-events:none;"><i data-lucide="arrow-left" class="w-3.5 h-3.5"></i></span>
-            <span>Voltar</span>
-        </button>
+    <div class="border-b border-slate-100 dark:border-white/5 pb-4 mb-8">
+        <h4 class="text-base sm:text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+            <i data-lucide="bed" class="w-5 h-5 text-brand"></i>
+            {% if quarto %}Editar Acomodação: <span class="text-brand">{{ quarto.nome }}</span>{% else %}Nova Acomodação{% endif %}
+        </h4>
+        <p class="text-xs text-slate-400 mt-1">Gerenciamento completo e otimização para IA da categoria de quarto</p>
     </div>
 
     <!-- Main Dynamic Form -->
@@ -88,9 +79,9 @@
         <!-- ─────────────────────────────────────────────────────────────
              SEÇÃO 1: GALERIA DE FOTOS (PRINCIPAL DESTAQUE CORONA)
              ───────────────────────────────────────────────────────────── -->
-        <div class="b2b-element-gap">
-            <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider b2b-label-gap">Galeria de Fotos (Máximo 10 Fotos)</label>
-            <div class="b2b-pill-grid">
+        <div class="mb-8">
+            <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-3.5">Galeria de Fotos (Máximo 10 Fotos)</label>
+            <div class="flex flex-wrap gap-3">
                 <!-- Imagens Existentes no Banco -->
                 {% if quarto %}
                     {% for img in quarto.imagens.all %}
@@ -124,7 +115,7 @@
                     <input type="file" name="imagens" id="upload-galeria" multiple accept="image/*" class="hidden" onchange="previewLocalImages(this)">
                 </label>
             </div>
-            <p class="text-[10px] text-slate-400 b2b-text-media-gap">O primeiro card (borda destacada com coroa) é a imagem de capa da pousada no site. Selecione até 10 fotos.</p>
+            <p class="text-[10px] text-slate-400 mt-4 leading-relaxed">O primeiro card (borda destacada com coroa) é a imagem de capa da pousada no site. Selecione até 10 fotos.</p>
         </div>
 
         <!-- Custom Division Line with Animation -->
@@ -138,7 +129,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             <!-- Upload de Video Card -->
             <div class="lg:col-span-5 flex flex-col gap-4">
-                <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider b2b-label-gap">Vídeo Tour da Acomodação</label>
+                <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-3.5">Vídeo Tour da Acomodação</label>
                 
                 <label class="relative rounded-3xl border-2 border-dashed border-slate-300 dark:border-white/10 hover:border-brand dark:hover:border-brand p-6 flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.01] active:scale-99 bg-slate-50/50 dark:bg-black/10 group h-36">
                     <span class="flex items-center text-slate-400 dark:text-slate-500 group-hover:text-brand transition-colors"><i data-lucide="video" class="w-8 h-8"></i></span>
@@ -163,7 +154,7 @@
                     </button>
                 </div>
                 <input type="hidden" name="remover_video" id="remover-video-input" value="false">
-                <p class="text-[10px] text-slate-400 b2b-text-media-gap leading-relaxed">Faça o upload do tour de vídeo local. Ele rodará de forma silenciosa e contínua dentro dos dispositivos de visualização de clientes.</p>
+                <p class="text-[10px] text-slate-400 mt-4 leading-relaxed">Faça o upload do tour de vídeo local. Ele rodará de forma silenciosa e contínua dentro dos dispositivos de visualização de clientes.</p>
             </div>
 
             <!-- Previews lado a lado em Mockups com website real -->
@@ -219,16 +210,16 @@
         <!-- ─────────────────────────────────────────────────────────────
              SEÇÃO 3: INFORMAÇÕES DA ACOMODAÇÃO E TEXTO EM MODAL
              ───────────────────────────────────────────────────────────── -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 b2b-element-gap">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <!-- Nome -->
             <div class="md:col-span-2">
-                <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider b2b-label-gap">Nome do Quarto / Categoria</label>
+                <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-3.5">Nome do Quarto / Categoria</label>
                 <input type="text" name="nome" id="room-name-input" required value="{{ quarto.nome|default:'' }}" placeholder="Ex: Suíte Presidencial Vista da Serra" oninput="updateSEOPreview()"
                        class="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-brand transition-colors">
             </div>
             <!-- Preço -->
             <div>
-                <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider b2b-label-gap">Preço da Diária</label>
+                <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-3.5">Preço da Diária</label>
                 <div class="relative">
                     <span class="absolute left-4 top-3 text-xs font-bold text-slate-400">R$</span>
                     <input type="text" name="preco" id="room-price-input" required value="{{ quarto.preco|default:'' }}" placeholder="250.00" oninput="updateSEOPreview()"
@@ -237,10 +228,65 @@
             </div>
         </div>
 
-        <!-- Botão Editor de Descrição em Modal -->
-        <div class="b2b-element-gap">
-            <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider b2b-label-gap">Descrição Completa</label>
-            <div class="flex flex-col sm:flex-row sm:items-center gap-3.5">
+        <!-- ─────────────────────────────────────────────────────────────
+             SEÇÃO DE QUANTIDADE DE QUARTOS (UNIDADES FÍSICAS)
+             ───────────────────────────────────────────────────────────── -->
+        <div class="mb-8">
+            <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-3.5">
+                Quantidade de Quartos (Controle de Unidades Físicas)
+            </label>
+            
+            <div class="flex flex-wrap gap-3 items-center" id="room-units-container">
+                <!-- Unidades Existentes ou Default -->
+                {% if quarto and quarto.unidades.all %}
+                    {% for unidade in quarto.unidades.all %}
+                        {% if unidade.ativa %}
+                        <div class="room-unit-card w-28 sm:w-32 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl p-3 flex flex-col gap-1.5 relative shrink-0 animate-in zoom-in-95 duration-200">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider room-unit-label">Quarto 1</span>
+                                <button type="button" class="text-slate-400 hover:text-red-500 transition-colors remove-room-btn flex items-center justify-center p-0.5" onclick="removeRoomUnit(this)">
+                                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </div>
+                            <input type="hidden" name="unidades_ids" value="{{ unidade.id }}">
+                            <input type="text" name="unidades_identificadores" required value="{{ unidade.identificador }}" placeholder="Ex: 101"
+                                   class="w-full bg-white dark:bg-black/30 border border-slate-200 dark:border-white/5 rounded-xl px-2 py-1.5 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-brand transition-colors font-bold text-center">
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <!-- Pelo menos um quarto se for novo -->
+                    <div class="room-unit-card w-28 sm:w-32 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl p-3 flex flex-col gap-1.5 relative shrink-0 animate-in zoom-in-95 duration-200">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider room-unit-label">Quarto 1</span>
+                            <button type="button" class="text-slate-400 hover:text-red-500 transition-colors remove-room-btn flex items-center justify-center p-0.5" onclick="removeRoomUnit(this)">
+                                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                        <input type="hidden" name="unidades_ids" value="new">
+                        <input type="text" name="unidades_identificadores" required value="" placeholder="Ex: 101"
+                               class="w-full bg-white dark:bg-black/30 border border-slate-200 dark:border-white/5 rounded-xl px-2 py-1.5 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-brand transition-colors font-bold text-center">
+                    </div>
+                {% endif %}
+
+                <!-- Botão Adicionar Quarto [+] -->
+                <button type="button" id="add-room-unit-btn" onclick="addRoomUnit()"
+                        class="w-28 h-[78px] sm:w-32 sm:h-[80px] rounded-2xl border-2 border-dashed border-slate-300 dark:border-white/10 hover:border-brand dark:hover:border-brand flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.02] active:scale-95 group shrink-0">
+                    <span class="flex items-center text-slate-400 dark:text-slate-500 group-hover:text-brand transition-colors"><i data-lucide="plus" class="w-5 h-5"></i></span>
+                    <span class="text-[9px] font-bold text-slate-400 dark:text-slate-500 mt-1">Add Quarto</span>
+                </button>
+            </div>
+            <p class="text-[10px] text-slate-400 mt-4 leading-relaxed">Defina a numeração ou identificação de cada quarto físico real para controle de reservas (ex: 101, 102, Chalé 01). Clique em <b>+ Add Quarto</b> para adicionar mais unidades desse tipo.</p>
+        </div>
+
+        <!-- Custom Division Line with Animation -->
+        <div class="relative h-[2px] w-full bg-slate-100 dark:bg-white/5 my-8 rounded-full overflow-hidden shrink-0">
+            <div class="animated-divider-bar bg-brand absolute top-0 left-0"></div>
+        </div>
+
+        <div class="mb-6">
+            <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-3">Descrição Completa</label>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3.5 mt-2">
                 <button type="button" @click="editorOpen = true"
                         class="bg-brand/10 hover:bg-brand/20 border border-brand/20 dark:border-brand/30 text-brand px-5 py-3 rounded-2xl text-xs font-black transition-all flex items-center justify-center gap-1.5 hover:scale-[1.02] active:scale-95 shrink-0 shadow-sm">
                     <span class="flex items-center" style="pointer-events:none;"><i data-lucide="pencil-line" class="w-4 h-4"></i></span>
@@ -304,11 +350,10 @@
         <!-- ─────────────────────────────────────────────────────────────
              SEÇÃO 4: CAPACIDADE (DROPDOWN ALPINE) E TAGS/COMODIDADES (PADDED)
              ───────────────────────────────────────────────────────────── -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 b2b-element-gap">
-            <!-- Capacidade Dropdown Padronizado -->
-            <div class="b2b-element-gap">
-                <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider b2b-label-gap">Capacidade Recomendada</label>
-                <div x-data="{ open: false, selected: {{ quarto.capacidade_pessoas|default:2 }} }" class="relative w-full max-w-xs">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div class="mb-6">
+                <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-3">Capacidade do Quarto</label>
+                <div x-data="{ open: false, selected: {{ quarto.capacidade_pessoas|default:2 }} }" class="relative w-full max-w-xs mt-2">
                     <button type="button" @click="open = !open" @click.away="open = false"
                             class="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-brand transition-all flex items-center justify-between font-bold hover:scale-[1.01]">
                         <span x-text="selected === 8 ? '8 ou mais pessoas' : (selected === 1 ? '1 pessoa' : selected + ' pessoas')"></span>
@@ -316,19 +361,19 @@
                     </button>
                     <!-- Standardized Checkable Dropdown -->
                     <div x-show="open" style="display: none;" x-transition:enter="transition ease-out duration-100" x-transition:leave="transition ease-in duration-75"
-                         class="absolute z-40 mt-2 w-full bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border border-slate-200/50 dark:border-white/10 rounded-2xl shadow-xl overflow-hidden py-1 max-h-60 overflow-y-auto">
+                         class="absolute z-40 mt-2 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/50 dark:border-white/10 rounded-2xl shadow-xl overflow-hidden py-1 max-h-60 overflow-y-auto">
                         
-                        {% for num in "1,2,3,4,5,6,7"|split:"," %}
+                        {% for num in capacidades %}
                         <button type="button" @click="selected = {{ num }}; open = false; document.getElementById('capacidade-input').value = {{ num }}; updateSEOPreview()"
-                                class="w-full text-left px-4 py-2.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-brand hover:text-white transition-colors flex items-center justify-between font-bold">
-                            <span>{{ num }} {% if num == "1" %}pessoa{% else %}pessoas{% endif %}</span>
-                            <span x-show="selected === {{ num }}" class="text-brand hover:text-white"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
+                                class="w-full text-left px-4 py-2.5 text-xs text-slate-700 dark:text-white hover:bg-brand hover:text-white dark:hover:bg-white/10 dark:hover:text-white transition-colors flex items-center justify-between font-bold">
+                            <span>{{ num }} {% if num == 1 %}pessoa{% else %}pessoas{% endif %}</span>
+                            <span x-show="selected === {{ num }}" class="text-brand dark:text-white"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
                         </button>
                         {% endfor %}
                         <button type="button" @click="selected = 8; open = false; document.getElementById('capacidade-input').value = 8; updateSEOPreview()"
-                                class="w-full text-left px-4 py-2.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-brand hover:text-white transition-colors flex items-center justify-between font-bold">
+                                class="w-full text-left px-4 py-2.5 text-xs text-slate-700 dark:text-white hover:bg-brand hover:text-white dark:hover:bg-white/10 dark:hover:text-white transition-colors flex items-center justify-between font-bold">
                             <span>8 ou mais pessoas</span>
-                            <span x-show="selected === 8" class="text-brand hover:text-white"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
+                            <span x-show="selected === 8" class="text-brand dark:text-white"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
                         </button>
                     </div>
                     <input type="hidden" name="capacidade_pessoas" id="capacidade-input" value="{{ quarto.capacidade_pessoas|default:2 }}">
@@ -336,12 +381,12 @@
             </div>
 
             <!-- Categorização por Tags (Seleção Dinâmica) -->
-            <div class="b2b-element-gap">
-                <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider b2b-label-gap">Tags Especiais (Ideal para IA)</label>
-                <div class="b2b-pill-grid">
+            <div class="mb-6">
+                <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-3">Tags Especiais (Ideal para IA)</label>
+                <div class="flex flex-wrap gap-2.5 mt-2">
                     {% for tag in tags_disponiveis %}
                         <button type="button" onclick="toggleTag(this, '{{ tag }}')"
-                                class="tag-pill px-3.5 py-2 rounded-full border text-[10px] font-black uppercase tracking-wider transition-all border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 hover:scale-[1.03]">
+                                class="tag-pill px-3.5 py-2.5 rounded-full border text-[10px] font-black uppercase tracking-wider transition-all border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 hover:scale-[1.03]">
                             {{ tag }}
                         </button>
                     {% endfor %}
@@ -350,9 +395,9 @@
         </div>
 
         <!-- Comodidades / Diferenciais -->
-        <div class="b2b-element-gap">
-            <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider b2b-label-gap">Comodidades Inclusas</label>
-            <div class="b2b-pill-grid">
+        <div class="mb-6">
+            <label class="block text-xs font-black text-slate-500 dark:text-navie-textsec uppercase tracking-wider mb-3">Comodidades Inclusas</label>
+            <div class="flex flex-wrap gap-2.5 mt-2">
                 {% for com in comodidades_disponiveis %}
                     <button type="button" onclick="toggleComodidade(this, '{{ com }}')"
                             class="com-pill px-3.5 py-2.5 rounded-2xl border text-[11px] font-bold transition-all border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 flex items-center gap-1.5 hover:scale-[1.03]">
@@ -471,7 +516,7 @@
             <button type="submit"
                     class="bg-brand hover:bg-brand/90 text-white px-6 py-3 rounded-2xl text-xs font-black transition-all shadow-md shadow-brand/25 flex items-center gap-2 hover:scale-[1.02] active:scale-95 font-bold">
                 <span class="flex items-center" style="pointer-events:none;"><i data-lucide="save" class="w-4 h-4"></i></span>
-                Salvar Acomodação
+                {% if quarto %}Salvar Alterações{% else %}Salvar Quarto{% endif %}
             </button>
         </div>
     </form>
@@ -529,7 +574,7 @@
             document.querySelectorAll('.tag-pill').forEach(btn => {
                 var txt = btn.textContent.trim();
                 if (tagsList.includes(txt)) {
-                    btn.classList.add('bg-brand', 'text-white', 'border-brand');
+                    btn.classList.add('bg-amber-500', 'text-white', 'border-amber-500', 'dark:bg-amber-500/20', 'dark:text-amber-300', 'dark:border-amber-500/40');
                     btn.classList.remove('bg-slate-50', 'dark:bg-white/5', 'text-slate-600', 'dark:text-slate-300', 'border-slate-200/60');
                 }
             });
@@ -541,7 +586,7 @@
             document.querySelectorAll('.com-pill').forEach(btn => {
                 var txt = btn.textContent.trim();
                 if (comList.includes(txt)) {
-                    btn.classList.add('bg-brand', 'text-white', 'border-brand');
+                    btn.classList.add('bg-amber-500', 'text-white', 'border-amber-500', 'dark:bg-amber-500/20', 'dark:text-amber-300', 'dark:border-amber-500/40');
                     btn.classList.remove('bg-slate-50', 'dark:bg-white/5', 'text-slate-600', 'dark:text-slate-300', 'border-slate-200/60');
                     var icon = btn.querySelector('i');
                     if (icon) icon.classList.remove('opacity-40');
@@ -550,45 +595,94 @@
         }
     })();
 
-    // Function to render local previews of uploaded files
-    function previewLocalImages(input) {
+    // ─── Gallery: acumula arquivos entre seleções e permite remoção individual ───
+
+    // Array persistido que acumula todos os File objects selecionados
+    var localFiles = [];
+
+    // Atualiza o FileList real do input usando DataTransfer
+    function syncInputFiles() {
+        const input = document.getElementById('upload-galeria');
+        const dt = new DataTransfer();
+        localFiles.forEach(f => dt.items.add(f));
+        input.files = dt.files;
+    }
+
+    // Re-renderiza todos os cards de preview locais a partir de localFiles[]
+    function renderLocalPreviews() {
         const container = document.getElementById('local-previews-grid');
         container.innerHTML = '';
-        if (input.files) {
-            const count = input.files.length;
-            if (count > 10) {
-                alert("O limite máximo de fotos é 10. Por favor, remova ou selecione até 10.");
-                input.value = '';
-                return;
-            }
-            Array.from(input.files).forEach((file, index) => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const card = document.createElement('div');
-                    
-                    // Check if it is the first photo overall
-                    const existingCount = document.querySelectorAll('[id^="quarto-img-card-"]').length;
-                    const isFirstOverall = (existingCount === 0 && index === 0);
-                    
-                    card.className = isFirstOverall 
-                        ? "relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 border-brand shadow-md scale-95 shrink-0 animate-in zoom-in-95 duration-200" 
-                        : "relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border border-slate-100 dark:border-white/5 shadow-inner shrink-0 animate-in zoom-in-95 duration-200";
-                    
-                    let badgeHtml = isFirstOverall
-                        ? `<div class="absolute top-1.5 left-1.5 w-5 h-5 rounded-full border border-brand bg-brand flex items-center justify-center text-white shadow"><i data-lucide="crown" class="w-2.5 h-2.5"></i></div>
-                           <div class="absolute bottom-1 right-1 bg-brand/80 backdrop-blur-sm text-[8px] text-white px-1.5 py-0.5 rounded font-black shadow-sm">Principal</div>`
-                        : `<div class="absolute bottom-1 left-1 bg-brand/80 backdrop-blur-sm text-[8px] text-white px-1.5 py-0.5 rounded font-black">Nova</div>`;
+        const savedCount = document.querySelectorAll('[id^="quarto-img-card-"]').length;
 
-                    card.innerHTML = `
-                        <img src="${e.target.result}" class="w-full h-full object-cover">
-                        ${badgeHtml}
-                    `;
-                    container.appendChild(card);
-                    if(typeof lucide !== 'undefined') { lucide.createIcons(); }
-                };
-                reader.readAsDataURL(file);
-            });
+        localFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const isFirstOverall = (savedCount === 0 && index === 0);
+
+                const card = document.createElement('div');
+                card.dataset.localIndex = index;
+                card.className = [
+                    'relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden shrink-0',
+                    'animate-in zoom-in-95 duration-200 group/limg',
+                    isFirstOverall
+                        ? 'border-2 border-brand shadow-md scale-95'
+                        : 'border border-slate-100 dark:border-white/5 shadow-inner'
+                ].join(' ');
+
+                const badgeHtml = isFirstOverall
+                    ? `<div class="absolute top-1.5 left-1.5 w-5 h-5 rounded-full border border-brand bg-brand flex items-center justify-center text-white shadow"><i data-lucide="crown" class="w-2.5 h-2.5"></i></div>
+                       <div class="absolute bottom-1 right-1 bg-brand/80 backdrop-blur-sm text-[8px] text-white px-1.5 py-0.5 rounded font-black shadow-sm">Principal</div>`
+                    : `<div class="absolute bottom-1 left-1 bg-brand/80 backdrop-blur-sm text-[8px] text-white px-1.5 py-0.5 rounded font-black">Nova</div>`;
+
+                card.innerHTML = `
+                    <img src="${e.target.result}" class="w-full h-full object-cover">
+                    ${badgeHtml}
+                    <button type="button"
+                        onclick="removeLocalFile(${index})"
+                        class="absolute top-1 right-1 bg-red-500/90 text-white rounded-full p-1 hover:bg-red-600 transition-all shadow opacity-0 group-hover/limg:opacity-100 flex items-center justify-center">
+                        <i data-lucide="x" class="w-3 h-3"></i>
+                    </button>
+                `;
+                container.appendChild(card);
+                if (typeof lucide !== 'undefined') { lucide.createIcons(); }
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // Chamado pelo onchange do input: acumula novos arquivos em localFiles[]
+    function previewLocalImages(input) {
+        if (!input.files || input.files.length === 0) return;
+
+        const savedCount = document.querySelectorAll('[id^="quarto-img-card-"]').length;
+        const newFiles = Array.from(input.files);
+        const totalAfter = savedCount + localFiles.length + newFiles.length;
+
+        if (totalAfter > 10) {
+            const allowed = 10 - savedCount - localFiles.length;
+            alert(`Você já tem ${savedCount + localFiles.length} foto(s). Só é possível adicionar mais ${allowed > 0 ? allowed : 0} foto(s) (máximo 10 no total).`);
+            input.value = '';
+            return;
         }
+
+        // Acumula novos arquivos (evita duplicatas pelo nome+tamanho)
+        newFiles.forEach(f => {
+            const isDupe = localFiles.some(lf => lf.name === f.name && lf.size === f.size);
+            if (!isDupe) localFiles.push(f);
+        });
+
+        // Limpa o input para que o próximo "onchange" sempre dispare
+        input.value = '';
+
+        syncInputFiles();
+        renderLocalPreviews();
+    }
+
+    // Remove um arquivo pelo índice e re-renderiza
+    function removeLocalFile(index) {
+        localFiles.splice(index, 1);
+        syncInputFiles();
+        renderLocalPreviews();
     }
 
     // Active local video URL pointer
@@ -621,9 +715,15 @@
         const mobileI = document.getElementById('quarto-preview-iframe-mobile');
         if (desktopI) {
             desktopI.addEventListener('load', () => hydrateIframeVideo('quarto-preview-iframe-desktop'));
+            if (desktopI.contentDocument && desktopI.contentDocument.readyState === 'complete') {
+                hydrateIframeVideo('quarto-preview-iframe-desktop');
+            }
         }
         if (mobileI) {
             mobileI.addEventListener('load', () => hydrateIframeVideo('quarto-preview-iframe-mobile'));
+            if (mobileI.contentDocument && mobileI.contentDocument.readyState === 'complete') {
+                hydrateIframeVideo('quarto-preview-iframe-mobile');
+            }
         }
     })();
 
@@ -687,11 +787,11 @@
         let tags = input.value ? input.value.split(',').map(t => t.trim()) : [];
         if (tags.includes(tag)) {
             tags = tags.filter(t => t !== tag);
-            btn.classList.remove('bg-brand', 'text-white', 'border-brand');
+            btn.classList.remove('bg-amber-500', 'text-white', 'border-amber-500', 'dark:bg-amber-500/20', 'dark:text-amber-300', 'dark:border-amber-500/40');
             btn.classList.add('bg-slate-50', 'dark:bg-white/5', 'text-slate-600', 'dark:text-slate-300', 'border-slate-200/60');
         } else {
             tags.push(tag);
-            btn.classList.add('bg-brand', 'text-white', 'border-brand');
+            btn.classList.add('bg-amber-500', 'text-white', 'border-amber-500', 'dark:bg-amber-500/20', 'dark:text-amber-300', 'dark:border-amber-500/40');
             btn.classList.remove('bg-slate-50', 'dark:bg-white/5', 'text-slate-600', 'dark:text-slate-300', 'border-slate-200/60');
         }
         input.value = tags.join(',');
@@ -706,12 +806,12 @@
         
         if (list.includes(com)) {
             list = list.filter(c => c !== com);
-            btn.classList.remove('bg-brand', 'text-white', 'border-brand');
+            btn.classList.remove('bg-amber-500', 'text-white', 'border-amber-500', 'dark:bg-amber-500/20', 'dark:text-amber-300', 'dark:border-amber-500/40');
             btn.classList.add('bg-slate-50', 'dark:bg-white/5', 'text-slate-600', 'dark:text-slate-300', 'border-slate-200/60');
             if (icon) icon.classList.add('opacity-40');
         } else {
             list.push(com);
-            btn.classList.add('bg-brand', 'text-white', 'border-brand');
+            btn.classList.add('bg-amber-500', 'text-white', 'border-amber-500', 'dark:bg-amber-500/20', 'dark:text-amber-300', 'dark:border-amber-500/40');
             btn.classList.remove('bg-slate-50', 'dark:bg-white/5', 'text-slate-600', 'dark:text-slate-300', 'border-slate-200/60');
             if (icon) icon.classList.remove('opacity-40');
         }
@@ -802,4 +902,106 @@
 
     // Pre-hydrate preview on load
     setTimeout(updateSEOPreview, 200);
+
+    // Dynamic physical room units (UnidadeQuarto) logic
+    function renumberRoomUnits() {
+        const cards = document.querySelectorAll('.room-unit-card');
+        cards.forEach((card, index) => {
+            const label = card.querySelector('.room-unit-label');
+            if (label) {
+                label.textContent = `Quarto ${index + 1}`;
+            }
+            
+            // Hide delete button if only 1 card left
+            const removeBtn = card.querySelector('.remove-room-btn');
+            if (removeBtn) {
+                if (cards.length === 1) {
+                    removeBtn.style.visibility = 'hidden';
+                } else {
+                    removeBtn.style.visibility = 'visible';
+                }
+            }
+        });
+    }
+
+    function addRoomUnit() {
+        const container = document.getElementById('room-units-container');
+        const btn = document.getElementById('add-room-unit-btn');
+        if (!container || !btn) return;
+        
+        // Create new card
+        const card = document.createElement('div');
+        card.className = "room-unit-card w-28 sm:w-32 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl p-3 flex flex-col gap-1.5 relative shrink-0 animate-in zoom-in-95 duration-200";
+        card.innerHTML = `
+            <div class="flex items-center justify-between">
+                <span class="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider room-unit-label">Quarto</span>
+                <button type="button" class="text-slate-400 hover:text-red-500 transition-colors remove-room-btn flex items-center justify-center p-0.5" onclick="removeRoomUnit(this)">
+                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                </button>
+            </div>
+            <input type="hidden" name="unidades_ids" value="new">
+            <input type="text" name="unidades_identificadores" required value="" placeholder="Ex: 101"
+                   class="w-full bg-white dark:bg-black/30 border border-slate-200 dark:border-white/5 rounded-xl px-2 py-1.5 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-brand transition-colors font-bold text-center">
+        `;
+        
+        // Insert before the [+] button
+        container.insertBefore(card, btn);
+        
+        // Re-number labels
+        renumberRoomUnits();
+        
+        // Re-initialize lucide icons for the new card
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+
+    function removeRoomUnit(btn) {
+        const card = btn.closest('.room-unit-card');
+        if (card) {
+            card.remove();
+            renumberRoomUnits();
+        }
+    }
+
+    // Run initial renumbering
+    setTimeout(renumberRoomUnits, 150);
 </script>
+
+<!-- Out of Band swaps to update the B2B dashboard header actions to Form state -->
+<div style="display: none;" hx-swap-oob="innerHTML:#header_actions_area">
+    <div class="flex items-center gap-2.5 sm:gap-3 animate-in fade-in duration-300">
+        <!-- Voltar -->
+        <button type="button" hx-get="{% url 'hoteis:partner_quarto_lista' %}" hx-target="#quartos-container" hx-swap="innerHTML"
+                class="bg-white hover:bg-slate-50 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-1.5 hover:scale-[1.02] active:scale-95 border border-slate-200/50 dark:border-white/5 shadow-sm">
+            <span class="flex items-center" style="pointer-events:none;"><i data-lucide="arrow-left" class="w-3.5 h-3.5"></i></span>
+            <span>Voltar</span>
+        </button>
+        <!-- Salvar (Binds to #quarto-form using HTML5 form attribute) -->
+        <button type="submit" form="quarto-form"
+                class="bg-brand hover:bg-brand/90 text-white px-4 py-2.5 rounded-2xl text-xs font-black transition-all shadow-md shadow-brand/25 flex items-center gap-1.5 hover:scale-[1.02] active:scale-95 font-bold">
+            <span class="flex items-center" style="pointer-events:none;"><i data-lucide="save" class="w-4 h-4"></i></span>
+            <span>{% if quarto %}Salvar Alterações{% else %}Salvar Quarto{% endif %}</span>
+        </button>
+    </div>
+</div>
+
+<div style="display: none;" hx-swap-oob="innerHTML:#sub-header-container">
+    <!-- Sub-cabeçalho Mobile para as abas de Quartos -->
+    <div class="md:hidden bg-white/40 dark:bg-black/20 backdrop-blur-md border-b border-slate-200/50 dark:border-navie-border px-4 py-2.5 flex justify-center items-center gap-2 animate-in fade-in duration-300">
+        <!-- Voltar -->
+        <button type="button" hx-get="{% url 'hoteis:partner_quarto_lista' %}" hx-target="#quartos-container" hx-swap="innerHTML"
+                class="bg-white dark:bg-white/5 text-slate-700 dark:text-white border border-slate-200 dark:border-white/10 py-2 px-3 rounded-xl text-xs font-black transition-all shadow-sm flex items-center justify-center gap-1.5 w-1/2 hover:scale-[1.01] active:scale-95">
+            <span class="flex items-center" style="pointer-events:none;"><i data-lucide="arrow-left" class="w-3.5 h-3.5"></i></span>
+            <span>Voltar</span>
+        </button>
+        <!-- Salvar (Binds to #quarto-form using HTML5 form attribute) -->
+        <button type="submit" form="quarto-form"
+                class="bg-brand hover:bg-brand/90 text-white py-2 px-3 rounded-xl text-xs font-black transition-all shadow-md shadow-brand/25 flex items-center justify-center gap-1.5 w-1/2 hover:scale-[1.01] active:scale-95 font-bold">
+            <span class="flex items-center" style="pointer-events:none;"><i data-lucide="save" class="w-3.5 h-3.5"></i></span>
+            <span>{% if quarto %}Salvar Alterações{% else %}Salvar Quarto{% endif %}</span>
+        </button>
+    </div>
+</div>
+
+

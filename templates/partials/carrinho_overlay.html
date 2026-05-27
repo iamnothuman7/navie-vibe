@@ -1,0 +1,216 @@
+<!-- Style overrides para o carrinho e tratamento do cabeçalho do Naviê -->
+<style>
+    /* Ocultar barra de rolagem no carrinho */
+    .no-scrollbar::-webkit-scrollbar {
+        display: none !important;
+    }
+    .no-scrollbar {
+        -ms-overflow-style: none !important;
+        scrollbar-width: none !important;
+    }
+
+    /* Forçar cabeçalho limpo e branco com logo e textos normais quando o carrinho abre (corrige bug do header preto nas páginas de acomodação) */
+    header.cart-open-header {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        background-color: #ffffff !important;
+        border-bottom: 1px solid #f1f5f9 !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
+        z-index: 50 !important;
+    }
+    header.cart-open-header nav a, 
+    header.cart-open-header .text-gray-600, 
+    header.cart-open-header span, 
+    header.cart-open-header button {
+        color: #1e293b !important;
+        text-shadow: none !important;
+    }
+    header.cart-open-header nav a:hover {
+        color: #2563eb !important;
+    }
+    header.cart-open-header i[data-lucide] {
+        color: #64748b !important;
+        filter: none !important;
+    }
+    header.cart-open-header span.bg-red-500 {
+        background-color: #ef4444 !important;
+        color: #ffffff !important;
+    }
+    header.cart-open-header img {
+        filter: none !important;
+    }
+</style>
+
+<div id="navieCartOverlay" class="fixed top-[72px] left-0 w-full h-[calc(100vh-72px)] bg-white z-[40] transition-transform duration-500 ease-in-out flex flex-col" style="transform: translateY(-120%);">
+    
+    <!-- Title Section Discreta e Elegante -->
+    <div class="px-4 md:px-8 pt-7 pb-4 max-w-[90rem] mx-auto w-full shrink-0 border-b border-gray-100/50">
+        <div class="flex items-center gap-2">
+            <h1 class="text-lg font-bold text-gray-950 font-poppins tracking-tight">Carrinho de compras</h1>
+            <span class="px-2 py-0.5 rounded-full bg-blue-50 text-[10px] font-bold text-action-blue font-poppins">{{ carrinho.quantidade_hospedes }} hóspede{% if carrinho.quantidade_hospedes != 1 %}s{% endif %}</span>
+        </div>
+        <p class="text-xs text-gray-400 font-medium mt-0.5">Revise suas escolhas e complete os dados obrigatórios.</p>
+    </div>
+
+    <!-- Scrollable Content sem barra de rolagem -->
+    <div class="flex-1 overflow-y-auto px-4 md:px-8 py-6 pb-40 no-scrollbar">
+        <div class="max-w-[90rem] mx-auto w-full">
+            <!-- Grid otimizado para Cards Horizontais (Achatados) -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6" id="cartItemsContainer">
+                {% if carrinho %}
+                    {% include 'partials/card_carrinho_hospedagem.html' %}
+                {% else %}
+                    <!-- Carrinho Vazio State -->
+                    <div class="col-span-full flex flex-col items-center justify-center py-20 text-center">
+                        <div class="w-16 h-16 rounded-full bg-slate-50 dark:bg-white/5 text-slate-400 flex items-center justify-center mb-4">
+                            <i data-lucide="shopping-cart" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="text-sm font-bold text-gray-900 font-poppins">Seu carrinho está vazio</h3>
+                        <p class="text-xs text-gray-400 mt-1">Nenhuma acomodação selecionada para estadia.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumo Fixed Footer Redesenhado com Geometria e Design Responsivo Infalível -->
+    <div class="bg-white px-4 md:px-8 py-5 shrink-0 absolute bottom-0 left-0 w-full z-20 shadow-[0_-8px_30px_rgba(0,0,0,0.05)] border-t border-slate-100 flex items-center justify-center">
+        <div class="max-w-[90rem] w-full">
+            
+            {% if carrinho %}
+                <!-- ==================== LAYOUT DESKTOP (MD EM DIANTE) ==================== -->
+                <div class="hidden md:flex flex-row justify-between items-center w-full gap-6">
+                    <!-- Detalhamento Financeiro Sólido e Uniforme -->
+                    <div class="flex flex-col gap-1 flex-1">
+                        <div class="flex items-center gap-2 text-[11px] sm:text-xs text-slate-400 font-semibold font-poppins">
+                            <span>1 Acomodação</span>
+                            <span class="w-1.5 h-1.5 rounded-full bg-slate-200"></span>
+                            <span>{{ carrinho.quantidade_hospedes }} Hóspede{% if carrinho.quantidade_hospedes != 1 %}s{% endif %}</span>
+                            <span class="w-1.5 h-1.5 rounded-full bg-slate-200"></span>
+                            <span>Subtotal: R$ {{ carrinho.subtotal|floatformat:2 }}</span>
+                            <span class="w-1.5 h-1.5 rounded-full bg-slate-200"></span>
+                            <span>Taxa de Serviço: R$ {{ carrinho.taxas|floatformat:2 }}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">Total</span>
+                            <span class="text-2xl md:text-3xl font-black text-gray-950 font-poppins leading-none">
+                                R$ {{ carrinho.total|floatformat:0 }}<span class="text-base text-gray-400 font-normal">,00</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Botão de Ação Principal Desktop -->
+                    <div class="w-[380px] shrink-0">
+                        <button id="btnConfirmarCompra" 
+                                {% if not carrinho.todos_hospedes_completos %}
+                                    disabled 
+                                    class="w-full py-4 px-6 rounded-full font-bold transition-all flex justify-center items-center gap-2 text-xs sm:text-sm cursor-not-allowed bg-slate-100 text-slate-400 border border-slate-200/80"
+                                {% else %}
+                                    class="w-full py-4 px-6 rounded-full font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md shadow-blue-500/10 hover:shadow-lg transition-all flex justify-center items-center gap-2 cursor-pointer text-xs sm:text-sm hover:-translate-y-0.5"
+                                {% endif %}
+                                onclick="window.location.href='{% url 'hoteis:checkout_processar' %}'">
+                            {% if not carrinho.todos_hospedes_completos %}
+                                <i data-lucide="lock" class="w-4 h-4 shrink-0"></i>
+                                Preencha os dados do hóspede titular
+                            {% else %}
+                                Finalizar Compra <i data-lucide="arrow-right" class="w-4 h-4 shrink-0"></i>
+                            {% endif %}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ==================== LAYOUT MOBILE (ABAIXO DE MD) ==================== -->
+                <div class="flex md:hidden flex-col gap-4 w-full">
+                    <!-- Resumo Financeiro estruturado em tabela limpa no Mobile -->
+                    <div class="w-full bg-slate-50/70 p-4 rounded-3xl border border-slate-200/40 text-xs shadow-[inset_0_2px_4px_rgba(0,0,0,0.01)]">
+                        <div class="flex justify-between text-slate-500 font-semibold">
+                            <span>Subtotal ({{ carrinho.noites }} noites)</span>
+                            <span>R$ {{ carrinho.subtotal|floatformat:2 }}</span>
+                        </div>
+                        <div class="flex justify-between text-slate-500 font-semibold mt-1.5">
+                            <span>Taxa de Serviço Naviê</span>
+                            <span>R$ {{ carrinho.taxas|floatformat:2 }}</span>
+                        </div>
+                        
+                        <div class="border-t border-slate-200/50 my-2.5"></div>
+                        
+                        <div class="flex justify-between items-center">
+                            <span class="font-extrabold text-slate-800 text-sm">Valor Total</span>
+                            <span class="font-black text-gray-950 text-xl font-poppins">
+                                R$ {{ carrinho.total|floatformat:0 }}<span class="text-sm text-gray-400 font-normal">,00</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Botão de Ação Principal Mobile (Largura total, cápsula ideal) -->
+                    <div class="w-full">
+                        <button id="btnConfirmarCompraMobile" 
+                                {% if not carrinho.todos_hospedes_completos %}
+                                    disabled 
+                                    class="w-full py-4 px-6 rounded-full font-bold transition-all flex justify-center items-center gap-2 text-xs cursor-not-allowed bg-slate-100 text-slate-400 border border-slate-200/80"
+                                {% else %}
+                                    class="w-full py-4 px-6 rounded-full font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md shadow-blue-500/10 hover:shadow-lg transition-all flex justify-center items-center gap-2 cursor-pointer text-xs"
+                                {% endif %}
+                                onclick="window.location.href='{% url 'hoteis:checkout_processar' %}'">
+                            {% if not carrinho.todos_hospedes_completos %}
+                                <i data-lucide="lock" class="w-4 h-4 shrink-0"></i>
+                                Preencha os dados obrigatórios
+                            {% else %}
+                                Finalizar Compra <i data-lucide="arrow-right" class="w-4 h-4 shrink-0"></i>
+                            {% endif %}
+                        </button>
+                    </div>
+                </div>
+            {% else %}
+                <div class="w-full flex items-center justify-center">
+                    <button class="w-full py-4 px-6 rounded-full font-bold text-slate-400 bg-slate-100 border border-slate-200/80 transition-all flex justify-center items-center gap-2 cursor-not-allowed text-xs sm:text-sm" disabled>
+                        Carrinho Vazio
+                    </button>
+                </div>
+            {% endif %}
+            
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleNavieCart() {
+        const cart = document.getElementById('navieCartOverlay');
+        const header = document.querySelector('header');
+        if (cart.style.transform === 'translateY(0%)') {
+            cart.style.transform = 'translateY(-120%)';
+            document.body.style.overflow = 'auto';
+            if (header) {
+                header.classList.remove('cart-open-header');
+            }
+        } else {
+            cart.style.transform = 'translateY(0%)';
+            document.body.style.overflow = 'hidden';
+            if (header) {
+                header.classList.add('cart-open-header');
+            }
+        }
+    }
+
+    function verificarCheckoutLiberado() {
+        const pendencias = document.querySelectorAll('.cart-pendencia-ativa');
+        const btnCompra = document.getElementById('btnConfirmarCompra');
+
+        if (pendencias.length > 0) {
+            btnCompra.disabled = true;
+            btnCompra.className = 'w-full py-3.5 px-6 rounded-2xl font-bold text-slate-400 bg-slate-100 border border-slate-200/80 transition-all flex justify-center items-center gap-2 cursor-not-allowed text-xs sm:text-sm';
+            btnCompra.innerHTML = `<i data-lucide="lock" class="w-4 h-4 shrink-0"></i> Preencha as informações obrigatórias`;
+        } else {
+            btnCompra.disabled = false;
+            btnCompra.className = 'w-full py-3.5 px-6 rounded-2xl font-bold text-white bg-action-blue hover:bg-action-blue-dark shadow-md hover:shadow-lg transition-all flex justify-center items-center gap-2 cursor-pointer text-xs sm:text-sm hover:-translate-y-0.5';
+            btnCompra.innerHTML = `Finalizar Compra <i data-lucide="arrow-right" class="w-4 h-4 shrink-0"></i>`;
+        }
+        lucide.createIcons();
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(verificarCheckoutLiberado, 500);
+    });
+</script>

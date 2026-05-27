@@ -14,7 +14,7 @@
             
             <div class="p-3 flex-1 overflow-y-auto custom-scrollbar sortable-list min-h-[200px] flex flex-col gap-3" data-status="overdue">
                 {% for tarefa in overdue %}
-                    {% include 'hoteis/partials/card_tarefa.html' %}
+                    {% include 'hoteis/atividades/partials/card_tarefa.html' %}
                 {% empty %}
                     <div class="empty-state text-center p-8 border border-dashed border-red-200/30 dark:border-red-500/10 rounded-2xl text-red-400 text-[10px] font-black uppercase tracking-widest opacity-40">
                         Tudo em dia
@@ -35,7 +35,7 @@
             
             <div class="p-3 flex-1 overflow-y-auto custom-scrollbar sortable-list min-h-[200px] flex flex-col gap-3" data-status="todo">
                 {% for tarefa in todo %}
-                    {% include 'hoteis/partials/card_tarefa.html' %}
+                    {% include 'hoteis/atividades/partials/card_tarefa.html' %}
                 {% empty %}
                     <div class="empty-state text-center p-8 border border-dashed border-slate-200 dark:border-white/5 rounded-2xl text-slate-400 dark:text-navie-textsec text-[10px] font-black uppercase tracking-widest opacity-40">
                         Vazio
@@ -56,7 +56,7 @@
             
             <div class="p-3 flex-1 overflow-y-auto custom-scrollbar sortable-list min-h-[200px] flex flex-col gap-3" data-status="doing">
                 {% for tarefa in doing %}
-                    {% include 'hoteis/partials/card_tarefa.html' %}
+                    {% include 'hoteis/atividades/partials/card_tarefa.html' %}
                 {% empty %}
                     <div class="empty-state text-center p-8 border border-dashed border-brand-200/30 dark:border-brand-500/10 rounded-2xl text-brand text-[10px] font-black uppercase tracking-widest opacity-40">
                         Vazio
@@ -77,7 +77,7 @@
             
             <div class="p-3 flex-1 overflow-y-auto custom-scrollbar sortable-list min-h-[200px] flex flex-col gap-3" data-status="done">
                 {% for tarefa in done %}
-                    {% include 'hoteis/partials/card_tarefa.html' %}
+                    {% include 'hoteis/atividades/partials/card_tarefa.html' %}
                 {% empty %}
                     <div class="empty-state text-center p-8 border border-dashed border-green-200/30 dark:border-green-500/10 rounded-2xl text-green-400 text-[10px] font-black uppercase tracking-widest opacity-40">
                         Vazio
