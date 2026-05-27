@@ -1,0 +1,340 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br" class="scroll-smooth" 
+x-data="{ 
+    theme: localStorage.getItem('theme') || 'light', 
+    sidebarMobileOpen: false,
+    sidebarExpanded: false,
+    notificationsOpen: false,
+    activeTab: localStorage.getItem('client_active_tab') || 'hospedagens', 
+    
+    updateStatusColor() {
+        const meta = document.getElementById('theme-color-meta');
+        if (!meta) return;
+        meta.setAttribute('content', this.theme === 'glass' ? '#0f0f0f' : '#ffffff');
+    },
+
+    init() {
+        this.updateStatusColor();
+        if (this.theme === 'glass') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        
+        // Persistir a aba ativa ao mudar
+        this.$watch('activeTab', value => {
+            localStorage.setItem('client_active_tab', value);
+            if (window.lucide) lucide.createIcons();
+        });
+    },
+    
+    toggleTheme() {
+        this.theme = this.theme === 'light' ? 'glass' : 'light';
+        localStorage.setItem('theme', this.theme);
+        this.updateStatusColor();
+        
+        if(this.theme === 'glass') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    }
+}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <!-- Cores Dinâmicas da Barra de Status do Celular -->
+    <meta name="theme-color" content="#ffffff" id="theme-color-meta">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>{% block title %}Meu Painel{% endblock %} | Naviê Vibe</title>
+    
+    <link rel="icon" type="image/png" href="{% static 'images/logo.png' %}">
+    <link rel="apple-touch-icon" href="{% static 'images/logo.png' %}">
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Play CDN do Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { 
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Inter', 'monospace']
+                    },
+                    colors: {
+                        brand: {
+                            DEFAULT: '#2563eb',
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#2563eb',
+                            600: '#1d4ed8',
+                            900: '#1e3a8a',
+                            contrastText: '#ffffff',
+                            burned: '#1e3a8a',
+                        },
+                        navie: {
+                            bg: '#0f0f0f',             // Fundo mestre escuro
+                            overlay: 'rgba(0, 0, 0, 0.7)',
+                            glass: 'rgba(255, 255, 255, 0.05)', // Painel de vidro fosco
+                            border: 'rgba(255, 255, 255, 0.1)', // Linha divisória fina
+                            textsec: '#a0a0a0'          // Texto secundário discreto
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Bibliotecas Mestre -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://unpkg.com/alpinejs@3.13.5" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Folha de Estilo Customizada -->
+    <style>
+        html, body { 
+            margin: 0; 
+            padding: 0;
+            max-width: 100%;
+            width: 100%;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            background-color: #ffffff;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Scrollbar Minimalista Premium */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        html.dark ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); }
+        html.dark ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.4); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        [x-cloak] { display: none !important; }
+
+        /* Estilo Vidro Premium */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7) !important;
+            backdrop-filter: blur(16px) !important;
+            -webkit-backdrop-filter: blur(16px) !important;
+            border: 1px solid rgba(226, 232, 240, 0.8) !important;
+        }
+        .dark .glass-card {
+            background: rgba(15, 15, 15, 0.65) !important;
+            backdrop-filter: blur(20px) !important;
+            -webkit-backdrop-filter: blur(20px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body class="text-slate-600 dark:text-white font-sans antialiased flex min-h-screen selection:bg-blue-100 selection:text-blue-900 bg-slate-50/50 dark:bg-navie-bg relative">
+
+    <!-- Fundo de Partículas (Apenas no Modo Claro) -->
+    <div id="particles-js" x-show="theme === 'light'" class="fixed inset-0 z-0 pointer-events-none bg-slate-50/40"></div>
+
+    <!-- MODO GLASS: Imagem de Fundo Dinâmica -->
+    <div x-show="theme === 'glass'" class="fixed inset-0 z-0 pointer-events-none overflow-hidden bg-navie-bg" style="display: none; height: 100dvh;">
+        <div class="absolute inset-0 w-full h-full bg-black/55 z-10 backdrop-blur-[8px]"></div>
+        <img src="https://images.unsplash.com/photo-1506157786151-b8491531f063?auto=format&fit=crop&w=1920&q=80" class="absolute inset-0 w-full h-full object-cover opacity-35 brightness-[0.5]">
+    </div>
+
+    <!-- Espaçador lateral para empurrar conteúdo ao lado da Sidebar recolhida -->
+    <div class="hidden md:block w-[70px] hover:w-[260px] transition-all duration-300 min-h-screen flex-shrink-0 z-10 peer"></div>
+
+    <!-- ─────────────────────────────────────────────────────────────────
+         SIDEBAR RESPONSIVA LATERAL DO CLIENTE (FOCO MOBILE/DESKTOP)
+         ───────────────────────────────────────────────────────────────── -->
+    <aside 
+        :class="sidebarMobileOpen ? 'translate-x-0' : '-translate-x-full'"
+        class="fixed top-0 left-0 h-[100dvh] bg-white/80 dark:bg-black/40 backdrop-blur-xl border-r border-slate-200/80 dark:border-navie-border transition-all duration-300 ease-in-out z-50 flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.02)] md:translate-x-0 w-72 md:w-[70px] hover:w-[260px] overflow-hidden group/sidebar"
+    >
+        
+        <!-- Header da Sidebar: Logo Naviê Vibe -->
+        <div class="h-20 flex items-center justify-center md:justify-start px-4 border-b border-slate-200/50 dark:border-navie-border flex-shrink-0 whitespace-nowrap transition-all duration-300">
+            <!-- EXPANDIDO (Aberto ou no Hover) -->
+            <div :class="sidebarMobileOpen ? 'flex' : 'hidden group-hover/sidebar:flex'" class="items-center justify-center gap-2.5 w-full animate-in fade-in zoom-in duration-300">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 flex-shrink-0 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-extrabold text-sm shadow-md shadow-blue-500/20">
+                        NV
+                    </div>
+                    <span class="text-blue-900 dark:text-white font-black tracking-tight text-sm">
+                        NAVIÊ VIBE
+                    </span>
+                </div>
+            </div>
+
+            <!-- RECOLHIDO -->
+            <div :class="sidebarMobileOpen ? 'hidden' : 'flex group-hover/sidebar:hidden'" class="flex-col items-center justify-center gap-2 w-full h-full py-2">
+                <div class="w-7 h-7 flex-shrink-0 rounded-md bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-black text-[10px]" title="Naviê Vibe">
+                    NV
+                </div>
+            </div>
+        </div>
+
+        <!-- Links de Navegação do Cliente -->
+        <nav class="flex-1 overflow-y-auto no-scrollbar py-6 flex flex-col gap-6 px-3">
+            
+            <div> 
+                <p class="px-3 text-[9px] font-black text-slate-400 dark:text-navie-textsec uppercase tracking-widest mb-3 opacity-100 md:opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap">Minha Ibiapaba</p>
+                
+                <ul class="space-y-1.5">
+                    <li>
+                        <button type="button" @click="activeTab = 'hospedagens'; sidebarMobileOpen = false;" :class="activeTab === 'hospedagens' ? 'text-blue-600 dark:text-white bg-blue-50/80 dark:bg-white/10 font-bold' : 'text-slate-500 dark:text-navie-textsec hover:text-blue-900 dark:hover:text-white hover:bg-slate-100/50 dark:hover:bg-white/10'" class="w-full flex items-center p-2 text-sm font-semibold rounded-xl transition-colors overflow-hidden whitespace-nowrap group/link focus:outline-none">
+                            <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg">
+                                <i data-lucide="bed-double" class="w-5 h-5"></i>
+                            </div>
+                            <span class="ml-3 opacity-100 md:opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300">Minhas Hospedagens</span>
+                        </button>
+                    </li>
+                    
+                    <li>
+                        <button type="button" @click="activeTab = 'shows'; sidebarMobileOpen = false;" :class="activeTab === 'shows' ? 'text-blue-600 dark:text-white bg-blue-50/80 dark:bg-white/10 font-bold' : 'text-slate-500 dark:text-navie-textsec hover:text-blue-900 dark:hover:text-white hover:bg-slate-100/50 dark:hover:bg-white/10'" class="w-full flex items-center p-2 text-sm font-semibold rounded-xl transition-colors overflow-hidden whitespace-nowrap group/link focus:outline-none">
+                            <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg">
+                                <i data-lucide="ticket" class="w-5 h-5"></i>
+                            </div>
+                            <span class="ml-3 opacity-100 md:opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300">Shows & Eventos</span>
+                        </button>
+                    </li>
+                    
+                    <li>
+                        <button type="button" @click="activeTab = 'cinema'; sidebarMobileOpen = false;" :class="activeTab === 'cinema' ? 'text-blue-600 dark:text-white bg-blue-50/80 dark:bg-white/10 font-bold' : 'text-slate-500 dark:text-navie-textsec hover:text-blue-900 dark:hover:text-white hover:bg-slate-100/50 dark:hover:bg-white/10'" class="w-full flex items-center p-2 text-sm font-semibold rounded-xl transition-colors overflow-hidden whitespace-nowrap group/link focus:outline-none">
+                            <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg">
+                                <i data-lucide="clapperboard" class="w-5 h-5"></i>
+                            </div>
+                            <span class="ml-3 opacity-100 md:opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300">Meu Cinema</span>
+                        </button>
+                    </li>
+
+                    <li>
+                        <button type="button" @click="activeTab = 'restaurantes'; sidebarMobileOpen = false;" :class="activeTab === 'restaurantes' ? 'text-blue-600 dark:text-white bg-blue-50/80 dark:bg-white/10 font-bold' : 'text-slate-500 dark:text-navie-textsec hover:text-blue-900 dark:hover:text-white hover:bg-slate-100/50 dark:hover:bg-white/10'" class="w-full flex items-center p-2 text-sm font-semibold rounded-xl transition-colors overflow-hidden whitespace-nowrap group/link focus:outline-none">
+                            <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg">
+                                <i data-lucide="utensils" class="w-5 h-5"></i>
+                            </div>
+                            <span class="ml-3 opacity-100 md:opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300">Restaurantes</span>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mt-auto">
+                <ul class="space-y-1">
+                    <li>
+                        <a href="{% url 'hoteis:home' %}" class="flex items-center p-2 text-sm font-semibold rounded-xl text-slate-500 dark:text-navie-textsec hover:text-blue-900 dark:hover:text-white hover:bg-slate-100/50 dark:hover:bg-white/10 transition-colors overflow-hidden whitespace-nowrap group/link">
+                            <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg">
+                                <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                            </div>
+                            <span class="ml-3 opacity-100 md:opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300">Voltar à Loja</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Informações do Usuário e Logout Form -->
+        <div class="p-3 border-t border-slate-200/50 dark:border-navie-border flex-shrink-0 bg-white/50 dark:bg-black/20">
+            <div class="flex items-center gap-3 p-2 mb-2 min-w-[46px] overflow-hidden">
+                <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-white text-blue-700 dark:text-navie-bg flex items-center justify-center font-bold text-sm flex-shrink-0">
+                    {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                </div>
+                <div class="flex-1 min-w-0 opacity-100 md:opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 flex flex-col justify-center font-sans">
+                    <p class="font-bold text-xs text-slate-800 dark:text-white leading-tight truncate">{{ request.user.get_full_name|default:request.user.username }}</p>
+                    <p class="text-[9px] font-black text-slate-400 dark:text-navie-textsec uppercase leading-tight truncate tracking-wider mt-0.5">Cliente</p>
+                </div>
+            </div>
+
+            <a href="{% url 'clientes:logout' %}" class="w-full flex items-center p-2 text-sm font-semibold rounded-xl text-slate-500 dark:text-navie-textsec hover:bg-red-50 dark:hover:bg-red-500/20 hover:text-red-600 dark:hover:text-red-400 transition-colors overflow-hidden whitespace-nowrap group/logout">
+                <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg">
+                    <i data-lucide="log-out" class="w-5 h-5 text-slate-400 dark:text-navie-textsec group-hover/logout:text-red-500 transition-colors"></i>
+                </div>
+                <span class="ml-3 opacity-100 md:opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300">Sair da Conta</span>
+            </a>
+        </div>
+    </aside>
+
+    <div 
+        x-show="sidebarMobileOpen" 
+        @click="sidebarMobileOpen = false"
+        x-transition.opacity
+        class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 md:hidden"
+        style="display: none;"
+    ></div>
+
+    <!-- ─────────────────────────────────────────────────────────────────
+         MAIN CONTENT AREA
+         ───────────────────────────────────────────────────────────────── -->
+    <main class="flex-1 flex flex-col h-screen relative z-10 min-w-0 overflow-hidden" style="height: 100dvh;">
+        
+        <!-- Header Superior -->
+        <header class="bg-white/60 dark:bg-navie-glass backdrop-blur-md border-b border-slate-200/50 dark:border-navie-border flex items-center justify-between px-6 w-full flex-shrink-0 sticky top-0 z-[60] transition-colors"
+                style="height: calc(4.5rem + env(safe-area-inset-top, 0px)); padding-top: env(safe-area-inset-top, 0px);">
+            
+            <div class="flex items-center gap-4 shrink-0 mr-4">
+                <button @click="sidebarMobileOpen = !sidebarMobileOpen" class="md:hidden text-slate-500 dark:text-navie-textsec hover:text-blue-600 transition-colors">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+                <div class="flex flex-col">
+                    <h1 class="text-sm sm:text-base font-black text-slate-800 dark:text-white tracking-tight leading-tight uppercase">
+                        <span x-show="activeTab === 'hospedagens'">Minhas Hospedagens</span>
+                        <span x-show="activeTab === 'shows'">Shows & Ingressos</span>
+                        <span x-show="activeTab === 'cinema'">Bilhetes de Cinema</span>
+                        <span x-show="activeTab === 'restaurantes'">Reservas em Restaurantes</span>
+                    </h1>
+                    <p class="text-[9px] font-black text-slate-400 dark:text-navie-textsec mt-0.5 leading-tight tracking-wider uppercase hidden sm:block">
+                        <span x-show="activeTab === 'hospedagens'">Seus vouchers, estadias e check-ins em pousadas e hotéis</span>
+                        <span x-show="activeTab === 'shows'">Seus ingressos digitais e reservas de shows, festas e eventos</span>
+                        <span x-show="activeTab === 'cinema'">Seus bilhetes, sessões e assentos de cinema comprados</span>
+                        <span x-show="activeTab === 'restaurantes'">Seu histórico de mesas e reservas gastronômicas</span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4 flex-1 justify-end">
+                <!-- Alternar Temas (Claro / Glass) -->
+                <button @click="toggleTheme()" class="w-9 h-9 rounded-full bg-white/80 dark:bg-transparent border border-slate-200/80 dark:border-navie-border flex items-center justify-center text-slate-400 dark:text-navie-textsec hover:text-blue-600 dark:hover:text-white transition-colors shadow-sm dark:shadow-none relative group" title="Alternar Tema">
+                    <span x-show="theme === 'light'" class="flex items-center"><i data-lucide="moon" class="w-4 h-4"></i></span>
+                    <span x-show="theme === 'glass'" style="display: none;" class="flex items-center"><i data-lucide="sun" class="w-4 h-4"></i></span>
+                </button>
+
+                <!-- Notificações -->
+                <button class="w-9 h-9 rounded-full bg-white/80 dark:bg-transparent border border-slate-200/80 dark:border-navie-border flex items-center justify-center text-slate-400 dark:text-navie-textsec hover:text-blue-600 dark:hover:text-white transition-colors shadow-sm dark:shadow-none relative group" title="Notificações">
+                    <i data-lucide="bell" class="w-4.5 h-4.5 relative z-10"></i>
+                    <span class="absolute top-1.5 right-1.5 flex h-2 w-2 z-20">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-500 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                    </span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Área de Conteúdo Principal -->
+        <div class="flex-1 overflow-y-auto no-scrollbar p-6 relative z-10">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Script de Inicialização de Ícones Lucide -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+        });
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
